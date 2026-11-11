@@ -143,6 +143,10 @@ Aynı oyun ve aynı içerik her platformda çalışır; yalnızca satış biçim
 - **Ses:** Yağmur, uzak trafik, caz ve ambiyans; geçişlerde efektler.
 - **Kullanım:** Mobilde yatay, tam ekran, tek elle rahat dokunuşlar. PC'de pencere veya tam ekran, fare ve klavye.
 - **Görsel çözünürlük:** PC'nin büyük ekranları düşünülerek üretilir; mobil için küçültülmüş sürümler kullanılır.
+- **Dil:** İlk çıkışta oyun yalnızca **İngilizce**dir. Türkçe ve diğer diller sonradan eklenebilir; altyapı hazırdır
+  (yeni dil = yeni metin dosyaları). Bu yüzden fontlar Latin Extended karakterleri (ç, ğ, ş, ı, ä, ñ...) destekler.
+  Görsellere metin gömülmez (tabela, belge başlığı gibi okunması gereken yazılar metin katmanı olarak eklenir);
+  böylece yeni dil yeni görsel gerektirmez.
 
 ## 10. Açık sorular
 
@@ -162,3 +166,6 @@ Aynı oyun ve aynı içerik her platformda çalışır; yalnızca satış biçim
 
 - 2026-11-11: İlk taslak.
 - 2026-11-11: Steam (Windows) platform olarak eklendi: Bölüm 1 demo, Vaka 1 peşin ücretli, Vaka 2 DLC; Steam Cloud ile kayıt.
+- 2026-11-11: Dil kararı: ilk çıkış yalnızca İngilizce (önceki karar TR + EN idi). Gerekçe: global pazara tek dille
+  daha hızlı çıkmak ve her metni iki dilde yazma yükünü içerik üretimi boyunca taşımamak. Yerelleştirme altyapısı
+  ilk günden kurulur; Türkçe ve diğer diller sonradan dosya ekleyerek gelir.

@@ -37,7 +37,7 @@ Android Studio terminalinde Claude'a yaz:
 | Ortamlar | `dev` / `staging` / `prod` flavor; 2 Supabase projesi | Gerçek oyuncu verisi testlerden ayrı |
 | Sahne geçişi | Zoom yok. 150 ms siyaha kararma/açılma; kural bazında ayarlanabilir (`cut`, `holdMs`, `sfx`) | Noir hissi, göz yormaz, ses efektiyle uzatılabilir |
 | Ekran yönü | Yatay kilitli, tam ekran; sahne 16:9 viewport | Point-and-click için doğal; koordinatlar her ekranda tutarlı |
-| Diller | TR + EN, ilk günden | Global pazar; sonradan eklemek pahalı |
+| Diller | İlk çıkış sadece İngilizce (`en`); l10n altyapısı ilk günden, diğer diller sonra | Global pazar tek dille daha hızlı çıkar; altyapı hazır olduğu için yeni dil = yeni dosya |
 | Lint | `very_good_analysis` | Sıkı kurallar, temiz kod |
 | CI | GitHub Actions: format, analyze, test | Her push'ta otomatik kontrol, README'de rozet |
 | Dil | Kod/commit/README/ADR İngilizce; açıklamalar, devlog ve oyun tasarımı Türkçe | Global CV + öğrenme |
@@ -128,16 +128,19 @@ Sonradan kurmak, yazılmış kodu toptan düzeltmek demektir.
   **Commit:** `build: add dev, staging and prod flavors`
 
 ### [ ] 0.4 Tema, yerelleştirme ve yönlendirme
-**Amaç:** Görsel kimliğin ve çoklu dilin temelini atmak.
+**Amaç:** Görsel kimliğin ve yerelleştirme altyapısının temelini atmak.
 **Yapılacaklar:**
 - `core/theme/`: noir renk tokenları (koyu zemin, soluk amber/sepya vurgu, gece mavisi, soluk kırmızı uyarı),
   tipografi, boşluk ve süre sabitleri (`kSceneFadeDuration = 150 ms` vb.).
 - Fontlar `assets/fonts/` içine paketlenir (internetten çalışma anında indirilmez; oyun offline çalışmalı):
-  daktilo hissi veren bir başlık fontu + okunaklı bir gövde fontu, ikisi de OFL lisanslı, lisans dosyalarıyla.
-- l10n: `flutter_localizations`, `intl`, `l10n.yaml`, `app_tr.arb`, `app_en.arb`. Cihaz dili desteklenmiyorsa EN.
+  daktilo hissi veren bir başlık fontu + okunaklı bir gövde fontu. **Latin Extended** desteklemeli (ileride Türkçe,
+  Almanca, İspanyolca vb. eklenebilsin); lisans OFL veya Apache 2.0, lisans dosyalarıyla.
+- l10n: `flutter_localizations`, `intl`, `l10n.yaml`, sadece `app_en.arb`. Desteklenen diller ARB dosyalarından üretilen
+  listeden gelir (tek kaynak); cihaz dili desteklenmiyorsa EN. Yeni dil = yeni `app_xx.arb`, kod değişmez.
   Flutter'ın güncel `gen-l10n` çıktı davranışını kontrol et; çıktı `lib/core/l10n/` altında olsun.
 - `go_router`: şimdilik `/` → oyun ekranı. Splash ve menü Aşama 6'da.
-  **Kabul kriterleri:** Telefon dili TR/EN değişince örnek metin değişiyor; tema uygulanmış.
+  **Kabul kriterleri:** Örnek metin `app_en.arb`'den geliyor; telefon dili Türkçe olsa da EN gösteriliyor; tema ve
+  fontlar uygulanmış.
   **Commit:** `feat(core): add noir theme, localization and routing`
 
 ### [ ] 0.5 CI ve karar kayıtları
@@ -235,12 +238,12 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
 - Yapı:
   ```
   assets/content/
-    common/text_tr.json, text_en.json      # genel metinler (ör. generic_item_no_effect)
+    common/text_en.json                    # genel metinler (ör. generic_item_no_effect)
     cases/case01/
       case.json                            # bölümler ve her bölümün giriş sahnesi
       chapters/ch01/
         scenes.json  items.json  notes.json
-        text_tr.json  text_en.json
+        text_en.json                       # yeni dil = yeni text_xx.json
   ```
   Her dosyada `"formatVersion": 1`. Arayüz metinleri ARB'de, hikaye metinleri içerik dosyalarında.
 - Paketler: `json_annotation`; dev: `json_serializable`, `build_runner`. CI'daki `build_runner` ve üretilen kod
@@ -258,8 +261,8 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
     `statue_body` → kısa yorum.
   - `villa_hall` (parent: `villa_door_closeup`): `desk_paper` → `AddNote(hall_letter)` + `HideHotspot` + yorum.
   - `items.json`: `brass_key`. `notes.json`: `hall_letter` (document).
-  - Tüm metinler TR + EN; atmosferik, kısa.
-- **İçerik doğrulama testi** (CLAUDE.md bölüm 9): referanslar, metin anahtarları, koordinatlar,
+  - Tüm metinler İngilizce; atmosferik, kısa.
+- **İçerik doğrulama testi** (CLAUDE.md bölüm 9): referanslar, metin anahtarları (desteklenen tüm dillerde), koordinatlar,
   "okunan her bayrak bir yerde set ediliyor mu" ve "her sahne bölümün giriş sahnesinden ulaşılabilir mi" (graf taraması).
   **Kabul kriterleri:** Tüm içerik yükleniyor; doğrulama testi geçiyor; bilerek bozulan bir ID veya yanlış yazılmış bir
   bayrak testi kırıyor.
@@ -517,7 +520,7 @@ Bu aşamadaki kod platform servisi arayüzlerinin arkasında kalır.
 - [ ] 6.1 Ses: ambiyans döngüsü, efektler, geçişlerde `sfx` + `holdMs` (karanlık ses bitene kadar uzayabilir), ses ayarları, arka planda susma.
 - [ ] 6.2 Dokunsal geri bildirim ve mikro animasyonlar.
 - [ ] 6.3 Uygulama ikonu, açılış ekranı (native splash), ana menü (Devam / Yeni Oyun / Ayarlar), yeni oyun onayı.
-- [ ] 6.4 Ayarlar: ses, dil, hesap ve eşitleme durumu, gizlilik politikası bağlantısı, sürüm bilgisi.
+- [ ] 6.4 Ayarlar: ses, dil (birden fazla dil desteklendiğinde), hesap ve eşitleme durumu, gizlilik politikası bağlantısı, sürüm bilgisi.
 - [ ] 6.5 Performans ve erişilebilirlik: komşu sahnelerin önceden yüklenmesi, kullanılmayan görsellerin bellekten atılması,
   bellek ölçümü, yazı ölçeği, kontrast.
 
@@ -579,7 +582,7 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   Steam sürümünde Supabase hesap/eşitleme kapalı. Steamworks API gerekirse `steamworks` Dart paketi değerlendirilir
   (yalnızca Windows; olgunluğu kontrol edilir).
 - [ ] 11.4 (Opsiyonel) Başarımlar ve Steam arayüz katmanı (overlay) kontrolü.
-- [ ] 11.5 Mağaza: sayfa görselleri, fragman, açıklama (TR + EN), "Yakında" sayfası, istek listesi toplama;
+- [ ] 11.5 Mağaza: sayfa görselleri, fragman, açıklama (EN; diğer diller oyuna eklendikçe), "Yakında" sayfası, istek listesi toplama;
   Bölüm 1 demosu ve Steam Next Fest'e katılım.
 - [ ] 11.6 Derleme ve yükleme hattı: SteamPipe ile build yükleme, beta dalı, GitHub Actions'tan Windows derlemesi.
 - [ ] 11.7 (Sonra) Steam Deck uyumu (kontrolcü ile sanal imleç), macOS sürümü (Mac gerekir).
@@ -610,3 +613,5 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
 - 2026-11-11 (0.3): `bootstrap`, giriş noktasının flavor'ı ile `--flavor` değeri (`appFlavor`) uyuşmazsa açılışta
   hata verir (ör. `--flavor prod -t lib/main_dev.dart`). Env'e `SHOW_DEBUG_OVERLAY` anahtarı eklendi
   (yoksa sadece dev'de açık). `.run/` formatı kurulu Flutter eklentisinin (95.0.0) alan adlarıyla doğrulandı.
+- 2026-11-11: Dil kararı değişti: ilk çıkış sadece İngilizce (`en`). l10n altyapısı yine kuruluyor; yeni dil = yeni
+  `app_xx.arb` + `text_xx.json`. 0.4 ve 1.2 buna göre güncellendi; fontlar Latin Extended desteklemeli.

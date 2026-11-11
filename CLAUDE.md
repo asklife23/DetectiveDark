@@ -216,8 +216,11 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
 
 - Lint: `very_good_analysis` (`public_member_api_docs` kapalı).
 - **Dil:** Kod, isimler, kod yorumları, commit mesajları, README ve ADR'ler İngilizce.
-  Kullanıcıya açıklamalar ve devlog Türkçe. Oyun içi metinler l10n üzerinden (TR + EN); kodda kullanıcıya
-  görünen string literal olmaz.
+  Kullanıcıya açıklamalar ve devlog Türkçe. **Oyun içi metinler İngilizce** ve l10n üzerinden gelir; kodda kullanıcıya
+  görünen string literal olmaz. İlk çıkışta tek dil `en`; altyapı çok dillidir: yeni dil = yeni `app_xx.arb` +
+  içerik `text_xx.json` dosyaları, kod değişmez.
+- **Desteklenen diller kodda tek yerde tanımlıdır:** ARB dosyalarından üretilen `AppLocalizations.supportedLocales`.
+  `MaterialApp`, içerik metin servisi ve içerik doğrulama testi bu listeyi kullanır; başka yerde dil listesi yazılmaz.
 - Dosya adları `snake_case`; bir dosyada bir public sınıf (küçük yardımcılar hariç).
 - `print` yok; `core/logging` kullanılır.
 - Sihirli sayı yok; ölçüler, renkler, süreler `core/theme` veya ilgili sabit dosyasında.
@@ -269,7 +272,7 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
 - **İçerik doğrulama testi** her zaman çalışır ve 50+ sahneli bölümlerde güvenlik ağıdır:
   - Tüm JSON'lar yüklenir; bilinmeyen koşul/etki anahtarı yoktur.
   - Referans verilen her sahne, eşya ve not ID'si vardır.
-  - Her metin anahtarı hem TR hem EN dosyasında bulunur.
+  - Her metin anahtarı **desteklenen tüm dillerin** dosyalarında bulunur (şimdilik sadece `en`).
   - Koordinatlar 0–1 aralığındadır.
   - Okunan (`flag`, `notFlag`) her bayrak bir yerde `setFlag` ile set edilir (yazım hatası yakalanır).
   - Her sahne, bölümün giriş sahnesinden ulaşılabilirdir (graf taraması; kopuk sahne yakalanır).
