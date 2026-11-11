@@ -1,4 +1,5 @@
 import 'package:detective_dark/core/config/app_config.dart';
+import 'package:detective_dark/core/config/build_target.dart';
 import 'package:detective_dark/core/config/flavor.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -10,6 +11,7 @@ void main() {
       final config = AppConfig.fromEnvironment(Flavor.staging);
 
       expect(config.flavor, Flavor.staging);
+      expect(config.target, BuildTarget.mobile);
       expect(config.supabaseUrl, isEmpty);
       expect(config.supabaseAnonKey, isEmpty);
     });
@@ -21,6 +23,29 @@ void main() {
         isFalse,
       );
       expect(AppConfig.fromEnvironment(Flavor.prod).showDebugOverlay, isFalse);
+    });
+  });
+
+  group('build target', () {
+    test('the Steam entry point config targets Steam', () {
+      final config = AppConfig.fromEnvironment(
+        Flavor.prod,
+        target: BuildTarget.steam,
+      );
+
+      expect(config.target, BuildTarget.steam);
+      expect(config.showDebugOverlay, isFalse);
+    });
+
+    test('debugLabel names the target only for Steam', () {
+      expect(AppConfig.fromEnvironment(Flavor.dev).debugLabel, 'dev');
+      expect(
+        AppConfig.fromEnvironment(
+          Flavor.prod,
+          target: BuildTarget.steam,
+        ).debugLabel,
+        'prod · steam',
+      );
     });
   });
 

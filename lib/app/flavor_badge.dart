@@ -1,21 +1,20 @@
-import 'package:detective_dark/core/config/flavor.dart';
 import 'package:detective_dark/core/theme/app_colors.dart';
 import 'package:detective_dark/core/theme/app_spacing.dart';
 import 'package:flutter/material.dart';
 
-/// A small label at the top center showing the flavor (e.g. "DEV"), so a
-/// dev build is never mistaken for the real game.
+/// A small label at the top center showing the build (e.g. "DEV" or
+/// "PROD · STEAM"), so a test build is never mistaken for the real game.
 ///
 /// It ignores pointer events: taps go straight through to the scene below.
 /// Top center is the one HUD area that stays free (back button top left,
 /// inventory panel on the right, message bar at the bottom).
 ///
-/// The flavor name is a developer label, not game text, so it is not
-/// localized.
+/// [label] is a developer label (`AppConfig.debugLabel`), not game text, so
+/// it is not localized.
 class FlavorBadge extends StatelessWidget {
-  const FlavorBadge({required this.flavor, super.key});
+  const FlavorBadge({required this.label, super.key});
 
-  final Flavor flavor;
+  final String label;
 
   static const _alpha = 0.6;
 
@@ -42,7 +41,7 @@ class FlavorBadge extends StatelessWidget {
                   vertical: AppSpacing.xxs,
                 ),
                 child: Text(
-                  flavor.name.toUpperCase(),
+                  label.toUpperCase(),
                   style: style?.copyWith(color: AppColors.textPrimary),
                 ),
               ),

@@ -66,3 +66,28 @@ jobs:
 
       - name: Test
         run: flutter test
+
+  # The Steam build must keep compiling on Windows (native runner, C++ and
+  # Windows-specific plugins). Runs in parallel with the quality job.
+  windows-build:
+    name: Windows build (Steam)
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Real env files are git-ignored; the template has the same keys.
+      - name: Build Steam release
+        run: flutter build windows -t lib/main_steam.dart --dart-define-from-file=env/example.json

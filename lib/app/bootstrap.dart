@@ -27,7 +27,7 @@ Future<void> bootstrap(AppConfig config) async {
       'flavor "$appFlavor". Use lib/main_$appFlavor.dart.',
     );
   }
-  logger.info('Starting DetectiveDark (${config.flavor.name})');
+  logger.info('Starting DetectiveDark (${config.debugLabel})');
 
   Bloc.observer = const AppBlocObserver(AppLogger('bloc'));
   registerFontLicenses();

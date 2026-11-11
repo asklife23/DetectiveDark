@@ -162,7 +162,7 @@ Sonradan kurmak, yazılmış kodu toptan düzeltmek demektir.
   **Kabul kriterleri:** GitHub Actions yeşil.
   **Commit:** `ci: add GitHub Actions workflow` ve `docs: add architecture decision records`
 
-### [ ] 0.6 Windows masaüstü hedefi
+### [x] 0.6 Windows masaüstü hedefi
 **Amaç:** Steam sürümünün temelini baştan atmak; her özelliğin ilk günden Windows'ta da çalıştığından emin olmak.
 Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı test.
 **Yapılacaklar:**
@@ -665,3 +665,8 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
 - 2026-11-11 (0.5): CI'da "üretilen kod güncel mi" kontrolü 1.2'yi beklemeden açıldı: `gen-l10n` çıktısı 0.4'ten beri
   commit ediliyor. Kontrol `git status --porcelain` ile yapılır (yeni, takip edilmeyen üretilmiş dosyaları da yakalar).
   `build_runner` adımları yorum satırı olarak hazır. `docs/adr/README.md` dizin + şablon olarak eklendi.
+- 2026-11-11 (0.6): `windows/` 0.1'den beri vardı; `flutter create` çalıştırmak yerine aynı Flutter sürümünün temiz
+  şablonuyla karşılaştırıldı (yalnızca bilinçli ad farkları). Visual Studio 2026 kuruluydu, KULLANICI adımı gerekmedi.
+  Şablondaki pencere boyutu dış çerçeveyi kapsıyordu; runner, boyutu içerik alanı sayacak şekilde değiştirildi
+  (1280×720 mantıksal, 16:9) ve 960×540 minimum eklendi (`WM_GETMINMAXINFO`, DPI'a göre). Steam girişi `prod`
+  flavor + `BuildTarget.steam`; debug etiketi `AppConfig.debugLabel` (ör. "PROD · STEAM"). `.run/steam` eklendi.

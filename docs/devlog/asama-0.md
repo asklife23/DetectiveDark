@@ -121,3 +121,29 @@
   sonraki adımlar çalışmaz. `permissions: contents: read` iş akışına en az yetkiyi verir; `concurrency` aynı dala
   art arda yapılan push'larda eski çalışmayı iptal eder. Flutter sürümü sabitlendi ki CI ile senin makinen aynı
   derleyiciyi kullansın; yerelde Flutter'ı güncellersen `ci.yml`'deki `FLUTTER_VERSION`'ı da güncellemelisin.
+
+### Adım 0.6 — Windows masaüstü hedefi (2026-11-11)
+- **Ne yaptık:** Steam sürümünün temelini attık. `lib/main_steam.dart` giriş noktası `prod` flavor'ı ve yeni
+  `BuildTarget.steam` hedefiyle açılıyor; mobil giriş noktaları `BuildTarget.mobile`. Hedef `AppConfig`'te duruyor ve
+  ileride DI hangi platform servislerini (mağaza + Supabase ya da Steam) kaydedeceğine buna göre karar verecek.
+  Windows penceresini ayarladık: başlık "DetectiveDark", oyun alanı tam 1280×720 (16:9), en küçük boyut 960×540.
+  CI'a Windows makinesinde Steam release derlemesi ekledik ve ADR 0009'u yazdık. Android Studio'ya `steam (Windows)`
+  çalıştırma yapılandırması geldi.
+- **Neden:** Oyunu Steam'de de satacağız. Windows'u en baştan her gün çalıştırırsak bir özelliğin PC'de bozulduğunu
+  aylar sonra değil, hemen fark ederiz. Bonus olarak telefonu bağlamadan bilgisayarda hızlıca deneyebiliyoruz.
+  Platform farkları (satın alma, hesap, bulut kaydı) arayüzlerin arkasında kalıyor; oyun kodu hangi platformda
+  olduğunu bilmiyor.
+- **Önemli dosyalar:** `lib/main_steam.dart`, `lib/core/config/build_target.dart`, `lib/core/config/app_config.dart`,
+  `windows/runner/win32_window.cpp`, `windows/runner/flutter_window.cpp`, `.github/workflows/ci.yml`,
+  `docs/adr/0009-platform-targets-and-services.md`, `.run/steam.run.xml`.
+- **Nasıl test edilir (Windows):** `flutter run -d windows -t lib/main_dev.dart --dart-define-from-file=env/dev.json`
+  komutunu çalıştır. Pencere açılmalı; üstte "DEV" etiketi, ortada başlık ve cümle görünmeli. Pencereyi küçültmeye
+  çalış: belli bir boyutun altına inmemeli. Steam sürümü için `-t lib/main_steam.dart --dart-define-from-file=env/steam.json`
+  kullan; etiket görünmez (prod). Android Studio'da cihaz olarak "Windows (desktop)" seçip `steam (Windows)`
+  yapılandırmasıyla da çalıştırabilirsin.
+- **Öğrenme notu:** Windows'ta ekran ölçeği (%100, %125, %150...) yüzünden iki tür piksel vardır. **Mantıksal piksel**
+  tasarımda kullandığımız birimdir; **fiziksel piksel** ise ekrandaki gerçek noktadır. %125 ölçekte 1280×720 mantıksal
+  alan 1600×900 fiziksel pikseldir. Pencere boyutunu bu yüzden DPI ile çarpıyoruz (96 DPI = %100). Ayrıca Windows'ta
+  bir pencerenin boyutu başlık çubuğunu ve kenarlıkları da kapsar. Oyunun gerçekten 16:9 bir alan alması için
+  `AdjustWindowRectExForDpi` ile çerçeveyi hesaplayıp içerik alanının üstüne ekliyoruz. Minimum boyut ise Windows'un
+  pencereye yeniden boyutlanırken gönderdiği `WM_GETMINMAXINFO` mesajına cevap vererek konuyor.

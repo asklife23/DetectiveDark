@@ -2,6 +2,7 @@ import 'package:detective_dark/app/app.dart';
 import 'package:detective_dark/app/flavor_badge.dart';
 import 'package:detective_dark/app/game_screen.dart';
 import 'package:detective_dark/core/config/app_config.dart';
+import 'package:detective_dark/core/config/build_target.dart';
 import 'package:detective_dark/core/config/flavor.dart';
 import 'package:detective_dark/core/l10n/l10n.dart';
 import 'package:detective_dark/core/theme/app_colors.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   AppConfig config({bool showDebugOverlay = false}) => AppConfig(
     flavor: Flavor.dev,
+    target: BuildTarget.mobile,
     supabaseUrl: '',
     supabaseAnonKey: '',
     showDebugOverlay: showDebugOverlay,

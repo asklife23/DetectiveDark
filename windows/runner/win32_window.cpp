@@ -134,10 +134,17 @@ bool Win32Window::Create(const std::wstring& title,
   UINT dpi = FlutterDesktopGetDpiForMonitor(monitor);
   double scale_factor = dpi / 96.0;
 
+  // DetectiveDark: `size` is the client area (the Flutter view), not the
+  // outer window. Add the title bar and borders for this DPI, so the game
+  // view gets exactly the requested size (16:9).
+  RECT frame = {0, 0, Scale(size.width, scale_factor),
+                Scale(size.height, scale_factor)};
+  AdjustWindowRectExForDpi(&frame, WS_OVERLAPPEDWINDOW, FALSE, 0, dpi);
+
   HWND window = CreateWindow(
       window_class, title.c_str(), WS_OVERLAPPEDWINDOW,
       Scale(origin.x, scale_factor), Scale(origin.y, scale_factor),
-      Scale(size.width, scale_factor), Scale(size.height, scale_factor),
+      frame.right - frame.left, frame.bottom - frame.top,
       nullptr, nullptr, GetModuleHandle(nullptr), this);
 
   if (!window) {

@@ -4,6 +4,29 @@
 
 #include "flutter/generated_plugin_registrant.h"
 
+namespace {
+
+// DetectiveDark: smallest client area (logical pixels, 16:9) that keeps the
+// scene and the HUD usable. Scaled by the window's DPI.
+constexpr int kMinClientWidth = 960;
+constexpr int kMinClientHeight = 540;
+constexpr int kDefaultDpi = 96;
+
+// Converts the minimum client size to a minimum window size (with title bar
+// and borders) for the window's current DPI.
+void SetMinimumWindowSize(HWND hwnd, MINMAXINFO* info) {
+  const UINT dpi = GetDpiForWindow(hwnd);
+  RECT frame = {0, 0, MulDiv(kMinClientWidth, dpi, kDefaultDpi),
+                MulDiv(kMinClientHeight, dpi, kDefaultDpi)};
+  AdjustWindowRectExForDpi(
+      &frame, static_cast<DWORD>(GetWindowLongPtr(hwnd, GWL_STYLE)), FALSE,
+      static_cast<DWORD>(GetWindowLongPtr(hwnd, GWL_EXSTYLE)), dpi);
+  info->ptMinTrackSize.x = frame.right - frame.left;
+  info->ptMinTrackSize.y = frame.bottom - frame.top;
+}
+
+}  // namespace
+
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
 
@@ -65,6 +88,9 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
     case WM_FONTCHANGE:
       flutter_controller_->engine()->ReloadSystemFonts();
       break;
+    case WM_GETMINMAXINFO:
+      SetMinimumWindowSize(hwnd, reinterpret_cast<MINMAXINFO*>(lparam));
+      return 0;
   }
 
   return Win32Window::MessageHandler(hwnd, message, wparam, lparam);

@@ -45,7 +45,7 @@ class _AppState extends State<App> {
         children: [
           ?child,
           if (widget.config.showDebugOverlay)
-            FlavorBadge(flavor: widget.config.flavor),
+            FlavorBadge(label: widget.config.debugLabel),
         ],
       ),
     );

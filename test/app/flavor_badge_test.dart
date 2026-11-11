@@ -1,18 +1,17 @@
 import 'package:detective_dark/app/flavor_badge.dart';
-import 'package:detective_dark/core/config/flavor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('shows the flavor name in capitals', (tester) async {
+  testWidgets('shows the label in capitals', (tester) async {
     await tester.pumpWidget(
       const Directionality(
         textDirection: TextDirection.ltr,
-        child: FlavorBadge(flavor: Flavor.staging),
+        child: FlavorBadge(label: 'prod · steam'),
       ),
     );
 
-    expect(find.text('STAGING'), findsOneWidget);
+    expect(find.text('PROD · STEAM'), findsOneWidget);
   });
 
   testWidgets('lets taps pass through to the widget below', (tester) async {
@@ -29,7 +28,7 @@ void main() {
                 onTap: () => taps++,
               ),
             ),
-            const FlavorBadge(flavor: Flavor.dev),
+            const FlavorBadge(label: 'dev'),
           ],
         ),
       ),

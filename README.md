@@ -74,6 +74,23 @@ Android Studio picks up ready-made `dev`, `staging` and `prod` run configuration
 
 iOS flavors are set up in Phase 10.
 
+### Windows (Steam build)
+
+Windows has no native flavors; the entry point selects the build. Requires Visual Studio with the
+"Desktop development with C++" workload.
+
+```bash
+cp env/example.json env/steam.json
+
+# Steam build (prod flavor, Steam platform services)
+flutter run -d windows -t lib/main_steam.dart --dart-define-from-file=env/steam.json
+
+# Quick development testing on the desktop, without a phone
+flutter run -d windows -t lib/main_dev.dart --dart-define-from-file=env/dev.json
+```
+
+The window opens with a 1280×720 (16:9) game area and cannot be made smaller than 960×540.
+
 ### Quality checks
 
 ```bash
