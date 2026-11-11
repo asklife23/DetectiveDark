@@ -95,7 +95,7 @@ Sonradan kurmak, yazılmış kodu toptan düzeltmek demektir.
   **Kabul kriterleri:** Repo GitHub'da görünüyor; gizli dosya yok; uygulama telefonda hâlâ açılıyor.
   **Commit:** `chore: initialize repository and clean up template`
 
-### [ ] 0.2 Lint, klasör yapısı ve uygulama iskeleti
+### [x] 0.2 Lint, klasör yapısı ve uygulama iskeleti
 **Amaç:** Kod kalitesi kurallarını ve mimarinin iskeletini kurmak.
 **Yapılacaklar:**
 - `very_good_analysis` + `analysis_options.yaml` (`public_member_api_docs: false`; üretilen dosyalar analiz dışı).
@@ -594,6 +594,14 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   arayüz arkasında; Aşama 3–4 ve 8 mobil kapsamlı.
 - 2026-11-11 (0.1): Proje adının yazımı düzeltildi: `DedectiveDark` → **DetectiveDark**. Dart paketi `detective_dark`,
   uygulama kimliği `io.github.asklife23.detectivedark`, GitHub deposu `asklife23/DetectiveDark`.
-  Yerel klasör adı (`C:\flutter\DedectiveDark`) şimdilik eski haliyle duruyor.
+  Yerel klasör de sonradan `C:\flutter\DetectiveDark` olarak yeniden adlandırıldı.
 - 2026-11-11 (0.1): Hedef olmayan `linux/`, `macos/`, `web/` platform klasörleri silindi. `windows/` kaldı (adım 0.6).
-  macOS gerektiğinde `flutter create --platforms=macos .` ile geri eklenir (adım 11.7).
+  macOS gerektiğinde `flutter create --platforms=macos .` ile geri eklenir (adım 11.7).- 2026-11-11 (0.2): Kullanıcı isteğiyle `.gitattributes` eklendi (`* text=auto eol=lf`, `.bat`/`.cmd` için `crlf`,
+  görseller/fontlar/sesler `binary`); depo LF'ye normalleştirildi. Ayrı commit.
+- 2026-11-11 (0.2): `Result<T>` alt sınıfları `Success` / **`Failed`** olarak adlandırıldı; `Failure` adı hata
+  türlerinin (`ContentFailure`, `StorageFailure`, `NetworkFailure`, `UnexpectedFailure`) sealed üst sınıfına kaldı.
+- 2026-11-11 (0.2): `very_good_analysis` 10.3.0 (11.x Dart 3.13 istiyor; Flutter yükselince güncellenir).
+- 2026-11-11 (0.2): iOS'ta yön kilidi için `UIRequiresFullScreen` + `UIStatusBarHidden` eklendi. `UIRequiresFullScreen`
+  iPadOS 26'da kullanımdan kalkıyor; Aşama 10'da Mac/Xcode ile doğrulanacak.
+- 2026-11-11 (0.2): `SystemChrome` çağrıları sadece Android/iOS'ta yapılır (Windows bu kanalı uygulamaz,
+  `MissingPluginException` fırlatır). 0.6'da `AppConfig` derleme hedefi gelince bu kontrol yeniden değerlendirilir.
