@@ -80,7 +80,8 @@ lib/
     theme/             # renk/tipografi/ölçü tokenları
     widgets/           # ortak, feature'dan bağımsız widget'lar
   features/
-    scene_engine/      # sahneler, hotspot'lar, koşul + etki sistemi, gezinme yığını, geçişler
+    scene_engine/      # sahneler, hotspot'lar, koşul + etki sistemi, gezinme yığını, geçişler,
+                       # inceleme penceresi, overlay yazılar, noir filtre
     inventory/         # eşya kataloğu, sağ panel, eşya seçimi ve kullanımı
     notebook/          # not defteri: belgeler, gözlemler, şüpheliler
     detective_chat/    # dedektifin iç sesi, mesaj geçmişi
@@ -174,8 +175,14 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
 - **Koşul + etki sistemi:** Hotspot'ların türü yoktur; her hotspot sıralı `interactions` kuralları taşır.
   - Kural = `when` (opsiyonel koşul) + `do` (etki listesi). Yukarıdan aşağı, koşulu tutan **ilk** kural çalışır.
   - Koşullar (`sealed class Condition`): `flag`, `notFlag`, `hasItem`, `usingItem`, `hasNote`, `all`, `any`.
-  - Etkiler (`sealed class Effect`): `goToScene`, `giveItem`, `consumeItem`, `addNote`, `setFlag`, `hideHotspot`, `say`;
-    Aşama 5'te `openPuzzle`, `playMedia`.
+  - Etkiler (`sealed class Effect`): `goToScene`, `giveItem`, `consumeItem`, `addNote`, `setFlag`, `hideHotspot`, `say`,
+    `inspect`; Aşama 5'te `openPuzzle`, `playMedia`.
+  - **`inspect`** (ADR 0010): sahneyi ve gezinme yığınını değiştirmeden sahnenin üstünde küçük bir inceleme penceresi
+    açar (görsel + metin). İçerik bölümün `inspections.json` kataloğundan ID ile gelir. Pencere açıkken sahneye
+    dokunulamaz; dışına dokunmak, kapat düğmesi veya Geri (Android sistem geri dahil) yalnızca pencereyi kapatır.
+    İlerlemeye kaydedilmez (arayüz durumudur); kalıcı olması gereken şey aynı kuralda ayrı etkiyle eklenir (`addNote`).
+    Bir kuralda en fazla bir `inspect` olur ve `goToScene` ile birlikte kullanılmaz. Eşyaya uzun basınca açılan
+    inceleme kartı da aynı pencereyi kullanır.
   - Seçili eşyayla dokunulduysa ve hiçbir kural o eşyayı karşılamıyorsa yalnızca genel tepki verilir
     (`generic_item_no_effect`); yanlış eşya normal etkileşimi tetiklemez. Dokunuştan sonra seçim temizlenir.
   - Hotspot'lar `visibleWhen` ile koşullu görünür; `hideHotspot` ile kalıcı gizlenir (alınan nesne bir daha görünmez).
@@ -198,7 +205,18 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
   Ana sahnede gizlidir. Android sistem geri tuşu da aynı davranışı tetikler.
 - **Görseller:** Şimdilik `CustomPainter` ile noir placeholder çizimler. Her sahne tanımında opsiyonel
   `background` alanı vardır: doluysa gerçek görsel (WebP/PNG) çizilir, boşsa placeholder.
-  Gerçek görsele geçiş tek satırlık JSON değişikliği olmalı.
+  Gerçek görsele geçiş tek satırlık JSON değişikliği olmalı. Gerçek görseller yapay zekâ destekli üretilir (ADR 0011).
+- **Yazı ve sayılar görsele gömülmez (overlay, ADR 0011):** Okunması gereken veya bulmaca için kritik her yazı ve sayı
+  (saat, şifre, mektup metni, tabela, plaka) görselin JSON'undaki `overlays` ile tanımlanır ve oyun tarafından
+  görselin üstüne çizilir: normalize `rect` (görsele göre, 0–1), `textKey` (l10n), `style` (kodda tanımlı
+  adlandırılmış preset: daktilo, el yazısı, kazıma...), opsiyonel `rotation`. Sahne görselinde, görünüm
+  varyantlarında ve inceleme görsellerinde kullanılır. Bulmaca cevabı her zaman okunur ve doğrudur; yeni dil yeni
+  görsel gerektirmez.
+- **Noir filtre (ADR 0011):** Tüm arka planlara ve inceleme görsellerine ortak bir filtre katmanı uygulanır:
+  film greni, vinyet, renk tonu. Ayarlar `core/theme`'de adlandırılmış preset'lerdir; sahne JSON'u yalnızca preset
+  adı seçer (sayısal değer yazmaz). Katman sırası: **arka plan → overlay → noir filtre → hotspot → geçiş**.
+  Overlay filtrenin altında kalır ki yazı görsele kaynaşsın; hiçbir preset kritik yazıyı okunmaz hale getiremez.
+  Placeholder çizimler kendi gren/vinyetini çizmez, ortak filtreyi kullanır.
 - **Ekran yönü:** Mobilde yatay (landscape) kilitli, tam ekran (immersive). Windows'ta pencere veya tam ekran;
   sahne her durumda 16:9 viewport içinde çizilir.
 - **Girdi:** Dokunma ve fare tıklaması aynı etkileşimi tetikler. Oyun mantığı fareyle üzerine gelmeye (hover)
@@ -271,9 +289,10 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
 - `test/` klasörü `lib/` yapısını aynalar.
 - **İçerik doğrulama testi** her zaman çalışır ve 50+ sahneli bölümlerde güvenlik ağıdır:
   - Tüm JSON'lar yüklenir; bilinmeyen koşul/etki anahtarı yoktur.
-  - Referans verilen her sahne, eşya ve not ID'si vardır.
+  - Referans verilen her sahne, eşya, not ve inceleme ID'si vardır.
   - Her metin anahtarı **desteklenen tüm dillerin** dosyalarında bulunur (şimdilik sadece `en`).
-  - Koordinatlar 0–1 aralığındadır.
+  - Koordinatlar (hotspot ve overlay) 0–1 aralığındadır.
+  - Bir kuralda en fazla bir `inspect` vardır ve `goToScene` ile birlikte kullanılmaz.
   - Okunan (`flag`, `notFlag`) her bayrak bir yerde `setFlag` ile set edilir (yazım hatası yakalanır).
   - Her sahne, bölümün giriş sahnesinden ulaşılabilirdir (graf taraması; kopuk sahne yakalanır).
 

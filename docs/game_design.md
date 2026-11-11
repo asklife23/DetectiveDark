@@ -51,7 +51,7 @@ mekanları keşfedip eşya ve belge topladığı, bulmacalar çözdüğü ve son
 - **Kullanım:** Eşyaya dokun → seçili olur → sahnede hedefe dokun.
 - Doğru yerde kullanılınca etki olur (kapı açılır). Yanlış yerde dedektif kısa bir yorum yapar; ceza yoktur.
 - Bazı eşyalar kullanılınca tükenir (anahtar kilitte kalır), bazıları elde kalır (fener).
-- Uzun basınca inceleme kartı açılır.
+- Uzun basınca inceleme penceresi açılır (bkz. 5.8).
 
 ### 5.3 Not defteri
 - Okunan şeyler üç bölümde toplanır:
@@ -92,6 +92,15 @@ mekanları keşfedip eşya ve belge topladığı, bulmacalar çözdüğü ve son
   ama bu, PC'deki oyunu mobile göre kolaylaştırır.
 - PC'de klavye kısayolları: `Esc` geri / menü; ileride eşya ve not defteri için kısayollar.
 
+### 5.8 İnceleme penceresi
+- Bazı ayrıntılar ayrı bir yakın plan sahnesi gerektirmez: duvardaki saat, heykelin plaketi, bir fotoğrafın arkası.
+  Bunlara dokununca sahne değişmez; sahnenin üstünde küçük bir **inceleme penceresi** açılır: bir görsel ve kısa bir metin.
+- Sahne ve Geri yığını değişmez. Pencerenin dışına dokunmak, kapat düğmesi veya Geri onu kapatır.
+- Yakın plan sahnesinden farkı: pencerede dokunulacak nokta yoktur, sadece bakılır. İçinde etkileşim gereken
+  yerler (çekmece, kasa) yakın plan sahnesi olarak kalır.
+- İnceleme tek başına bir şey toplamaz. Gerekirse aynı dokunuşla bir not da eklenir (mektubu oku + belgelere ekle).
+- Envanterdeki bir eşyaya uzun basınca açılan kart da aynı penceredir.
+
 ## 6. Yapı ve süre
 
 | Bölüm | Süre | Rolü |
@@ -130,7 +139,8 @@ Aynı oyun ve aynı içerik her platformda çalışır; yalnızca satış biçim
 
 ## 8. İçerik ölçeği
 
-- **Tahmin:** Bölüm başına 8–12 ana mekan + 20–40 yakın plan. Bölüm 1 için ~40–50 sahne, Vaka 1 için ~150–200 görsel.
+- **Tahmin (kesin değil; hikaye yazılırken belirlenir):** Bölüm başına 8–12 ana mekan + 20–40 yakın plan.
+  İnceleme pencereleri (5.8), yalnızca bakılan ayrıntılar için yakın plan ihtiyacını azaltır. Bölüm 1 için ~40–50 sahne, Vaka 1 için ~150–200 görsel.
 - **Kodda sahne sayısı sınırı yoktur.** Motor veri odaklıdır; yeni sahne yeni veri ve görsel demektir, yeni kod değil.
   Asıl iş sanat üretimidir.
 - **Üretim ipucu:** Yakın planlar, ana mekanın yüksek çözünürlüklü görselinden kırpılıp detay eklenerek üretilebilir.
@@ -143,6 +153,16 @@ Aynı oyun ve aynı içerik her platformda çalışır; yalnızca satış biçim
 - **Ses:** Yağmur, uzak trafik, caz ve ambiyans; geçişlerde efektler.
 - **Kullanım:** Mobilde yatay, tam ekran, tek elle rahat dokunuşlar. PC'de pencere veya tam ekran, fare ve klavye.
 - **Görsel çözünürlük:** PC'nin büyük ekranları düşünülerek üretilir; mobil için küçültülmüş sürümler kullanılır.
+- **Görsel üretimi:** Görseller yapay zekâ destekli üretilir, ardından elle düzenlenir (temizlik, kırpma, tutarlılık).
+  Yazılı bir stil rehberi (palet, ışık, dönem, kompozisyon) bütün görselleri aynı dünyaya bağlar.
+- **Yazı ve sayılar oyun tarafından çizilir:** Bulmaca için kritik ya da okunması gereken yazı ve sayılar (saat, şifre,
+  mektup metni, tabela) görsele gömülmez; oyun bunları görselin üstüne çizer. Yapay zekâ yazıyı çoğu zaman bozuk
+  üretir; ayrıca cevabın her zaman net okunması adil bulmaca kuralının (5.4) gereğidir. Bu yazılar da çevrilebilir.
+- **Ortak noir filtre:** Tüm sahne ve inceleme görsellerine aynı film greni, vinyet ve renk tonu uygulanır. Farklı
+  zamanlarda üretilmiş görseller bu katman sayesinde tek bir filmden çıkmış gibi görünür. Oyunun çizdiği yazılar
+  filtrenin altında kalır ki görsele kaynaşsın, ama her zaman okunur.
+- **Açıklık:** Steam, yapay zekâ ile üretilmiş içeriğin mağaza sayfasında açıklanmasını ister. Hangi görselin nasıl
+  üretildiği üretim sırasında kayıt altına alınır.
 - **Dil:** İlk çıkışta oyun yalnızca **İngilizce**dir. Türkçe ve diğer diller sonradan eklenebilir; altyapı hazırdır
   (yeni dil = yeni metin dosyaları). Bu yüzden fontlar Latin Extended karakterleri (ç, ğ, ş, ı, ä, ñ...) destekler.
   Görsellere metin gömülmez (tabela, belge başlığı gibi okunması gereken yazılar metin katmanı olarak eklenir);
@@ -169,3 +189,8 @@ Aynı oyun ve aynı içerik her platformda çalışır; yalnızca satış biçim
 - 2026-11-11: Dil kararı: ilk çıkış yalnızca İngilizce (önceki karar TR + EN idi). Gerekçe: global pazara tek dille
   daha hızlı çıkmak ve her metni iki dilde yazma yükünü içerik üretimi boyunca taşımamak. Yerelleştirme altyapısı
   ilk günden kurulur; Türkçe ve diğer diller sonradan dosya ekleyerek gelir.
+- 2026-11-11: İnceleme penceresi (5.8) eklendi; görseller yapay zekâ destekli üretilecek; kritik yazı ve sayılar
+  görsele gömülmez, oyun tarafından çizilir; tüm görsellere ortak noir filtre. Gerekçe: yalnızca bakılan ayrıntılar
+  için sahne sayısını ve gezinmeyi azaltmak; AI'nın bozuk yazı üretmesine karşı bulmaca cevaplarını güvenceye almak;
+  farklı zamanlarda üretilen görselleri tek bir görünümde birleştirmek. Sahne sayısı hikaye yazılırken belirlenecek.
+  (ADR 0010, 0011)

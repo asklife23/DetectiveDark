@@ -84,6 +84,7 @@ flutter test
 
 - [`plan.md`](plan.md) — roadmap (Turkish)
 - [`docs/game_design.md`](docs/game_design.md) — game design (Turkish)
+- [`docs/adr/`](docs/adr/) — architecture decision records
 - `docs/adr/` — architecture decision records
 - `docs/devlog/` — development log (Turkish)
 

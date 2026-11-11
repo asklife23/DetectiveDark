@@ -55,6 +55,9 @@ Android Studio terminalinde Claude'a yaz:
 | Para (Steam) | Bölüm 1 ücretsiz demo; Vaka 1 peşin ücretli; Vaka 2 DLC; reklam yok |
 | Platformlar arası | İlerleme ve satın alımlar taşınmaz; mobil: Supabase hesabı, Steam: Steam Cloud |
 | Final | 7 şüpheli; isim + 2–3 kanıt; 2 hak; sonra "Baştan oyna" / "Cevabı gör" |
+| İnceleme | Sahneyi değiştirmeden küçük görsel + metin penceresi (`inspect` etkisi, ADR 0010) |
+| Görseller | AI destekli; kritik yazı/sayılar görsele gömülmez, oyun üstüne çizer (overlay); ortak noir filtre (ADR 0011) |
+| Sahne sayısı | Kesin değil; hikaye yazılırken belirlenir (tahmin: Bölüm 1 ~40–50) |
 
 ## Açık kararlar (ilgili aşamanın başında sorulacak)
 
@@ -64,6 +67,7 @@ Android Studio terminalinde Claude'a yaz:
 | 5 | İsim doğru, kanıt yetersizse hak düşer mi | Düşer; polis "kanıtlar zayıf" der |
 | 6 | Ses kütüphanesi | `flutter_soloud` (düşük gecikme, oyun odaklı) veya `audioplayers` |
 | 7 | Yön bulma (harita / mekan listesi) | İlk 15–20 sahne oynandıktan sonra ihtiyaca göre |
+| 7 | Görsel üretim aracı (AI) ve ticari kullanım koşulları | Ticari kullanıma açık lisanslı araç; seçim stil denemeleriyle |
 | 8 | Satın alma biçimi, fiyat, ipucu/reklam | Vaka 1'in kalanı tek satın alım; ipucu modeli test sonrası |
 | 9 | Çökme raporlama / analitik | Sentry veya Firebase Crashlytics; minimal analitik |
 | 10 | iOS derleme yolu | Mac veya bulut CI (Codemagic / GitHub Actions macOS) |
@@ -153,6 +157,7 @@ Sonradan kurmak, yazılmış kodu toptan düzeltmek demektir.
 - ADR'ler (`docs/adr/`): 0001 architecture, 0002 state management (bloc), 0003 local database (drift),
   0004 backend (supabase + fastapi path), 0005 anonymous-first auth, 0006 sync and conflicts,
   0007 scene transitions, 0008 flavors. Gerekçeler "Kesinleşen kararlar" tablosundan.
+  (0010 inspect ve 0011 overlay + noir filtre + AI görseller önceden yazıldı; 0009 adım 0.6'ya ayrılı.)
 - README'ye CI rozeti; `docs/devlog/asama-0.md`.
   **Kabul kriterleri:** GitHub Actions yeşil.
   **Commit:** `ci: add GitHub Actions workflow` ve `docs: add architecture decision records`
@@ -195,20 +200,26 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
 8. Açık kapıya dokun → "Hol". Masadaki kağıda dokun → kağıt kaybolur, not defteri düğmesinde rozet belirir.
 9. Not defterini aç → kağıdı oku.
 10. Geri, Geri → Villa Önü → Heykel: anahtar **yok**. Kapı yakın planı: kapı **açık** kalmış.
+11. Heykel yakın planında kaidedeki plakete dokun → sahne değişmeden **inceleme penceresi** açılır: plaket görseli,
+    üstünde oyunun çizdiği kazıma yazı ve kısa bir metin. Geri → yalnızca pencere kapanır; bir daha Geri → Villa Önü.
 
 ### [ ] 1.1 Domain modelleri ve etkileşim kuralları
 **Amaç:** Oyunun dilini saf Dart ile tanımlamak; bütün bulmacaların üzerine kurulacağı koşul + etki sistemini kurmak.
 **Yapılacaklar:**
 - `scene_engine/domain/entities`:
   - `SceneDefinition` (`id`, `parentId?`, `titleKey`, `visual`, `visualVariants`, `hotspots`, `onFirstEnter`)
-  - `SceneVisual` (`background?` (asset yolu), `placeholderStyle`)
+  - `SceneVisual` (`background?` (asset yolu), `placeholderStyle`, `overlays`, `filterPreset?`)
+  - `sealed class VisualOverlay` → `TextOverlay` (`rect`, `textKey`, `style`, `rotation?`): görsele gömülmeyen yazı ve
+    sayılar (ADR 0011). Analog saat ibreleri gibi yeni türler bir bulmaca gerektirdiğinde (Aşama 5) eklenir.
+  - `InspectionDefinition` (`id`, `titleKey?`, `textKey`, `visual: SceneVisual`): inceleme penceresinin içeriği (ADR 0010).
   - `VisualVariant` (`when`, `visual`): koşula göre görünüm (kapı açık/kapalı). İlk tutan kazanır, hiçbiri tutmazsa varsayılan.
   - `NormalizedRect` (`x`, `y`, `width`, `height`; 0–1 doğrulaması; `contains`)
   - `HotspotDefinition` (`id`, `rect`, `labelKey`, `visibleWhen?`, `interactions`)
   - `InteractionRule` (`when?`, `effects`)
   - `sealed class Condition` → `FlagSet`, `FlagNotSet`, `HasItem`, `UsingItem`, `HasNote`, `AllOf`, `AnyOf`
   - `sealed class Effect` → `GoToScene(sceneId, transition?)`, `GiveItem`, `ConsumeItem`, `AddNote`, `SetFlag`,
-    `HideHotspot` (bu hotspot'u kalıcı gizler), `Say(messageKey)`.
+    `HideHotspot` (bu hotspot'u kalıcı gizler), `Say(messageKey)`,
+    `Inspect(inspectionId)` (sahneyi değiştirmeden inceleme penceresi açar).
     `OpenPuzzle` ve `PlayMedia` Aşama 5'te eklenir.
   - `SceneTransition` (`type: fade|cut`, `fadeOutMs`, `holdMs`, `fadeInMs`, `sfx?`; varsayılan 150 / 0 / 150)
 - `scene_engine/domain/services`:
@@ -228,7 +239,8 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
 - `core/events`: `sealed class GameEvent` → `SceneEntered(sceneId, isFirstVisit)`, `ItemObtained(itemId)`,
   `ItemUsed(itemId, hotspotId)`, `NoteAdded(noteId)`, `DetectiveSaid(messageKey)`; `GameEventBus` (broadcast stream).
 - Unit testler: `ConditionEvaluator` (her koşul türü), `InteractionResolver` (kabul senaryosundaki kapı kurallarının
-  tamamı: anahtarsız, yanlış eşyayla, doğru eşyayla, kapı açıkken), `NormalizedRect`, geçiş varsayılanları.
+  tamamı: anahtarsız, yanlış eşyayla, doğru eşyayla, kapı açıkken; `Inspect` içeren kural), `NormalizedRect`,
+  geçiş varsayılanları.
   **Kabul kriterleri:** `domain` klasörlerinde Flutter import'u yok; resolver testleri kapı/anahtar senaryosunu kapsıyor.
   **Commit:** `feat(scene_engine): add domain models and interaction rule system`
 
@@ -242,7 +254,7 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
     cases/case01/
       case.json                            # bölümler ve her bölümün giriş sahnesi
       chapters/ch01/
-        scenes.json  items.json  notes.json
+        scenes.json  items.json  notes.json  inspections.json
         text_en.json                       # yeni dil = yeni text_xx.json
   ```
   Her dosyada `"formatVersion": 1`. Arayüz metinleri ARB'de, hikaye metinleri içerik dosyalarında.
@@ -254,15 +266,17 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
 - `core/content/`: aktif dile göre metni anahtarla veren servis (önce bölüm metinleri, sonra genel metinler).
 - Dikey dilim içeriği (koordinatlar placeholder çizimlerle uyumlu ayarlanır):
   - `villa_exterior`: `door` → `villa_door_closeup`'a git; `statue` → `statue_closeup`'a git; ilk girişte dedektif yorumu.
+    Kapı yanındaki numara plakası görsele çizilmez, `TextOverlay` olarak gelir.
   - `villa_door_closeup` (parent: `villa_exterior`): görünüm varyantı `front_door_open` bayrağına göre (açık/kapalı).
     `lock` hotspot'u: kapı açıksa → `villa_hall`'a git; `brass_key` kullanılırsa → bayrak + anahtarı tüket + "Açıldı";
     aksi halde → "Kilitli."
   - `statue_closeup` (parent: `villa_exterior`): `statue_key` → `GiveItem(brass_key)` + `HideHotspot` + yorum;
-    `statue_body` → kısa yorum.
+    `statue_body` → kısa yorum; `statue_plaque` → `Inspect(statue_plaque)` (plaket görseli + kazıma yazı overlay'i + metin).
   - `villa_hall` (parent: `villa_door_closeup`): `desk_paper` → `AddNote(hall_letter)` + `HideHotspot` + yorum.
-  - `items.json`: `brass_key`. `notes.json`: `hall_letter` (document).
+  - `items.json`: `brass_key`. `notes.json`: `hall_letter` (document). `inspections.json`: `statue_plaque`.
   - Tüm metinler İngilizce; atmosferik, kısa.
-- **İçerik doğrulama testi** (CLAUDE.md bölüm 9): referanslar, metin anahtarları (desteklenen tüm dillerde), koordinatlar,
+- **İçerik doğrulama testi** (CLAUDE.md bölüm 9): referanslar (inceleme ID'leri dahil), metin anahtarları (desteklenen
+  tüm dillerde), hotspot ve overlay koordinatları, "bir kuralda tek `inspect`, `goToScene` ile birlikte değil",
   "okunan her bayrak bir yerde set ediliyor mu" ve "her sahne bölümün giriş sahnesinden ulaşılabilir mi" (graf taraması).
   **Kabul kriterleri:** Tüm içerik yükleniyor; doğrulama testi geçiyor; bilerek bozulan bir ID veya yanlış yazılmış bir
   bayrak testi kırıyor.
@@ -277,13 +291,17 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
 - `SceneBloc`:
   - Olaylar: `SceneStarted`, `HotspotTapped(hotspotId, usingItemId?)`, `BackPressed`, `TransitionCovered`, `TransitionFinished`.
   - Durum: `stack`, `currentScene`, `currentVisual` (varyant çözülmüş), `visibleHotspots` (`visibleWhen` ve gizlenenler
-    uygulanmış), `transitionPhase` (`idle` / `covering` / `revealing`), `pendingTransition`, `canGoBack`.
+    uygulanmış), `transitionPhase` (`idle` / `covering` / `revealing`), `pendingTransition`, `canGoBack`,
+    `activeInspection`.
+  - İnceleme: `Inspect` etkisi `activeInspection`'ı doldurur; yeni olay `InspectionClosed`. Pencere açıkken hotspot
+    dokunuşları yok sayılır; `BackPressed` önce pencereyi kapatır, yığına dokunmaz. İnceleme ilerlemeye yazılmaz.
   - İlerleme akışı (`watch()`) değiştikçe görünüm ve görünür hotspot'lar yeniden hesaplanır.
   - Geçiş zamanlaması arayüzdeki animasyondadır; Bloc yalnızca fazı tutar. Ekran tamamen karardığında arayüz
     `TransitionCovered` gönderir, Bloc sahneyi o an değiştirir.
   - Geçiş sürerken gelen dokunmalar yok sayılır.
   - Sahneye girişte: `markVisited`, `updateSceneStack`, `SceneEntered`; ilk ziyaretse `onFirstEnter` etkileri.
-- `bloc_test`: kabul senaryosunun 1–10. adımlarının mantığı, geçiş sırasında çift dokunma, ana sahnede geri (etkisiz).
+- `bloc_test`: kabul senaryosunun 1–11. adımlarının mantığı, geçiş sırasında çift dokunma, ana sahnede geri (etkisiz),
+  inceleme açıkken Geri ve hotspot dokunuşu.
   **Kabul kriterleri:** Kabul senaryosunun tamamı testlerle doğrulanmış (henüz arayüz yok).
   **Commit:** `feat(scene_engine): add scene bloc with effect execution and navigation stack`
 
@@ -293,16 +311,26 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
 - `SceneViewport`: verilen alana 16:9 oranını koruyarak sığar (contain); boşluklar koyu letterbox.
 - Arka plan: `background` doluysa `Image.asset` (ekran boyutuna göre `cacheWidth`), boşsa `placeholderStyle`'a göre
   `CustomPainter`: villa cephesi, kapı yakın planı (kapalı ve açık), heykel yakın planı, hol (masa ve kağıt).
-  Noir: gece mavisi/siyah, ay ışığı, sis katmanları, vinyet, hafif film greni. Görsel olarak anlaşılır ve şık olmalı.
+  Noir: gece mavisi/siyah, ay ışığı, sis katmanları. Görsel olarak anlaşılır ve şık olmalı. Gren ve vinyeti
+  placeholder'lar değil ortak noir filtre çizer.
+- `OverlayLayer`: `TextOverlay`'leri görselle aynı normalize koordinatlarla çizer; yazı `rect`'e sığacak şekilde
+  ölçeklenir; stil preset'leri (`typewriter`, `handwriting`, `engraved`...) `core/theme`'de.
+- `NoirFilter`: gren + vinyet + renk tonu; preset'ler `core/theme`'de, sahne `filterPreset` ile seçer. Uygulama yolu
+  (`ColorFilter` matrisi + gradyan + gren dokusu ya da fragment shader) Android, iOS ve Windows'ta ölçülerek seçilir;
+  gren varsayılan olarak statik. Katman sırası: arka plan → overlay → filtre → hotspot → geçiş.
+- `InspectPanel`: sahnenin üstünde küçük pencere; görsel sahneyle aynı hattan çizilir (görsel + overlay + filtre),
+  altında metin. Dışına dokun / kapat / Geri ile kapanır.
 - Toplanabilir nesneler (anahtar, kağıt) sahnede hafifçe parıldar: dikkat çeker ama bağırmaz.
 - `HotspotLayer`: normalize koordinat → piksel; şeffaf dokunma alanları; erişilebilirlik için `Semantics` etiketleri;
   dokunulan noktada kısa bir dalga efekti. Dev flavor'da açılıp kapanabilen **debug overlay**: hotspot dikdörtgenleri ve ID'leri.
 - `TransitionOverlay`: siyah katman; `fadeOutMs` → `holdMs` → `fadeInMs`; `cut` tipinde anında.
-- Arka plan ve hotspot katmanı ayrı `RepaintBoundary`.
+- Arka plan (görsel + overlay + filtre) ve hotspot katmanı ayrı `RepaintBoundary`.
 - Fare tıklaması dokunmayla aynı çalışır; Windows'ta farklı pencere boyutlarında da denenir.
   **Kabul kriterleri:** Kabul senaryosunun gezinme adımları telefonda ve Windows'ta çalışıyor; tablet emülatöründe ve
-  yeniden boyutlanan pencerede hotspot'lar kaymıyor.
-  **Commit:** `feat(scene_engine): render scenes with viewport, variants, hotspots and fade transitions`
+  yeniden boyutlanan pencerede hotspot'lar ve overlay yazılar kaymıyor, yazılar okunuyor; inceleme penceresi (adım 11)
+  çalışıyor; filtre 60 fps hedefini bozmuyor.
+  **Commit:** `feat(scene_engine): render scenes with viewport, overlays, noir filter, hotspots and transitions`
+  ve `feat(scene_engine): add inspect panel`
 
 ### [ ] 1.5 HUD: Geri butonu, eşya paneli ve eşya kullanımı
 **Amaç:** Sabit arayüzü ve "eşyayı al, doğru yerde kullan" hissini kurmak.
@@ -312,7 +340,7 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
 - Geri butonu `canGoBack` iken görünür. Android sistem geri tuşu `PopScope` ile `BackPressed`'e bağlanır;
   ana sahnede "Çıkmak için tekrar bas" mesajı.
 - `inventory/presentation`: `InventoryCubit` (ilerlemedeki eşyalar + katalog → sıralı liste; seçili eşya).
-  Dokun → seç / tekrar dokun → bırak. Uzun bas → inceleme kartı.
+  Dokun → seç / tekrar dokun → bırak. Uzun bas → inceleme kartı (1.4'teki `InspectPanel` yeniden kullanılır).
 - `GameScreen`, `HotspotTapped`'e seçili eşyayı ekler; dokunuştan sonra seçim temizlenir.
 - `ItemSidebar`: dikey, yarı saydam koyu yüzey; seçili eşya belirgin çerçeve; boş durum metni.
 - **Uçuş animasyonu:** Alınan nesne sahnedeki konumundan paneldeki yuvasına uçar (`Overlay` + `GlobalKey`;
@@ -342,7 +370,7 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
 - `ChatBar`: alt kenarda kompakt; son mesaj daktilo efektiyle yazılır (dokununca anında tamamlanır).
 - `ChatHistorySheet`: dokununca açılan mesaj geçmişi.
 - Testler: olay → mesaj; okunmamış sayısı; geçmiş sırası.
-  **Kabul kriterleri:** Kabul senaryosunun tamamı (1–10) telefonda çalışıyor.
+  **Kabul kriterleri:** Kabul senaryosunun tamamı (1–11) telefonda çalışıyor.
   **Commit:** `feat(detective_chat): add detective inner voice bar and history`
 
 ### [ ] 1.8 Uçtan uca test ve cila
@@ -529,10 +557,16 @@ Bu aşamadaki kod platform servisi arayüzlerinin arkasında kalır.
 
 - [ ] 7.1 Vaka 1 kurgusu (kullanıcıyla birlikte): olay, kurban, 7 şüpheli, gerçek çözüm, bulmaca zinciri, bölüm kapanışları.
   Sonuç `docs/story/` altında.
-- [ ] 7.2 Dev flavor'da hotspot editörü: dikdörtgenleri sürükleyip koordinatları JSON'a kopyalayan mini araç (50+ sahne için şart).
-- [ ] 7.3 Sanat yönü ve üretim hattı: stil, çözünürlük ve boyut bütçesi (WebP), yakın planları ana görselden kırpma tekniği,
-  placeholder → `background` geçişi.
-- [ ] 7.4 Bölüm 1 içeriği (~40–50 sahne) ve oyun testi; yön bulma (harita / mekan listesi) kararı.
+- [ ] 7.2 Dev flavor'da hotspot ve overlay editörü: hotspot ve yazı (overlay) dikdörtgenlerini sürükleyip koordinatları
+  JSON'a kopyalayan mini araç (çok sahneli bölümler için şart).
+- [ ] 7.3 Sanat yönü ve **AI destekli** üretim hattı (ADR 0011): araç seçimi ve ticari kullanım koşulları; stil rehberi
+  (palet, ışık, dönem, kompozisyon, prompt şablonları, referans görseller); görsellerde yazı/sayı olmaması (prompt +
+  elle temizlik; kritik yazılar overlay); yakın planları ana görselden kırpma/inpainting ile tutarlılık; noir filtre
+  preset'lerinin gerçek görsellerle ayarı; çözünürlük ve boyut bütçesi (WebP); placeholder → `background` geçişi.
+  Her görsel için üretim kaydı (araç, model, tarih, prompt, elle yapılan düzenlemeler): `docs/art/ai-usage.md`
+  (Steam AI açıklamasının kaynağı, bkz. 11.5).
+- [ ] 7.4 Bölüm 1 içeriği (sahne sayısı hikayeyle belirlenir; tahmin ~40–50, inceleme pencereleri yakın plan
+  ihtiyacını azaltır) ve oyun testi; yön bulma (harita / mekan listesi) kararı.
 - [ ] 7.5 Bölüm 2–4 içeriği.
 
 ## Aşama 8 — Para kazanma (mobil)
@@ -584,6 +618,9 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
 - [ ] 11.4 (Opsiyonel) Başarımlar ve Steam arayüz katmanı (overlay) kontrolü.
 - [ ] 11.5 Mağaza: sayfa görselleri, fragman, açıklama (EN; diğer diller oyuna eklendikçe), "Yakında" sayfası, istek listesi toplama;
   Bölüm 1 demosu ve Steam Next Fest'e katılım.
+  **AI içerik açıklaması (zorunlu):** Steamworks içerik anketinde önceden üretilmiş AI içeriği (görseller) ve nasıl
+  kullanıldığı açıklanır; açıklama mağaza sayfasında görünür. Oyun çalışırken AI ile içerik üretmez. Kaynak: 7.3'teki
+  üretim kaydı (`docs/art/ai-usage.md`).
 - [ ] 11.6 Derleme ve yükleme hattı: SteamPipe ile build yükleme, beta dalı, GitHub Actions'tan Windows derlemesi.
 - [ ] 11.7 (Sonra) Steam Deck uyumu (kontrolcü ile sanal imleç), macOS sürümü (Mac gerekir).
 
@@ -622,3 +659,6 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   `AppDurations.sceneFadeOut / sceneHold / sceneFadeIn` (JSON'daki `fadeOutMs/holdMs/fadeInMs` varsayılanları).
   Router 0.2'de kurulmuştu (`/` → `GameScreen`); bu adımda değişmedi.
 - 2026-11-11 (0.4): 0.3'ün kabul kriteri cihazda doğrulandı: üç flavor telefona yan yana kuruldu.
+- 2026-11-11: Tasarım kararları: `inspect` etkisi (ADR 0010); AI destekli görseller, kritik yazı/sayılar overlay,
+  ortak noir filtre (ADR 0011). Aşama 1 (kabul senaryosuna 11. adım, 1.1–1.5), Aşama 7 (7.2–7.4) ve 11.5
+  güncellendi. Sahne sayısı kesin değil; hikaye yazılırken belirlenecek.
