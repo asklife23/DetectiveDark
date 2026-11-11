@@ -1,0 +1,23 @@
+# Line endings: store text files with LF in the repository and check them out
+# with LF on every OS. This overrides each developer's `core.autocrlf` setting,
+# so Windows and CI (Linux/macOS) always see identical files.
+* text=auto eol=lf
+
+# Windows batch scripts must keep CRLF or cmd.exe may misread them.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets: never convert line endings and never diff them as text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.mp3 binary
+*.ogg binary
+*.wav binary
+*.mp4 binary
+*.jar binary
