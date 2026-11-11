@@ -76,3 +76,25 @@
   (Supabase anon anahtarı gibi). `service_role` anahtarı asla girmez. Flavor ise native taraftaki ayrımdır
   (uygulama kimliği, ad, simge). İkisini bağlayan şey giriş noktasıdır. Flutter `--flavor` değerini `appFlavor`
   olarak da verdiği için yanlış eşleşmeyi açılışta yakalıyoruz.
+
+### Adım 0.4 — Tema, yerelleştirme ve yönlendirme (2026-11-11)
+- **Ne yaptık:** `core/theme/` altında noir tokenlarını tanımladık: renkler (`AppColors`), boşluk ve köşe ölçüleri
+  (`AppSpacing`, `AppRadii`), sahne geçişi süreleri (`AppDurations`), yazı stilleri (`AppTypography`) ve hepsini
+  birleştiren `AppTheme.dark()`. İki fontu projeye gömdük: başlıklar için daktilo tarzı **Courier Prime**, gövde
+  metni için **IBM Plex Sans**. İkisi de OFL lisanslı; lisans metinleri uygulamanın lisans sayfasına eklendi.
+  Yerelleştirmeyi `gen-l10n` ile kurduk. Şimdilik tek dosya var (`app_en.arb`); üretilen kod `lib/core/l10n/generated/`
+  altında. Oyun ekranı artık başlığı ve bir örnek cümleyi ARB'den okuyup gösteriyor.
+- **Neden:** Renkler ve ölçüler tek yerde durursa oyunun görünümü tutarlı kalır ve tek satırla değiştirilebilir.
+  Fontları pakete gömüyoruz çünkü oyun internetsiz de çalışmalı. Fontlar Latin Extended destekliyor, yani ileride
+  Türkçe, Almanca veya İspanyolca eklenince font değiştirmek gerekmeyecek. İlk çıkış sadece İngilizce olsa da metinler
+  baştan ARB'den geliyor; yeni dil eklemek sadece `app_xx.arb` dosyası eklemek demek.
+- **Önemli dosyalar:** `lib/core/theme/*`, `lib/core/l10n/arb/app_en.arb`, `lib/core/l10n/l10n.dart`, `l10n.yaml`,
+  `lib/app/app.dart`, `lib/app/game_screen.dart`, `lib/app/font_licenses.dart`, `assets/fonts/`, `pubspec.yaml`.
+- **Telefonda nasıl test edilir:** `flutter run --flavor dev -t lib/main_dev.dart --dart-define-from-file=env/dev.json`
+  komutunu çalıştır. Koyu ekranın ortasında daktilo fontuyla "DetectiveDark", altında İngilizce bir cümle görünmeli.
+  Telefon Türkçe olsa bile metin İngilizce kalmalı, çünkü desteklenmeyen dil İngilizceye düşer.
+- **Öğrenme notu:** `gen-l10n`, ARB dosyalarını (JSON benzeri; anahtar → metin + açıklama) okuyup tip güvenli bir Dart
+  sınıfı üretir. `context.l10n.appTitle` yanlış yazılırsa uygulama derlenmez; düz string anahtarlarla bu hata ancak
+  çalışma anında fark edilirdi. Desteklenen diller listesi (`AppLocalizations.supportedLocales`) de ARB dosyalarından
+  üretilir. Bu yüzden kodda elle yazılmış ikinci bir dil listesi yok. `MaterialApp`, cihaz dili listede yoksa listedeki
+  ilk dile (`en`) düşer. Üretilen kod commit edilir: repoyu klonlayan kişi hiçbir şey üretmeden uygulamayı açabilir.

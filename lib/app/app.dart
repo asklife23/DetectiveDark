@@ -1,6 +1,8 @@
 import 'package:detective_dark/app/flavor_badge.dart';
 import 'package:detective_dark/app/router/app_router.dart';
 import 'package:detective_dark/core/config/app_config.dart';
+import 'package:detective_dark/core/l10n/l10n.dart';
+import 'package:detective_dark/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -28,13 +30,14 @@ class _AppState extends State<App> {
 
   @override
   Widget build(BuildContext context) {
-    // The noir theme replaces this minimal dark theme in step 0.4.
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: Colors.black,
-      ),
+      onGenerateTitle: (context) => context.l10n.appTitle,
+      theme: AppTheme.dark(),
+      // Languages come only from the ARB files. A device language that is
+      // not supported falls back to the first supported locale (English).
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       routerConfig: _router,
       // `builder` wraps every screen, so the badge stays on top of all of
       // them without each screen knowing about it.

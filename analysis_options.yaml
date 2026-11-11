@@ -6,6 +6,7 @@ analyzer:
   exclude:
     # Generated code (Drift, l10n, ...) is not hand-written; do not lint it.
     - "**/*.g.dart"
+    - lib/core/l10n/generated/**
     - build/**
 
 linter:

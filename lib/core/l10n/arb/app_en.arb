@@ -1,0 +1,11 @@
+{
+  "@@locale": "en",
+  "appTitle": "DetectiveDark",
+  "@appTitle": {
+    "description": "Name of the game. Shown in the OS task switcher, the window title and on screen."
+  },
+  "gameScreenPlaceholder": "The rain hadn’t stopped in three days, and neither had the lies.",
+  "@gameScreenPlaceholder": {
+    "description": "Temporary atmospheric line on the empty game screen, until the first scene exists."
+  }
+}

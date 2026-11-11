@@ -127,7 +127,7 @@ Sonradan kurmak, yazılmış kodu toptan düzeltmek demektir.
   **Kabul kriterleri:** Üç flavor aynı telefona yan yana kurulabiliyor.
   **Commit:** `build: add dev, staging and prod flavors`
 
-### [ ] 0.4 Tema, yerelleştirme ve yönlendirme
+### [x] 0.4 Tema, yerelleştirme ve yönlendirme
 **Amaç:** Görsel kimliğin ve yerelleştirme altyapısının temelini atmak.
 **Yapılacaklar:**
 - `core/theme/`: noir renk tokenları (koyu zemin, soluk amber/sepya vurgu, gece mavisi, soluk kırmızı uyarı),
@@ -615,3 +615,10 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   (yoksa sadece dev'de açık). `.run/` formatı kurulu Flutter eklentisinin (95.0.0) alan adlarıyla doğrulandı.
 - 2026-11-11: Dil kararı değişti: ilk çıkış sadece İngilizce (`en`). l10n altyapısı yine kuruluyor; yeni dil = yeni
   `app_xx.arb` + `text_xx.json`. 0.4 ve 1.2 buna göre güncellendi; fontlar Latin Extended desteklemeli.
+- 2026-11-11 (0.4): Fontlar: başlık **Courier Prime** (Regular/Bold), gövde **IBM Plex Sans** (Regular/Medium/Bold);
+  ikisi de OFL 1.1, statik TTF (değişken fontlarda `FontWeight` her platformda eksene güvenilir bağlanmıyor).
+  Latin Extended-A kapsamı fontTools ile doğrulandı (Courier Prime'da sadece `ĸ ŉ ſ ẞ` yok). Lisanslar
+  `LicenseRegistry`'ye eklendi (lisans sayfasında görünür). Süre sabitleri `kSceneFadeDuration` yerine
+  `AppDurations.sceneFadeOut / sceneHold / sceneFadeIn` (JSON'daki `fadeOutMs/holdMs/fadeInMs` varsayılanları).
+  Router 0.2'de kurulmuştu (`/` → `GameScreen`); bu adımda değişmedi.
+- 2026-11-11 (0.4): 0.3'ün kabul kriteri cihazda doğrulandı: üç flavor telefona yan yana kuruldu.

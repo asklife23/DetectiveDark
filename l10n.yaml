@@ -1,0 +1,12 @@
+# Localization (gen-l10n) settings. Supported languages = the ARB files in
+# arb-dir: adding app_xx.arb adds a language, no code change needed.
+arb-dir: lib/core/l10n/arb
+template-arb-file: app_en.arb
+output-dir: lib/core/l10n/generated
+output-localization-file: app_localizations.dart
+# AppLocalizations.of(context) is non-nullable: no `!` at call sites.
+nullable-getter: false
+# Every message needs a description: context for future translators.
+required-resource-attributes: true
+# Run dart format on the output, so `dart format .` never changes it.
+format: true

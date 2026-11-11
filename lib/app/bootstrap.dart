@@ -1,5 +1,6 @@
 import 'package:detective_dark/app/app.dart';
 import 'package:detective_dark/app/app_bloc_observer.dart';
+import 'package:detective_dark/app/font_licenses.dart';
 import 'package:detective_dark/app/system_ui.dart';
 import 'package:detective_dark/core/config/app_config.dart';
 import 'package:detective_dark/core/di/injection.dart';
@@ -29,6 +30,7 @@ Future<void> bootstrap(AppConfig config) async {
   logger.info('Starting DetectiveDark (${config.flavor.name})');
 
   Bloc.observer = const AppBlocObserver(AppLogger('bloc'));
+  registerFontLicenses();
 
   await configureSystemUi();
   await configureDependencies(GetIt.instance, config);

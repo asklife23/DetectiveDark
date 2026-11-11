@@ -21,6 +21,8 @@ _Coming soon._
 | State management | `flutter_bloc` + `equatable` |
 | Dependency injection | `get_it` |
 | Routing | `go_router` (app screens), scene navigation stack (in-game) |
+| Localization | `gen-l10n` (ARB); English at launch, new languages by adding files |
+| Fonts | Courier Prime + IBM Plex Sans (bundled, OFL, Latin Extended) |
 | Local storage | Drift (SQLite) |
 | Backend | Supabase (Auth, Postgres + RLS, Edge Functions) |
 | CI | GitHub Actions |
