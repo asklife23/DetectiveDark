@@ -1,5 +1,7 @@
 # DetectiveDark
 
+[![CI](https://github.com/asklife23/DetectiveDark/actions/workflows/ci.yml/badge.svg)](https://github.com/asklife23/DetectiveDark/actions/workflows/ci.yml)
+
 A noir, 2.5D point-and-click detective game for Android, iOS and Steam (Windows), built with Flutter.
 
 Explore moody, hand-crafted scenes, tap on details others would miss, collect items and
