@@ -39,12 +39,36 @@ _Diagram and overview coming in Phase 1._
 
 ### Run
 
+The app has three flavors, each with its own entry point and environment file:
+
+| Flavor | Android app ID | Launcher name | Backend |
+|---|---|---|---|
+| `dev` | `io.github.asklife23.detectivedark.dev` | DD Dev | staging |
+| `staging` | `io.github.asklife23.detectivedark.stg` | DD Staging | staging |
+| `prod` | `io.github.asklife23.detectivedark` | DetectiveDark | production |
+
+All three can be installed side by side on one device.
+
 ```bash
+# 1. Create your local env files from the template (they are git-ignored).
+cp env/example.json env/dev.json
+cp env/example.json env/staging.json
+cp env/example.json env/prod.json
+
+# 2. Run a flavor.
 flutter pub get
-flutter run
+flutter run --flavor dev -t lib/main_dev.dart --dart-define-from-file=env/dev.json
 ```
 
-Flavors (`dev` / `staging` / `prod`) and environment files are introduced in step 0.3.
+Android Studio picks up ready-made `dev`, `staging` and `prod` run configurations from `.run/`.
+
+| Env key | Meaning |
+|---|---|
+| `SUPABASE_URL` | Supabase project URL (filled in Phase 3) |
+| `SUPABASE_ANON_KEY` | Supabase anon / publishable key — never the service role key |
+| `SHOW_DEBUG_OVERLAY` | Shows the flavor badge on screen (default: on for `dev` only) |
+
+iOS flavors are set up in Phase 10.
 
 ### Quality checks
 

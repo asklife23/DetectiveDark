@@ -25,6 +25,28 @@ android {
         versionName = flutter.versionName
     }
 
+    // Three environments that can be installed side by side on one phone:
+    // each flavor has its own application ID and launcher name.
+    flavorDimensions += "environment"
+    productFlavors {
+        create("dev") {
+            dimension = "environment"
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            manifestPlaceholders["appName"] = "DD Dev"
+        }
+        create("staging") {
+            dimension = "environment"
+            applicationIdSuffix = ".stg"
+            versionNameSuffix = "-stg"
+            manifestPlaceholders["appName"] = "DD Staging"
+        }
+        create("prod") {
+            dimension = "environment"
+            manifestPlaceholders["appName"] = "DetectiveDark"
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.

@@ -50,3 +50,29 @@
   bu yüzden sealed: yeni bir hata türü eklendiğinde onu ele almayan her `switch` hemen kırmızı yanar.
   Exception'lar ise fonksiyon imzasında görünmez ve kolayca unutulur. Biz exception'ları `data` katmanında
   yakalayıp `Failed(...)` olarak döndürüyoruz.
+
+### Adım 0.3 — Ortamlar: dev / staging / prod (2026-11-11)
+- **Ne yaptık:** Android'e üç flavor ekledik: `dev` (`.dev`, "DD Dev"), `staging` (`.stg`, "DD Staging") ve `prod`.
+  Her birinin kendi giriş noktası var (`lib/main_dev.dart`, `main_staging.dart`, `main_prod.dart`). Hepsi
+  `bootstrap(AppConfig)` çağırıyor. `AppConfig` (flavor, Supabase URL ve anahtarı, `showDebugOverlay`)
+  `env/<flavor>.json` dosyasından derleme anında okunuyor ve DI'a kaydediliyor. Dev'de ekranın üst ortasında
+  dokunmaları engellemeyen küçük bir "DEV" etiketi görünüyor. Android Studio için `.run/` klasörüne hazır
+  çalıştırma yapılandırmaları ekledik.
+- **Neden:** Gerçek oyuncuların verisi (prod) ile denemelerimiz (dev/staging) asla karışmamalı. Her flavor'ın
+  ayrı uygulama kimliği olduğu için telefon bunları üç ayrı uygulama sayar ve üçü yan yana kurulur. Böylece
+  prod'u bozmadan deneme yapabiliriz. Env dosyaları gitignore'da; repoda sadece boş şablon (`env/example.json`) var.
+- **Önemli dosyalar:** `android/app/build.gradle.kts`, `android/app/src/main/AndroidManifest.xml`,
+  `lib/main_*.dart`, `lib/core/config/app_config.dart`, `lib/core/config/flavor.dart`, `lib/app/flavor_badge.dart`,
+  `env/example.json`, `.run/*.run.xml`.
+- **Telefonda nasıl test edilir:** Üç komutu sırayla çalıştır:
+  `flutter run --flavor dev -t lib/main_dev.dart --dart-define-from-file=env/dev.json`, ardından aynısını `staging`
+  ve `prod` için. Telefonda "DD Dev", "DD Staging" ve "DetectiveDark" adında üç ayrı simge olmalı. Sadece DD Dev'de
+  üstte "DEV" etiketi görünmeli. Android Studio'da üst çubuktaki menüden `dev` / `staging` / `prod` seçilip ▶ ile
+  çalıştırılabilir.
+- **Öğrenme notu:** `--dart-define-from-file` JSON'daki her anahtarı **derleme anında** koda gömer.
+  `const String.fromEnvironment('SUPABASE_URL')` çalışma anında bir dosya okumaz; değer derleyici tarafından
+  sabit olarak yazılır. Bu yüzden `const` olmak zorundadır. Bunun bir sonucu var: bu değerler APK'dan
+  çıkarılabilir, yani **gizli değildir**. Buraya sadece herkese açık olması sorun olmayan değerler girer
+  (Supabase anon anahtarı gibi). `service_role` anahtarı asla girmez. Flavor ise native taraftaki ayrımdır
+  (uygulama kimliği, ad, simge). İkisini bağlayan şey giriş noktasıdır. Flutter `--flavor` değerini `appFlavor`
+  olarak da verdiği için yanlış eşleşmeyi açılışta yakalıyoruz.

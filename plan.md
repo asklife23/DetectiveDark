@@ -111,7 +111,7 @@ Sonradan kurmak, yazılmış kodu toptan düzeltmek demektir.
   **Kabul kriterleri:** `flutter analyze` 0 sorun; uygulama yatay ve tam ekran açılıyor (boş koyu ekran).
   **Commit:** `chore: add lints, base packages and app skeleton`
 
-### [ ] 0.3 Ortamlar: dev / staging / prod
+### [x] 0.3 Ortamlar: dev / staging / prod
 **Amaç:** Geliştirme, test ve gerçek oyuncu ortamlarını birbirinden ayırmak.
 **Yapılacaklar:**
 - Android `productFlavors`: `dev` (`.dev`, uygulama adı "DD Dev"), `staging` (`.stg`, "DD Staging"), `prod`.
@@ -605,3 +605,8 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   iPadOS 26'da kullanımdan kalkıyor; Aşama 10'da Mac/Xcode ile doğrulanacak.
 - 2026-11-11 (0.2): `SystemChrome` çağrıları sadece Android/iOS'ta yapılır (Windows bu kanalı uygulamaz,
   `MissingPluginException` fırlatır). 0.6'da `AppConfig` derleme hedefi gelince bu kontrol yeniden değerlendirilir.
+- 2026-11-11 (0.3): Uygulama adı flavor başına `resValue` yerine `manifestPlaceholders["appName"]` ile verildi
+  (AGP 9'da `resValues` varsayılan kapalı; manifest yolu ek ayar istemez).
+- 2026-11-11 (0.3): `bootstrap`, giriş noktasının flavor'ı ile `--flavor` değeri (`appFlavor`) uyuşmazsa açılışta
+  hata verir (ör. `--flavor prod -t lib/main_dev.dart`). Env'e `SHOW_DEBUG_OVERLAY` anahtarı eklendi
+  (yoksa sadece dev'de açık). `.run/` formatı kurulu Flutter eklentisinin (95.0.0) alan adlarıyla doğrulandı.
