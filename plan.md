@@ -147,7 +147,7 @@ Sonradan kurmak, yazılmış kodu toptan düzeltmek demektir.
   fontlar uygulanmış.
   **Commit:** `feat(core): add noir theme, localization and routing`
 
-### [ ] 0.5 CI ve karar kayıtları
+### [x] 0.5 CI ve karar kayıtları
 **Amaç:** Her push'u otomatik kontrol etmek ve verilen kararları belgelemek.
 **Yapılacaklar:**
 - `.github/workflows/ci.yml` (push ve PR'da): checkout → Flutter kurulumu (`subosito/flutter-action`, sürüm
@@ -662,3 +662,6 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
 - 2026-11-11: Tasarım kararları: `inspect` etkisi (ADR 0010); AI destekli görseller, kritik yazı/sayılar overlay,
   ortak noir filtre (ADR 0011). Aşama 1 (kabul senaryosuna 11. adım, 1.1–1.5), Aşama 7 (7.2–7.4) ve 11.5
   güncellendi. Sahne sayısı kesin değil; hikaye yazılırken belirlenecek.
+- 2026-11-11 (0.5): CI'da "üretilen kod güncel mi" kontrolü 1.2'yi beklemeden açıldı: `gen-l10n` çıktısı 0.4'ten beri
+  commit ediliyor. Kontrol `git status --porcelain` ile yapılır (yeni, takip edilmeyen üretilmiş dosyaları da yakalar).
+  `build_runner` adımları yorum satırı olarak hazır. `docs/adr/README.md` dizin + şablon olarak eklendi.

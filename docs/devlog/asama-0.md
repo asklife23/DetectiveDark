@@ -98,3 +98,26 @@
   çalışma anında fark edilirdi. Desteklenen diller listesi (`AppLocalizations.supportedLocales`) de ARB dosyalarından
   üretilir. Bu yüzden kodda elle yazılmış ikinci bir dil listesi yok. `MaterialApp`, cihaz dili listede yoksa listedeki
   ilk dile (`en`) düşer. Üretilen kod commit edilir: repoyu klonlayan kişi hiçbir şey üretmeden uygulamayı açabilir.
+
+### Adım 0.5 — CI ve karar kayıtları (2026-11-11)
+- **Ne yaptık:** GitHub Actions ile bir CI hattı kurduk (`.github/workflows/ci.yml`). `main`'e her push'ta ve her PR'da
+  bir Linux makinesinde sırayla şunlar çalışıyor: Flutter 3.44.8 kurulumu, `pub get`, yerelleştirme kodunun yeniden
+  üretilmesi ve "üretilen kod commit edilmiş olanla aynı mı" kontrolü, format, analyze ve test. README'ye CI rozeti
+  ekledik. `docs/adr/` altına 0001–0008 numaralı karar kayıtlarını ve bir dizin (`README.md`) yazdık: mimari, Bloc,
+  Drift, Supabase, anonim giriş, eşitleme, sahne geçişleri ve flavor'lar. İlk CI çalışması ~2 dakikada yeşil bitti.
+- **Neden:** Kalite kapısını şimdiye kadar elle çalıştırıyorduk. CI ise bunu her push'ta otomatik yapıyor; "bende
+  çalışıyordu" sorunu ortadan kalkıyor ve kırmızı bir rozet hatayı herkese hemen gösteriyor. ADR'ler ise bir kararın
+  *neden* alındığını saklar. Altı ay sonra "neden Drift?" diye sorduğunda cevabı kodda değil burada bulursun.
+  Ayrıca bir işverenin projede en çok baktığı şeylerden biridir.
+- **Önemli dosyalar:** `.github/workflows/ci.yml`, `docs/adr/README.md`, `docs/adr/0001-architecture.md` …
+  `docs/adr/0008-flavors.md`, `README.md`.
+- **Telefonda nasıl test edilir:** Bu adım telefonu etkilemiyor. GitHub'da depoya gir → **Actions** sekmesi → "CI"
+  çalışmasını aç: her adımın yeşil tik aldığını görmelisin. README'deki rozet de "passing" göstermeli.
+  Terminalden: `gh run list --workflow ci.yml`.
+- **Öğrenme notu:** CI (Continuous Integration, sürekli entegrasyon), her değişikliği temiz bir makinede baştan derleyip
+  test eder. Workflow dosyası bir tarif gibidir: `on` ne zaman çalışacağını, `jobs.<ad>.steps` sırayla neler
+  yapılacağını söyler. `uses:` hazır bir "action" çağırır (kodu çekmek için `actions/checkout`, Flutter kurmak için
+  `subosito/flutter-action`); `run:` ise bir kabuk komutu çalıştırır. Bir adım hata koduyla biterse iş kırmızı olur ve
+  sonraki adımlar çalışmaz. `permissions: contents: read` iş akışına en az yetkiyi verir; `concurrency` aynı dala
+  art arda yapılan push'larda eski çalışmayı iptal eder. Flutter sürümü sabitlendi ki CI ile senin makinen aynı
+  derleyiciyi kullansın; yerelde Flutter'ı güncellersen `ci.yml`'deki `FLUTTER_VERSION`'ı da güncellemelisin.
