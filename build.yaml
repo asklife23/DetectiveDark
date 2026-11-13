@@ -1,0 +1,17 @@
+# Code generation settings (`dart run build_runner build`).
+targets:
+  $default:
+    builders:
+      json_serializable:
+        # Only DTOs are generated: they live in the data layer of a feature.
+        generate_for:
+          - lib/features/**/data/models/**.dart
+        options:
+          # A wrong type reports the key it happened at instead of a bare
+          # cast error.
+          checked: true
+          # A misspelled field name in content JSON is an error, not a
+          # silently ignored key.
+          disallow_unrecognized_keys: true
+          # Content is only read, never written back.
+          create_to_json: false

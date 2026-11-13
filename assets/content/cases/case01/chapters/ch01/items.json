@@ -1,0 +1,11 @@
+{
+  "formatVersion": 1,
+  "items": [
+    {
+      "id": "brass_key",
+      "nameKey": "item_brass_key_name",
+      "descriptionKey": "item_brass_key_description",
+      "iconStyle": "item_brass_key"
+    }
+  ]
+}

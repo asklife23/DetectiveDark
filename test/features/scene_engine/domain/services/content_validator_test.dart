@@ -1,0 +1,417 @@
+import 'package:detective_dark/features/inventory/domain/entities/item_definition.dart';
+import 'package:detective_dark/features/notebook/domain/entities/note_definition.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/case_content.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/condition.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/effect.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/hotspot_definition.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/inspection_definition.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/normalized_rect.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/scene_definition.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/scene_visual.dart';
+import 'package:detective_dark/features/scene_engine/domain/services/content_validator.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+const _rect = NormalizedRect(x: 0.1, y: 0.1, width: 0.2, height: 0.2);
+const _visual = SceneVisual(placeholderStyle: 'plain');
+const _styles = KnownStyleNames(
+  overlayStyles: {'engraved'},
+  filterPresets: {'night'},
+  placeholderStyles: {'plain'},
+);
+
+const _texts = {
+  'generic_item_no_effect',
+  'scene_yard',
+  'scene_shed',
+  'label',
+  'say_locked',
+  'key_name',
+  'key_description',
+  'memo_title',
+  'memo_body',
+  'sign_text',
+};
+
+const _items = {
+  'key': ItemDefinition(
+    id: 'key',
+    nameKey: 'key_name',
+    descriptionKey: 'key_description',
+    iconStyle: 'plain',
+  ),
+};
+
+const _notes = {
+  'memo': NoteDefinition(
+    id: 'memo',
+    category: NoteCategory.document,
+    titleKey: 'memo_title',
+    bodyKey: 'memo_body',
+  ),
+};
+
+HotspotDefinition _hotspot(
+  String id,
+  List<Effect> effects, {
+  Condition? when,
+  Condition? visibleWhen,
+  NormalizedRect rect = _rect,
+  String labelKey = 'label',
+}) => HotspotDefinition(
+  id: id,
+  rect: rect,
+  labelKey: labelKey,
+  visibleWhen: visibleWhen,
+  interactions: [InteractionRule(when: when, effects: effects)],
+);
+
+/// A small, consistent case: a yard with a door into a shed.
+List<ContentIssue> _validate({
+  List<HotspotDefinition>? yardHotspots,
+  List<Effect> yardOnFirstEnter = const [],
+  SceneVisual yardVisual = _visual,
+  String? shedParent = 'yard',
+  String entryScene = 'yard',
+  List<SceneDefinition> extraScenes = const [],
+  Map<String, Set<String>> texts = const {'en': _texts},
+}) {
+  final scenes = [
+    SceneDefinition(
+      id: 'yard',
+      titleKey: 'scene_yard',
+      visual: yardVisual,
+      onFirstEnter: yardOnFirstEnter,
+      hotspots:
+          yardHotspots ??
+          [
+            _hotspot('door', const [GoToScene('shed')]),
+          ],
+    ),
+    SceneDefinition(
+      id: 'shed',
+      parentId: shedParent,
+      titleKey: 'scene_shed',
+      visual: _visual,
+    ),
+    ...extraScenes,
+  ];
+
+  return const ContentValidator().validate(
+    content: CaseContent(
+      definition: CaseDefinition(
+        id: 'case01',
+        chapters: [ChapterDefinition(id: 'ch01', entrySceneId: entryScene)],
+      ),
+      scenes: {for (final scene in scenes) scene.id: scene},
+      inspections: const {
+        'sign': InspectionDefinition(
+          id: 'sign',
+          textKey: 'sign_text',
+          visual: _visual,
+        ),
+      },
+      sceneChapters: {for (final scene in scenes) scene.id: 'ch01'},
+    ),
+    items: _items,
+    notes: _notes,
+    textKeysByLanguage: texts,
+    styles: _styles,
+  );
+}
+
+Matcher _reports(String part) =>
+    contains(predicate<ContentIssue>((issue) => '$issue'.contains(part)));
+
+void main() {
+  test('consistent content has no issues', () {
+    expect(_validate(), isEmpty);
+  });
+
+  group('references', () {
+    test('goToScene to an unknown scene', () {
+      final issues = _validate(
+        yardHotspots: [
+          _hotspot('door', const [GoToScene('shed')]),
+          _hotspot('gate', const [GoToScene('cellar')]),
+        ],
+      );
+
+      expect(issues, _reports('unknown scene "cellar"'));
+      expect(issues, _reports('scene yard / hotspot gate / rule 1'));
+    });
+
+    test('unknown item in an effect and in a condition', () {
+      final issues = _validate(
+        yardHotspots: [
+          _hotspot('door', const [GoToScene('shed')]),
+          _hotspot(
+            'box',
+            const [GiveItem('crowbar')],
+            when: const UsingItem('hammer'),
+          ),
+        ],
+      );
+
+      expect(issues, _reports('unknown item "crowbar"'));
+      expect(issues, _reports('unknown item "hammer"'));
+    });
+
+    test('unknown note and unknown inspection', () {
+      final issues = _validate(
+        yardHotspots: [
+          _hotspot('door', const [GoToScene('shed')]),
+          _hotspot('paper', const [AddNote('diary')]),
+          _hotspot('sign', const [Inspect('poster')]),
+        ],
+      );
+
+      expect(issues, _reports('unknown note "diary"'));
+      expect(issues, _reports('unknown inspection "poster"'));
+    });
+
+    test('unknown parent scene', () {
+      expect(
+        _validate(shedParent: 'garden'),
+        _reports('unknown parent scene "garden"'),
+      );
+    });
+
+    test('a parent chain that loops', () {
+      final issues = _validate(
+        extraScenes: const [
+          SceneDefinition(
+            id: 'a',
+            parentId: 'b',
+            titleKey: 'scene_yard',
+            visual: _visual,
+          ),
+          SceneDefinition(
+            id: 'b',
+            parentId: 'a',
+            titleKey: 'scene_yard',
+            visual: _visual,
+          ),
+        ],
+      );
+
+      expect(issues, _reports('parent chain loops'));
+    });
+
+    test('unknown entry scene of a chapter', () {
+      expect(
+        _validate(entryScene: 'street'),
+        _reports('unknown entry scene "street"'),
+      );
+    });
+  });
+
+  group('texts', () {
+    test('a missing text key names the key and the language', () {
+      final issues = _validate(
+        yardHotspots: [
+          _hotspot('door', const [GoToScene('shed')]),
+          _hotspot('lock', const [Say('say_opened')]),
+        ],
+      );
+
+      expect(issues, _reports('missing text "say_opened" (en)'));
+    });
+
+    test('every supported language must have every key', () {
+      final issues = _validate(
+        texts: {
+          'en': _texts,
+          'tr': {..._texts}..remove('scene_shed'),
+        },
+      );
+
+      expect(issues, hasLength(1));
+      expect(issues, _reports('missing text "scene_shed" (tr)'));
+    });
+
+    test('the generic item reaction must exist', () {
+      final issues = _validate(
+        texts: {
+          'en': {..._texts}..remove('generic_item_no_effect'),
+        },
+      );
+
+      expect(issues, _reports('missing text "generic_item_no_effect"'));
+    });
+  });
+
+  group('flags', () {
+    test('a flag that is read but never set is reported (typo guard)', () {
+      final issues = _validate(
+        yardHotspots: [
+          _hotspot('door', const [GoToScene('shed')]),
+          _hotspot('lever', const [SetFlag('shed_open')]),
+          _hotspot(
+            'window',
+            const [Say('say_locked')],
+            when: const FlagSet('shed_opn'),
+          ),
+        ],
+      );
+
+      expect(issues, hasLength(1));
+      expect(issues, _reports('flag "shed_opn" is read but never set'));
+    });
+
+    test('flags read in visibleWhen and variants count as read', () {
+      final issues = _validate(
+        yardHotspots: [
+          _hotspot(
+            'door',
+            const [GoToScene('shed')],
+            visibleWhen: const FlagNotSet('door_gone'),
+          ),
+        ],
+      );
+
+      expect(issues, _reports('flag "door_gone" is read but never set'));
+    });
+  });
+
+  group('rules', () {
+    test('two inspect effects in one rule', () {
+      final issues = _validate(
+        yardHotspots: [
+          _hotspot('door', const [GoToScene('shed')]),
+          _hotspot('sign', const [Inspect('sign'), Inspect('sign')]),
+        ],
+      );
+
+      expect(issues, _reports('more than one inspect effect'));
+    });
+
+    test('inspect together with goToScene', () {
+      final issues = _validate(
+        yardHotspots: [
+          _hotspot('door', const [Inspect('sign'), GoToScene('shed')]),
+        ],
+      );
+
+      expect(issues, _reports('inspect cannot be combined with goToScene'));
+    });
+
+    test('a rule without effects', () {
+      final issues = _validate(
+        yardHotspots: [
+          _hotspot('door', const [GoToScene('shed')]),
+          _hotspot('stone', const []),
+        ],
+      );
+
+      expect(issues, _reports('has no effects'));
+    });
+
+    test('onFirstEnter allows only say, setFlag, addNote and giveItem', () {
+      expect(
+        _validate(
+          yardOnFirstEnter: const [
+            Say('say_locked'),
+            SetFlag('seen_yard'),
+            AddNote('memo'),
+            GiveItem('key'),
+          ],
+        ),
+        isEmpty,
+      );
+
+      final issues = _validate(
+        yardOnFirstEnter: const [GoToScene('shed'), HideHotspot()],
+      );
+      expect(issues, _reports('GoToScene is not allowed here'));
+      expect(issues, _reports('HideHotspot is not allowed here'));
+    });
+  });
+
+  group('hotspots and visuals', () {
+    test('duplicate hotspot ID inside a scene', () {
+      final issues = _validate(
+        yardHotspots: [
+          _hotspot('door', const [GoToScene('shed')]),
+          _hotspot('door', const [Say('say_locked')]),
+        ],
+      );
+
+      expect(issues, _reports('duplicate hotspot ID'));
+    });
+
+    test('a hotspot rect outside the image', () {
+      final issues = _validate(
+        yardHotspots: [
+          _hotspot(
+            'door',
+            const [GoToScene('shed')],
+            rect: const NormalizedRect(x: 0.9, y: 0, width: 0.2, height: 0.5),
+          ),
+        ],
+      );
+
+      expect(issues, _reports('rect is outside 0–1'));
+    });
+
+    test('unknown placeholder style and filter preset', () {
+      final issues = _validate(
+        yardVisual: const SceneVisual(
+          placeholderStyle: 'castle',
+          filterPreset: 'sepia',
+        ),
+      );
+
+      expect(issues, _reports('unknown placeholder style "castle"'));
+      expect(issues, _reports('unknown filter preset "sepia"'));
+    });
+
+    test('overlay with a bad rect, style and text key', () {
+      final issues = _validate(
+        yardVisual: const SceneVisual(
+          placeholderStyle: 'plain',
+          overlays: [
+            TextOverlay(
+              rect: NormalizedRect(x: 0.5, y: 0.5, width: 0.6, height: 0.1),
+              textKey: 'house_number',
+              style: 'neon',
+            ),
+          ],
+        ),
+      );
+
+      expect(issues, _reports('overlay rect is outside 0–1'));
+      expect(issues, _reports('unknown overlay style "neon"'));
+      expect(issues, _reports('missing text "house_number"'));
+    });
+  });
+
+  group('reachability', () {
+    test('a scene nothing leads to is reported', () {
+      final issues = _validate(
+        extraScenes: const [
+          SceneDefinition(
+            id: 'attic',
+            titleKey: 'scene_yard',
+            visual: _visual,
+          ),
+        ],
+      );
+
+      expect(issues, hasLength(1));
+      expect(
+        issues,
+        _reports('scene attic: cannot be reached from the chapter entry'),
+      );
+    });
+
+    test('Back counts: a parent is reachable from its child', () {
+      // The chapter starts in the shed; the yard is only reachable by Back.
+      final issues = _validate(
+        entryScene: 'shed',
+        yardHotspots: const [],
+      );
+
+      expect(issues, isEmpty);
+    });
+  });
+}

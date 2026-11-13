@@ -36,6 +36,12 @@ abstract final class AppColors {
   /// Semi-transparent [warning] behind the debug flavor badge.
   static const debugBadge = Color(0x99B5524A);
 
+  /// Dark ink of typed text drawn on paper (overlay text).
+  static const ink = Color(0xFF1B1A17);
+
+  /// Shadowed grooves of letters cut into stone or metal (overlay text).
+  static const engraving = Color(0xFF23211D);
+
   /// Full black used by scene fade transitions.
   static const fade = Color(0xFF000000);
 

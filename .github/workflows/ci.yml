@@ -43,9 +43,8 @@ jobs:
       - name: Generate localizations
         run: flutter gen-l10n
 
-      # Enable in step 1.2, when build_runner is added to the project.
-      # - name: Generate code
-      #   run: dart run build_runner build --delete-conflicting-outputs
+      - name: Generate code
+        run: dart run build_runner build
 
       # Generated files are committed (CLAUDE.md section 4). If regenerating
       # changed anything, someone forgot to commit the generated output.

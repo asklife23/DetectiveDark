@@ -1,0 +1,22 @@
+{
+  "formatVersion": 1,
+  "inspections": [
+    {
+      "id": "statue_plaque",
+      "titleKey": "inspection_statue_plaque_title",
+      "textKey": "inspection_statue_plaque_text",
+      "visual": {
+        "placeholderStyle": "statue_plaque",
+        "filterPreset": "close_up",
+        "overlays": [
+          {
+            "type": "text",
+            "rect": {"x": 0.16, "y": 0.34, "width": 0.68, "height": 0.32},
+            "textKey": "statue_plaque_inscription",
+            "style": "engraved"
+          }
+        ]
+      }
+    }
+  ]
+}

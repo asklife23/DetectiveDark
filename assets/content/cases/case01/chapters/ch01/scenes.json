@@ -1,0 +1,176 @@
+{
+  "formatVersion": 1,
+  "scenes": [
+    {
+      "id": "villa_exterior",
+      "titleKey": "scene_villa_exterior",
+      "visual": {
+        "placeholderStyle": "villa_exterior",
+        "filterPreset": "night",
+        "overlays": [
+          {
+            "type": "text",
+            "rect": {"x": 0.515, "y": 0.52, "width": 0.05, "height": 0.07},
+            "textKey": "villa_house_number",
+            "style": "brass"
+          }
+        ]
+      },
+      "onFirstEnter": [
+        {"say": "say_villa_first_look"}
+      ],
+      "hotspots": [
+        {
+          "id": "door",
+          "rect": {"x": 0.36, "y": 0.40, "width": 0.14, "height": 0.44},
+          "labelKey": "hotspot_door",
+          "interactions": [
+            {"do": [{"goToScene": "villa_door_closeup"}]}
+          ]
+        },
+        {
+          "id": "statue",
+          "rect": {"x": 0.70, "y": 0.36, "width": 0.16, "height": 0.50},
+          "labelKey": "hotspot_statue",
+          "interactions": [
+            {"do": [{"goToScene": "statue_closeup"}]}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "villa_door_closeup",
+      "parentId": "villa_exterior",
+      "titleKey": "scene_villa_door_closeup",
+      "visual": {
+        "placeholderStyle": "villa_door_closed",
+        "filterPreset": "night"
+      },
+      "visualVariants": [
+        {
+          "when": {"flag": "front_door_open"},
+          "visual": {
+            "placeholderStyle": "villa_door_open",
+            "filterPreset": "night"
+          }
+        }
+      ],
+      "hotspots": [
+        {
+          "id": "lock",
+          "rect": {"x": 0.585, "y": 0.44, "width": 0.11, "height": 0.20},
+          "labelKey": "hotspot_lock",
+          "visibleWhen": {"notFlag": "front_door_open"},
+          "interactions": [
+            {
+              "when": {"usingItem": "brass_key"},
+              "do": [
+                {"setFlag": "front_door_open"},
+                {"consumeItem": "brass_key"},
+                {"say": "say_door_unlocked"}
+              ]
+            },
+            {"do": [{"say": "say_door_locked"}]}
+          ]
+        },
+        {
+          "id": "doorway",
+          "rect": {"x": 0.32, "y": 0.10, "width": 0.36, "height": 0.82},
+          "labelKey": "hotspot_doorway",
+          "visibleWhen": {"flag": "front_door_open"},
+          "interactions": [
+            {"do": [{"goToScene": "villa_hall"}]}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "statue_closeup",
+      "parentId": "villa_exterior",
+      "titleKey": "scene_statue_closeup",
+      "visual": {
+        "placeholderStyle": "statue_closeup_key",
+        "filterPreset": "night"
+      },
+      "visualVariants": [
+        {
+          "when": {"flag": "statue_key_taken"},
+          "visual": {
+            "placeholderStyle": "statue_closeup",
+            "filterPreset": "night"
+          }
+        }
+      ],
+      "hotspots": [
+        {
+          "id": "statue_body",
+          "rect": {"x": 0.36, "y": 0.10, "width": 0.28, "height": 0.62},
+          "labelKey": "hotspot_statue_body",
+          "interactions": [
+            {"do": [{"say": "say_statue_body"}]}
+          ]
+        },
+        {
+          "id": "statue_key",
+          "rect": {"x": 0.575, "y": 0.27, "width": 0.07, "height": 0.15},
+          "labelKey": "hotspot_statue_key",
+          "glint": true,
+          "interactions": [
+            {
+              "do": [
+                {"giveItem": "brass_key"},
+                {"hideHotspot": true},
+                {"setFlag": "statue_key_taken"},
+                {"say": "say_statue_key_found"}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "statue_plaque",
+          "rect": {"x": 0.39, "y": 0.76, "width": 0.22, "height": 0.13},
+          "labelKey": "hotspot_statue_plaque",
+          "interactions": [
+            {"do": [{"inspect": "statue_plaque"}]}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "villa_hall",
+      "parentId": "villa_door_closeup",
+      "titleKey": "scene_villa_hall",
+      "visual": {
+        "placeholderStyle": "villa_hall_letter",
+        "filterPreset": "interior"
+      },
+      "visualVariants": [
+        {
+          "when": {"flag": "hall_letter_taken"},
+          "visual": {
+            "placeholderStyle": "villa_hall",
+            "filterPreset": "interior"
+          }
+        }
+      ],
+      "hotspots": [
+        {
+          "id": "desk_paper",
+          "rect": {"x": 0.43, "y": 0.60, "width": 0.14, "height": 0.11},
+          "labelKey": "hotspot_desk_paper",
+          "glint": true,
+          "interactions": [
+            {
+              "do": [
+                {"addNote": "hall_letter"},
+                {"hideHotspot": true},
+                {"setFlag": "hall_letter_taken"},
+                {"say": "say_hall_letter_taken"}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

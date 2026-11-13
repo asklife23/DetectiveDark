@@ -301,7 +301,7 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
   **Kabul kriterleri:** `domain` klasörlerinde Flutter import'u yok; resolver testleri kapı/anahtar senaryosunu kapsıyor.
   **Commit:** `feat(scene_engine): add domain models and interaction rule system`
 
-### [ ] 1.2 İçerik formatı ve dikey dilim içeriği
+### [x] 1.2 İçerik formatı ve dikey dilim içeriği
 **Amaç:** Oyunu koddan ayırmak; hikaye ve bulmacalar koda dokunmadan JSON ile kurulabilsin.
 **Yapılacaklar:**
 - Yapı:
@@ -853,3 +853,12 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   `sceneId` / `hotspotId` eklendi (uçuş animasyonunun başlangıç noktası için). `ItemUsed` olayını `EffectApplier`
   üretir (bağlamdaki `usedItemId`). Sahne ve inceleme içeriği tek bir `CaseContent` olarak döner. Katman kurallarını
   import satırlarından denetleyen `test/architecture/dependency_rules_test.dart` eklendi.
+- 2026-11-13 (1.2): Paketler: `json_annotation` 4.12.0, `json_serializable` 6.15.2, `build_runner` 2.15.1. Bu
+  `build_runner` sürümünde `--delete-conflicting-outputs` bayrağı kaldırılmış (verilirse uyarıyla yok sayılıyor); CI ve
+  yerelde komut `dart run build_runner build`. `CLAUDE.md` bölüm 4 hâlâ eski bayrağı yazıyor (**kullanıcı kararı:**
+  kural metni güncellensin mi). JSON ayarları (`checked`, `disallow_unrecognized_keys`) `build.yaml`'da tek yerde.
+  Kapı kilidi iki hotspot'a ayrıldı: `lock` (kapı kapalıyken görünür) ve `doorway` (kapı açıkken görünür, tüm kapı
+  alanı): açık kapıda küçük kilit alanına dokunmak yerine kapının kendisine dokunulur; `visibleWhen` de böylece
+  dilimde kullanılmış olur. Overlay stilleri `typewriter` / `engraved` / `brass` (el yazısı fontu paketlenmediği için
+  `handwriting` yok; gerektiğinde font kararıyla eklenir). Filtre preset'leri `night` / `interior` / `close_up`.
+  Hotspot'lar listede sonra gelen üstte olacak şekilde sıralanır (üst üste binen alanlarda sonuncu kazanır).

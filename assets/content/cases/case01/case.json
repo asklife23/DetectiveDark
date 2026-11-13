@@ -1,0 +1,7 @@
+{
+  "formatVersion": 1,
+  "id": "case01",
+  "chapters": [
+    {"id": "ch01", "entrySceneId": "villa_exterior"}
+  ]
+}

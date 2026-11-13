@@ -1,0 +1,37 @@
+{
+  "formatVersion": 1,
+  "texts": {
+    "scene_villa_exterior": "Ashgrove Villa",
+    "scene_villa_door_closeup": "Front Door",
+    "scene_statue_closeup": "Garden Statue",
+    "scene_villa_hall": "Entrance Hall",
+
+    "hotspot_door": "Front door",
+    "hotspot_statue": "Garden statue",
+    "hotspot_lock": "Door lock",
+    "hotspot_doorway": "Open doorway",
+    "hotspot_statue_body": "Statue",
+    "hotspot_statue_key": "Something behind the statue's ear",
+    "hotspot_statue_plaque": "Plaque on the pedestal",
+    "hotspot_desk_paper": "Sheet of paper on the desk",
+
+    "villa_house_number": "17",
+    "statue_plaque_inscription": "FIDES ET SILENTIUM",
+
+    "say_villa_first_look": "Ashgrove Villa. No lights, no car in the drive. Somebody left in a hurry. Or never left at all.",
+    "say_door_locked": "Locked. Of course it is.",
+    "say_door_unlocked": "The key turns like it has been waiting for me. Open.",
+    "say_statue_body": "Marble, cold and patient. She has watched this garden longer than anyone alive.",
+    "say_statue_key_found": "A brass key, hooked behind her ear. People hide things where nobody thinks to look up.",
+    "say_hall_letter_taken": "A letter, left out in the open. Careless. Or meant to be found.",
+
+    "item_brass_key_name": "Brass key",
+    "item_brass_key_description": "Old and heavy, worn smooth by years of use. It was hidden on the garden statue.",
+
+    "note_hall_letter_title": "Unsigned letter",
+    "note_hall_letter_body": "You were told what would happen if you kept the ledger.\n\nMidnight. Come alone, and leave the door on the latch.\n\nThere is no signature. The ink is still sharp.",
+
+    "inspection_statue_plaque_title": "Plaque",
+    "inspection_statue_plaque_text": "\"Faith and silence.\" A family motto, cut deep into the brass. Somebody here valued the second word more."
+  }
+}

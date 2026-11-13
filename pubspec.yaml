@@ -20,11 +20,14 @@ dependencies:
   go_router: ^18.1.4
   # The version is pinned by flutter_localizations.
   intl: any
+  json_annotation: ^4.12.0
 
 dev_dependencies:
   bloc_test: ^10.0.0
+  build_runner: ^2.15.1
   flutter_test:
     sdk: flutter
+  json_serializable: ^6.15.2
   mocktail: ^1.0.5
   very_good_analysis: ^10.3.0
 
@@ -33,10 +36,15 @@ flutter:
   generate: true
   uses-material-design: true
 
-  # Font license texts, shown on the app's license page.
   assets:
+    # Font license texts, shown on the app's license page.
     - assets/fonts/courier_prime/OFL.txt
     - assets/fonts/ibm_plex_sans/OFL.txt
+    # Game content (scenes, items, notes, texts). A folder entry covers only
+    # the files directly inside it, so every chapter folder is listed.
+    - assets/content/common/
+    - assets/content/cases/case01/
+    - assets/content/cases/case01/chapters/ch01/
 
   # Fonts are bundled (no runtime download): the game must work offline.
   # Both cover Latin Extended, so new languages need no new fonts.
