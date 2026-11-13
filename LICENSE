@@ -1,0 +1,33 @@
+Copyright (c) 2026 Ahmet Süha KILIÇ. All rights reserved.
+
+This repository is source-available for viewing only. It is not open source.
+
+You may view and read the contents of this repository on GitHub for personal,
+non-commercial evaluation (for example, to review the author's work).
+
+Without prior written permission from the copyright holder, you may not:
+
+- use, run, copy, modify, merge, publish, distribute, sublicense or sell the
+  source code, the game content (story, texts, puzzles, images, audio) or any
+  part of them;
+- create derivative works based on them;
+- use them to train machine learning models.
+
+No license or other right is granted by implication, estoppel or otherwise.
+The rights GitHub's Terms of Service give to GitHub and to its users (viewing
+and forking the repository on GitHub) are not affected.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE.
+
+Third-party components
+
+The bundled fonts are not covered by this notice. They are licensed under the
+SIL Open Font License 1.1 and keep their own license files:
+
+- Courier Prime: assets/fonts/courier_prime/OFL.txt
+- IBM Plex Sans: assets/fonts/ibm_plex_sans/OFL.txt
+
+Third-party packages listed in pubspec.yaml remain under their own licenses.

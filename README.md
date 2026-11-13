@@ -111,4 +111,7 @@ flutter test
 
 ## License
 
-_To be decided._
+Source available for viewing only; all rights reserved. See [`LICENSE`](LICENSE).
+
+The bundled fonts (Courier Prime, IBM Plex Sans) keep their own license, the SIL Open Font License 1.1
+(`assets/fonts/*/OFL.txt`).
