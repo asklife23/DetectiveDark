@@ -110,7 +110,7 @@ Her feature içinde:
 - Feature'lar arası olaylar `core/events` içindeki `GameEventBus` üzerinden akar
   (`SceneEntered`, `ItemObtained`, `ItemUsed`, `NoteAdded`, `DetectiveSaid`...).
 - DTO (`data/models`) ile entity (`domain/entities`) ayrıdır; dönüşüm `data` katmanında yapılır.
-- Hata yönetimi: `data` katmanı exception'ları yakalar, `domain`'e `Result<T>` (Success / Failure) döner.
+- Hata yönetimi: `data` katmanı exception'ları yakalar, `domain`'e `Result<T>` (`Success` / `Failed`; `Failed` bir `Failure` taşır) döner.
   UI'a exception sızmaz.
 - İlerlemenin tek doğruluk kaynağı `ProgressRepository`'dir. Sahne, eşya paneli, not defteri ve chat bu kaynaktan okur.
 - **Platforma özel servisler** (satın alma / sahiplik, hesap, bulut kaydı) domain arayüzleri arkasındadır

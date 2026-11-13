@@ -144,7 +144,7 @@ Sonradan kurmak, yazılmış kodu toptan düzeltmek demektir.
   (Git boş klasörü takip etmez; boş klasör açma).
 - `app/app.dart` (`MaterialApp.router`), `app/bootstrap.dart` (hata yakalama: `FlutterError.onError`,
   `PlatformDispatcher.instance.onError`; `Bloc.observer`), `core/logging/app_logger.dart`,
-  `core/error/result.dart` (`sealed class Result<T>`: `Success` / `Failure`) ve `Failure` türleri.
+  `core/error/result.dart` (`sealed class Result<T>`: `Success` / `Failed`) ve `Failure` türleri.
 - Yatay yön kilidi ve tam ekran: `SystemChrome.setPreferredOrientations`, `SystemUiMode.immersiveSticky`,
   Android manifest `screenOrientation="sensorLandscape"`, iOS `Info.plist` yön ayarları.
   **Kabul kriterleri:** `flutter analyze` 0 sorun; uygulama yatay ve tam ekran açılıyor (boş koyu ekran).
