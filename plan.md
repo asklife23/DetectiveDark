@@ -9,9 +9,38 @@ Android Studio terminalinde Claude'a yaz:
 
 - `Aşama 0.1'i yap` → sadece o adım
 - `Aşama 1'i yap` → aşamanın kalan tüm adımları (her adım ayrı commit)
-- `Sıradaki adım` → ilk işaretlenmemiş adım
+- `Sıradaki adım` → **çalışma sırasına** göre ilk işaretlenmemiş adım (aşağıya bak)
 - `Durum` → ne bitti, sırada ne var
 - `Açıkla 1.3` → o adımı tekrar anlat
+
+## Çalışma sırası
+
+Aşamalar numara sırasıyla değil, bu sırayla yapılır. Numaralar değişmez; dosyadaki yerleri de aynı kalır.
+Önce oyunun eğlenceli olduğu doğrulanır, sonra hesap ve bulut eklenir.
+
+1. Aşama 0 — Proje temeli ✔
+2. Aşama 1 — Oyun motoru
+3. Aşama 2 — Kalıcı kayıt
+4. Aşama 5 — Bulmacalar ve vaka akışı
+5. Aşama 7, **yalnızca Bölüm 1** (7.1–7.4): hikaye, görseller, Bölüm 1 içeriği ve 10–15 kişiyle oyun testi
+6. Aşama 3 — Supabase ve kimlik
+7. Aşama 4 — Bulut eşitleme
+8. Aşama 6 — Oyun hissi ve uygulama kabuğu
+9. Aşama 7'nin kalanı (7.5: Bölüm 2–4)
+10. Aşama 8 → 9 → 10 → 11
+
+**Sıradan doğan bağımlılıklar:**
+- **Aşama 5 → Aşama 2:** Bulmaca durumu, bölüm ve suçlama hakları ilerlemeye eklenir. Kayıt şekli değişirse payload
+  sürümü artar ve 2.2'deki migration zinciriyle taşınır (eski kayıt bozulmaz).
+- **Aşama 5 → Aşama 3:** Bölüm 1 sonundaki hesap bağlama önerisi 5.4'ten 3.3'e taşındı. 5.4 bölüm sonu ekranını
+  hesapsız kurar; öneri Aşama 3 gelince o ekrana eklenir.
+- **Aşama 5 → Aşama 6:** 5.3'teki kayıt inceleme sessiz kurulur; sesi 6.1'de bağlanır (geçişlerdeki `sfx` gibi).
+- **Aşama 7 (Bölüm 1) → Aşama 5:** Hikaye ve bulmaca zinciri 5'te hazırlanan bulmaca türleriyle kurulur.
+  Yeni bir bulmaca türü gerekirse önce Aşama 5'e adım olarak eklenir.
+- **Oyun testi (7.4) Aşama 3, 4 ve 6'dan önce:** Kayıt yereldir (Aşama 2), hesap veya bulut gerekmez. Ses, ana menü ve
+  cila henüz yoktur; test bulmacaları, hikayeyi ve akışı ölçer. Test sürümünün dağıtım yolu (APK, Windows zip veya
+  Play iç test) 7.4 detaylandırılırken seçilir.
+- **Aşama 6 → Aşama 3–4:** Ayarlardaki hesap ve eşitleme durumu (6.4) bu sırayla hazır olur; değişiklik gerekmez.
 
 ---
 
@@ -476,6 +505,8 @@ Bu aşamadaki kod platform servisi arayüzlerinin arkasında kalır.
   Supabase Google sağlayıcı ayarı. Apple tarafı Apple Developer hesabı ister: kod hazırlanır, iOS testi Aşama 10'da.
 - Geçici hesap ekranı (Aşama 6'da ayarlarla birleşir): durum (Misafir / Google ile bağlı), "İlerlemeni güvenceye al",
   "Hesabım var", "Hesabı sil".
+- **Bölüm 1 sonunda hesap bağlama önerisi** (5.4'ten taşındı): 5.4'te kurulan bölüm sonu ekranına, anonim oyuncu için
+  "İlerlemeni güvenceye al" önerisi eklenir. Reddedilebilir; oyunu bekletmez.
 - **Hesap silme** (iki mağazada da zorunlu): Supabase Edge Function `delete-account` (secret anahtar sadece
   fonksiyon ortamında) → kullanıcı ve kayıtları silinir; yerel veriler temizlenir.
   **Commit:** `feat(auth): link Google and Apple identities and add account deletion`
@@ -530,13 +561,16 @@ Bu aşamadaki kod platform servisi arayüzlerinin arkasında kalır.
 *(Başlarken: açık kararları sor, adımları Aşama 1 seviyesinde detaylandır, onay al.)*
 
 **Neden:** Oyunu "sahne gezme"den "dedektif oyunu"na çeviren aşama: kilitler, kayıtlar, bölümler ve final.
+**Sıra:** Aşama 2'den hemen sonra, Aşama 3–4'ten önce yapılır (bkz. "Çalışma sırası"). Hesap ve ses gerektiren
+parçalar işaretlidir; ilgili aşama gelince bağlanır.
 
 - [ ] 5.1 Bulmaca altyapısı: `OpenPuzzle` etkisi, `PuzzleDefinition` (tür, çözüm, `onSolved` etkileri), ortak bulmaca çerçevesi (aç, dene, kapat).
 - [ ] 5.2 Kilit bulmacaları: rakamlı tuş takımı, döner kombinasyon kilidi, saat kadranı, harf kilidi. Hepsi JSON'dan.
 - [ ] 5.3 Kayıt inceleme (`PlayMedia`): oynat / durdur / kare kare, ekranda zaman damgası; biçim kararı (kare dizisi veya video).
-- [ ] 5.4 Bölüm akışı: `case.json`'da bölüm bitiş koşulları, gerilimli bölüm sonu ekranı, Bölüm 1 sonunda hesap bağlama önerisi,
+  Ses Aşama 6 gelince bağlanır (6.1); bu adımda medya sessiz oynar.
+- [ ] 5.4 Bölüm akışı: `case.json`'da bölüm bitiş koşulları, gerilimli bölüm sonu ekranı,
   bölüm kilidi için `EntitlementRepository` arayüzü (dev'de hepsi açık; mobil satın alma Aşama 8'de,
-  Steam sahipliği Aşama 11'de).
+  Steam sahipliği Aşama 11'de). Bölüm 1 sonundaki hesap bağlama önerisi Aşama 3 gelince bağlanır (3.3).
 - [ ] 5.5 Suçlama: 7 şüpheli; isim + 2–3 kanıt (not defterinden); doğru cevap ve geçerli kanıtlar `case.json`'da;
   2 hak; sonra "Vakayı baştan oyna" / "Cevabı gör"; paylaşılabilir sonuç ekranı (deneme sayısı, süre, ipucu sayısı).
 - [ ] 5.6 İpucu sistemi: ilerlemeye göre bağlamsal, kademeli ipuçları (yön → net → cevap); uzun hareketsizlikte
@@ -545,7 +579,8 @@ Bu aşamadaki kod platform servisi arayüzlerinin arkasında kalır.
 ## Aşama 6 — Oyun hissi ve uygulama kabuğu
 *(Başlarken: açık kararları sor, adımları detaylandır, onay al.)*
 
-- [ ] 6.1 Ses: ambiyans döngüsü, efektler, geçişlerde `sfx` + `holdMs` (karanlık ses bitene kadar uzayabilir), ses ayarları, arka planda susma.
+- [ ] 6.1 Ses: ambiyans döngüsü, efektler, geçişlerde `sfx` + `holdMs` (karanlık ses bitene kadar uzayabilir), kayıt
+  incelemenin (5.3) sesi, ses ayarları, arka planda susma.
 - [ ] 6.2 Dokunsal geri bildirim ve mikro animasyonlar.
 - [ ] 6.3 Uygulama ikonu, açılış ekranı (native splash), ana menü (Devam / Yeni Oyun / Ayarlar), yeni oyun onayı.
 - [ ] 6.4 Ayarlar: ses, dil (birden fazla dil desteklendiğinde), hesap ve eşitleme durumu, gizlilik politikası bağlantısı, sürüm bilgisi.
@@ -554,6 +589,10 @@ Bu aşamadaki kod platform servisi arayüzlerinin arkasında kalır.
 
 ## Aşama 7 — Hikaye, içerik ve görseller
 *(Başlarken: açık kararları sor, adımları detaylandır, onay al.)*
+
+**Sıra:** İki parçada yapılır (bkz. "Çalışma sırası"). 7.1–7.4 (Bölüm 1 ve oyun testi) Aşama 5'ten hemen sonra;
+7.5 (Bölüm 2–4) Aşama 6'dan sonra. Oyun testinin sonucu Aşama 3'e geçmeden önce değerlendirilir; bulmaca veya
+hikaye değişikliği gerekiyorsa önce o yapılır.
 
 - [ ] 7.1 Vaka 1 kurgusu (kullanıcıyla birlikte): olay, kurban, 7 şüpheli, gerçek çözüm, bulmaca zinciri, bölüm kapanışları.
   Sonuç `docs/story/` altında.
@@ -566,8 +605,8 @@ Bu aşamadaki kod platform servisi arayüzlerinin arkasında kalır.
   Her görsel için üretim kaydı (araç, model, tarih, prompt, elle yapılan düzenlemeler): `docs/art/ai-usage.md`
   (Steam AI açıklamasının kaynağı, bkz. 11.5).
 - [ ] 7.4 Bölüm 1 içeriği (sahne sayısı hikayeyle belirlenir; tahmin ~40–50, inceleme pencereleri yakın plan
-  ihtiyacını azaltır) ve oyun testi; yön bulma (harita / mekan listesi) kararı.
-- [ ] 7.5 Bölüm 2–4 içeriği.
+  ihtiyacını azaltır) ve **10–15 kişiyle oyun testi**; yön bulma (harita / mekan listesi) kararı.
+- [ ] 7.5 Bölüm 2–4 içeriği. *(Aşama 6'dan sonra yapılır.)*
 
 ## Aşama 8 — Para kazanma (mobil)
 *(Başlarken: açık kararları sor, ADR yaz.)*
@@ -636,7 +675,8 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   uygulama kimliği `io.github.asklife23.detectivedark`, GitHub deposu `asklife23/DetectiveDark`.
   Yerel klasör de sonradan `C:\flutter\DetectiveDark` olarak yeniden adlandırıldı.
 - 2026-11-11 (0.1): Hedef olmayan `linux/`, `macos/`, `web/` platform klasörleri silindi. `windows/` kaldı (adım 0.6).
-  macOS gerektiğinde `flutter create --platforms=macos .` ile geri eklenir (adım 11.7).- 2026-11-11 (0.2): Kullanıcı isteğiyle `.gitattributes` eklendi (`* text=auto eol=lf`, `.bat`/`.cmd` için `crlf`,
+  macOS gerektiğinde `flutter create --platforms=macos .` ile geri eklenir (adım 11.7).
+- 2026-11-11 (0.2): Kullanıcı isteğiyle `.gitattributes` eklendi (`* text=auto eol=lf`, `.bat`/`.cmd` için `crlf`,
   görseller/fontlar/sesler `binary`); depo LF'ye normalleştirildi. Ayrı commit.
 - 2026-11-11 (0.2): `Result<T>` alt sınıfları `Success` / **`Failed`** olarak adlandırıldı; `Failure` adı hata
   türlerinin (`ContentFailure`, `StorageFailure`, `NetworkFailure`, `UnexpectedFailure`) sealed üst sınıfına kaldı.
@@ -670,3 +710,8 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   Şablondaki pencere boyutu dış çerçeveyi kapsıyordu; runner, boyutu içerik alanı sayacak şekilde değiştirildi
   (1280×720 mantıksal, 16:9) ve 960×540 minimum eklendi (`WM_GETMINMAXINFO`, DPI'a göre). Steam girişi `prod`
   flavor + `BuildTarget.steam`; debug etiketi `AppConfig.debugLabel` (ör. "PROD · STEAM"). `.run/steam` eklendi.
+- 2026-11-13: Aşama sırası değişti: 1 → 2 → 5 → 7 (yalnızca Bölüm 1 ve oyun testi) → 3 → 4 → 6 → 7'nin kalanı
+  (Bölüm 2–4) → 8 → 9 → 10 → 11. Numaralar aynı kaldı; sıra "Çalışma sırası" bölümünde. Gerekçe: Önce oyunun
+  eğlenceli olduğunu doğrula; bulut eşitleme eğlenceyi etkilemez. Bölüm 1 sonundaki hesap bağlama önerisi 5.4'ten
+  3.3'e, kayıt incelemenin sesi 5.3'ten 6.1'e taşındı. `Sıradaki adım` komutu artık bu sırayı izler (CLAUDE.md
+  güncellendi).

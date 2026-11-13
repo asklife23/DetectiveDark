@@ -36,13 +36,13 @@ Kullanıcı terminalde şu tür komutlar yazar (yazım farklılıklarını aynı
 |---|---|
 | `Aşama 1.2'yi yap` / `aşama 1 kısım 2` | Sadece o adımı uygula, sonra dur. |
 | `Aşama 1'i yap` | O aşamanın tamamlanmamış adımlarını sırayla uygula. Her adım ayrı commit. Aşama bitince dur. |
-| `Sıradaki adım` | `plan.md`'deki ilk işaretlenmemiş adımı uygula. |
+| `Sıradaki adım` | `plan.md`'deki **"Çalışma sırası"na** göre ilk işaretlenmemiş adımı uygula (dosyadaki ilk kutu değil). |
 | `Durum` | Biten adımlar, sıradaki adım, açık kararlar. Kod yazma. |
 | `Açıkla 1.3` | O adımda ne yapıldığını ve nedenini tekrar anlat. Kod yazma. |
 
 ### Her adımın akışı
 1. `plan.md`'yi oku. Adımın **Amaç**, **Yapılacaklar** ve **Kabul kriterleri** kısımlarını uygula.
-   Önceki adımlar bitmemişse uyar ve devam etmek için onay iste.
+   Çalışma sırasına göre önceki adımlar bitmemişse uyar ve devam etmek için onay iste.
 2. Başlamadan önce 3–6 satırlık Türkçe mini plan yaz: ne yapacaksın, hangi dosyalara dokunacaksın.
 3. Adımda **KULLANICI** etiketli bir iş varsa (hesap açmak, panelde ayar yapmak vb.) o noktada dur,
    adım adım net talimat ver ve kullanıcının "tamam" demesini bekle.
