@@ -4,6 +4,7 @@ import 'package:detective_dark/app/game/item_inspection.dart';
 import 'package:detective_dark/core/events/game_event.dart';
 import 'package:detective_dark/core/events/game_event_bus.dart';
 import 'package:detective_dark/core/l10n/l10n.dart';
+import 'package:detective_dark/core/theme/app_colors.dart';
 import 'package:detective_dark/core/theme/app_durations.dart';
 import 'package:detective_dark/core/theme/app_spacing.dart';
 import 'package:detective_dark/core/widgets/flight_layer.dart';
@@ -11,6 +12,9 @@ import 'package:detective_dark/core/widgets/fly_anchors.dart';
 import 'package:detective_dark/core/widgets/hud_icon_button.dart';
 import 'package:detective_dark/features/inventory/presentation/cubit/inventory_cubit.dart';
 import 'package:detective_dark/features/inventory/presentation/widgets/item_sidebar.dart';
+import 'package:detective_dark/features/notebook/presentation/cubit/notebook_cubit.dart';
+import 'package:detective_dark/features/notebook/presentation/widgets/notebook_button.dart';
+import 'package:detective_dark/features/notebook/presentation/widgets/notebook_screen.dart';
 import 'package:detective_dark/features/scene_engine/presentation/bloc/scene_bloc.dart';
 import 'package:detective_dark/features/scene_engine/presentation/widgets/scene_view.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +28,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// - a tap on the scene is sent to the scene bloc together with the item
 ///   selected in the inventory, then the selection is cleared;
 /// - a long press on an item opens the examine card of the scene engine;
-/// - a collected item flies from the scene into the item panel.
+/// - a collected item flies from the scene into the item panel, a
+///   collected note into the notebook button;
+/// - the notebook opens above the scene.
 ///
 /// It also owns the system back button: Back first closes what is open,
 /// then leaves the close-up; in a main scene a second press exits the app.
@@ -51,20 +57,40 @@ class _GameHudState extends State<GameHud> {
   bool _showHotspots = false;
   Timer? _exitTimer;
   StreamSubscription<ItemObtained>? _itemObtained;
+  StreamSubscription<NoteAdded>? _noteAdded;
 
   @override
   void initState() {
     super.initState();
-    _itemObtained = context.read<GameEventBus>().on<ItemObtained>().listen(
-      _onItemObtained,
-    );
+    final bus = context.read<GameEventBus>();
+    _itemObtained = bus.on<ItemObtained>().listen(_onItemObtained);
+    _noteAdded = bus.on<NoteAdded>().listen(_onNoteAdded);
   }
 
   @override
   void dispose() {
     _exitTimer?.cancel();
     unawaited(_itemObtained?.cancel());
+    unawaited(_noteAdded?.cancel());
     super.dispose();
+  }
+
+  /// A square in the middle of [rect]: where a flying icon starts.
+  Rect _iconRect(Rect rect) => Rect.fromCenter(
+    center: rect.center,
+    width: rect.shortestSide,
+    height: rect.shortestSide,
+  );
+
+  /// The collected paper flies into the notebook button.
+  Future<void> _onNoteAdded(NoteAdded event) async {
+    final from = _tapRects[event.hotspotId];
+    if (from == null || !mounted) return;
+    await _flightKey.currentState?.fly(
+      from: _iconRect(from),
+      to: () => _anchors.rectOf(FlyAnchors.notebookButton),
+      child: const NotePaperIcon(),
+    );
   }
 
   void _onHotspotTap(String hotspotId) {
@@ -89,14 +115,8 @@ class _GameHudState extends State<GameHud> {
     final items = context.read<InventoryCubit>().state.items;
     final item = items.where((item) => item.id == event.itemId).firstOrNull;
     if (item != null) {
-      // Fly a square icon out of the middle of the hotspot.
-      final start = Rect.fromCenter(
-        center: from.center,
-        width: from.shortestSide,
-        height: from.shortestSide,
-      );
       await _flightKey.currentState?.fly(
-        from: start,
+        from: _iconRect(from),
         to: () =>
             _anchors.rectOf(FlyAnchors.item(item.id)) ??
             _anchors.rectOf(FlyAnchors.itemPanel),
@@ -108,6 +128,12 @@ class _GameHudState extends State<GameHud> {
 
   /// Android system back (button or gesture).
   void _onSystemBack() {
+    final notebook = context.read<NotebookCubit>();
+    if (notebook.state.isOpen) {
+      notebook.closeNotebook();
+      return;
+    }
+
     final bloc = context.read<SceneBloc>();
     final state = bloc.state;
     final hasSomethingToClose =
@@ -171,15 +197,39 @@ class _GameHudState extends State<GameHud> {
                     ],
                   ),
                 ),
-                SafeArea(
-                  left: false,
-                  child: ItemSidebar(
-                    arrivingItemIds: _arrivingItems,
-                    onExamine: (item) =>
-                        bloc.add(InspectionRequested(inspectionForItem(item))),
+                ColoredBox(
+                  color: AppColors.surface,
+                  child: SafeArea(
+                    left: false,
+                    child: SizedBox(
+                      width: AppSizes.sidebarWidth,
+                      child: Column(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: AppSpacing.sm,
+                            ),
+                            child: NotebookButton(),
+                          ),
+                          Expanded(
+                            child: ItemSidebar(
+                              arrivingItemIds: _arrivingItems,
+                              onExamine: (item) => bloc.add(
+                                InspectionRequested(inspectionForItem(item)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
+            ),
+            BlocSelector<NotebookCubit, NotebookState, bool>(
+              selector: (state) => state.isOpen,
+              builder: (context, isOpen) =>
+                  isOpen ? const NotebookScreen() : const SizedBox.shrink(),
             ),
             FlightLayer(key: _flightKey),
           ],

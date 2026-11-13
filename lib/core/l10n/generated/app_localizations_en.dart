@@ -33,5 +33,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inventoryEmpty => 'Nothing yet';
 
   @override
+  String get notebookTooltip => 'Notebook';
+
+  @override
+  String get notebookTabDocuments => 'Documents';
+
+  @override
+  String get notebookTabObservations => 'Observations';
+
+  @override
+  String get notebookTabSuspects => 'Suspects';
+
+  @override
+  String get notebookEmptyDocuments =>
+      'No papers yet. Somebody always leaves something behind.';
+
+  @override
+  String get notebookEmptyObservations =>
+      'Nothing worth writing down. Not yet.';
+
+  @override
+  String get notebookEmptySuspects => 'No names. Only shadows, so far.';
+
+  @override
+  String get notebookSelectHint => 'Pick a note to read it.';
+
+  @override
   String get debugHotspotsTooltip => 'Show hotspots';
 }

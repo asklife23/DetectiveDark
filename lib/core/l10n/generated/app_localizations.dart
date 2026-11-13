@@ -142,6 +142,54 @@ abstract class AppLocalizations {
   /// **'Nothing yet'**
   String get inventoryEmpty;
 
+  /// Label of the HUD button that opens the notebook, and title of the notebook.
+  ///
+  /// In en, this message translates to:
+  /// **'Notebook'**
+  String get notebookTooltip;
+
+  /// Notebook tab: letters, clippings, receipts, photos.
+  ///
+  /// In en, this message translates to:
+  /// **'Documents'**
+  String get notebookTabDocuments;
+
+  /// Notebook tab: conclusions the detective has drawn.
+  ///
+  /// In en, this message translates to:
+  /// **'Observations'**
+  String get notebookTabObservations;
+
+  /// Notebook tab: one file per suspect.
+  ///
+  /// In en, this message translates to:
+  /// **'Suspects'**
+  String get notebookTabSuspects;
+
+  /// Shown in the Documents tab of the notebook while it is empty. Atmospheric, in the voice of the detective.
+  ///
+  /// In en, this message translates to:
+  /// **'No papers yet. Somebody always leaves something behind.'**
+  String get notebookEmptyDocuments;
+
+  /// Shown in the Observations tab of the notebook while it is empty. Atmospheric, in the voice of the detective.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing worth writing down. Not yet.'**
+  String get notebookEmptyObservations;
+
+  /// Shown in the Suspects tab of the notebook while it is empty. Atmospheric, in the voice of the detective.
+  ///
+  /// In en, this message translates to:
+  /// **'No names. Only shadows, so far.'**
+  String get notebookEmptySuspects;
+
+  /// Shown on the right page of the notebook while no note is selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a note to read it.'**
+  String get notebookSelectHint;
+
   /// Developer tool, visible only in dev builds: toggles the outlines of the tappable areas.
   ///
   /// In en, this message translates to:

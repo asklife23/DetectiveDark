@@ -19,6 +19,9 @@ abstract final class AppSizes {
   /// Width of the item panel on the right edge.
   static const double sidebarWidth = 72;
 
+  /// Diameter of the unread-notes badge on the notebook button.
+  static const double badge = 18;
+
   /// Border of the selected inventory slot.
   static const double selectedBorder = 2.5;
 

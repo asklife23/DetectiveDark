@@ -139,3 +139,29 @@
   widget'ın ekrandaki gerçek konumunu ve boyutunu (`RenderBox`) öğrenmenin yolu budur. `FlyAnchors` bu anahtarları
   isimle saklar ("hotspot:statue_key", "item:brass_key"), böylece başlangıç ve bitiş noktaları farklı feature'larda
   olsa da `app/` katmanı ikisini de bulabilir.
+
+### Adım 1.6 — Not defteri (2026-11-13)
+- **Ne yaptık:** Not defterini ekledik. Eşya panelinin üstünde defter düğmesi var; okunmamış not varsa üstünde sayı
+  rozeti çıkıyor. Düğmeye basınca defter sahnenin üstünde açılıyor: üç sekme (Documents / Observations / Suspects),
+  solda not listesi, sağda seçilen notun metni. `NotebookCubit` toplanan notları ilerlemeden okuyup katalogdaki
+  başlık ve metinle birleştiriyor. Bir nota dokununca `MarkNoteRead` use case'i onu ilerlemede "okundu" işaretliyor.
+  Holdeki kağıt alınınca küçük bir kağıt ikonu defter düğmesine uçuyor.
+- **Neden:** Bulmacaların cevapları çoğu zaman notlarda olacak ve finalde kanıtlar buradan seçilecek; defter oyunun
+  hafızası. "Okundu" bilgisini ekranda değil ilerlemede tutuyoruz: Aşama 2'de kayıt kalıcı olunca uygulamayı kapatıp
+  açtığında rozet yeniden belirmeyecek. Defter bir router sayfası değil, sahnenin üstündeki bir katman; böylece
+  alttaki oyun durumu (sahne, seçim, geçiş) hiç bozulmuyor ve Geri tuşu önce defteri kapatıyor.
+- **Önemli dosyalar:** `lib/features/notebook/presentation/cubit/notebook_cubit.dart`,
+  `lib/features/notebook/presentation/widgets/notebook_screen.dart`, `notebook_button.dart`,
+  `lib/features/notebook/domain/usecases/mark_note_read.dart`, `lib/core/di/register_notebook.dart`,
+  `lib/app/game/game_hud.dart`, `test/app/game/notebook_flow_test.dart`.
+- **Telefonda nasıl test edilir:** Oyunu aç (dev), anahtarı al, kapıyı aç, açık kapıdan hole gir. Masadaki parlayan
+  kağıda dokun: kağıt kaybolur, sağ üstteki defter düğmesinde "1" rozeti belirir. Düğmeye bas, "Unsigned letter"
+  satırına dokun: mektup sağda okunur. Defteri kapat: rozet gitmiş olmalı. Diğer sekmelerde atmosferik boş metinler
+  görünmeli. Telefonun geri tuşu defteri kapatmalı, sahneyi değiştirmemeli.
+- **Öğrenme notu:** Bu adımda **use case**'in neden ayrı bir sınıf olduğunu görmek kolay: `MarkNoteRead` üç satırlık
+  bir iş kuralı ("not okunmamışsa okundu yap ve kaydet"), ama arayüzden bağımsız olduğu için widget'sız test
+  ediliyor ve yarın başka bir yerden (ör. finalde kanıt seçerken) de çağrılabilir. Cubit'te iki tür veri yan yana
+  duruyor: ilerlemeden gelen kalıcı veri (hangi notlar var, okundu mu) ve yalnızca ekrana ait geçici veri (defter
+  açık mı, hangi sekme, hangi not seçili). Kural basit: uygulama kapanıp açılınca geri gelmesi gereken şey
+  ilerlemeye, gerisi cubit durumuna yazılır. `BlocSelector` ile düğme yalnızca okunmamış sayısını dinliyor; defterin
+  içinde sekme değiştirmek düğmeyi yeniden çizdirmiyor.

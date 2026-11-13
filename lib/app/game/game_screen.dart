@@ -6,6 +6,7 @@ import 'package:detective_dark/app/game/game_texts_cubit.dart';
 import 'package:detective_dark/core/content/content_text_scope.dart';
 import 'package:detective_dark/core/events/game_event_bus.dart';
 import 'package:detective_dark/features/inventory/presentation/cubit/inventory_cubit.dart';
+import 'package:detective_dark/features/notebook/presentation/cubit/notebook_cubit.dart';
 import 'package:detective_dark/features/scene_engine/presentation/bloc/scene_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -39,6 +40,13 @@ class GameScreen extends StatelessWidget {
         BlocProvider(
           create: (_) {
             final cubit = getIt<InventoryCubit>();
+            unawaited(cubit.load());
+            return cubit;
+          },
+        ),
+        BlocProvider(
+          create: (_) {
+            final cubit = getIt<NotebookCubit>();
             unawaited(cubit.load());
             return cubit;
           },

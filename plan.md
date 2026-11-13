@@ -441,7 +441,7 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
   **Kabul kriterleri:** Kabul senaryosunun 1–7. adımları telefonda ve Windows'ta çalışıyor (dedektif mesajları hariç).
   **Commit:** `feat(inventory): add item sidebar with selection, use and collect animation`
 
-### [ ] 1.6 Not defteri
+### [x] 1.6 Not defteri
 **Amaç:** Okunan her şeyin toplandığı ve ileride finalde kanıt seçilecek olan defteri kurmak.
 **Yapılacaklar:**
 - `notebook/domain`: `MarkNoteRead` use case (ilerlemeye yazar). Okundu bilgisi `GameProgress`'tedir; Aşama 2'den
@@ -887,3 +887,18 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   genel tepkiyi verir ve seçimi temizler; oyuncu sahne değiştirmek için ikinci kez dokunmak zorunda kalır. Kural
   `CLAUDE.md` bölüm 6'da açıkça yazılı olduğu için değiştirilmedi; oyun testinde rahatsız ederse "eşya kuralı olmayan
   hotspot'ta seçimi bırak ve normal etkileşimi çalıştır" seçeneği değerlendirilebilir.
+- 2026-11-13 (1.6): Defterin açık/kapalı durumu `NotebookCubit`'te (arayüz durumu); `GameHud` açıkken
+  `NotebookScreen`'i sahnenin üstüne koyar ve sistem Geri tuşunda önce onu kapatır. Okunmamış not listede kalın
+  yazılır; nota dokununca `MarkNoteRead` ilerlemeye yazar. Kağıt dokusu yerine düz kağıt rengi kullanıldı (doku görseli
+  7.3'teki sanat işiyle gelir). `GameHud` state sınıfı 150 satırı aştı; 1.8'deki cilada uçuş mantığı ayrı bir sınıfa
+  alınacak.
+- 2026-11-13: **DEVAM NOTU** (kullanım limiti nedeniyle 1.6'dan sonra duruldu)
+  - **Biten:** 1.1–1.6 commit'li ve push'lu. Kalite kapısı son durumda: format OK, analyze 0 sorun, test 302/302.
+  - **Cihaz doğrulaması:** 1.4 ve 1.5 telefonda ve Windows'ta doğrulandı. 1.6 **yalnızca telefonda** doğrulandı
+    (kağıt alınıyor, rozet çıkıyor, mektup defterde okunuyor). **1.6'nın Windows'ta fareyle doğrulaması yapılmadı**;
+    1.7'ye başlamadan önce yapılmalı (defter düğmesi, sekmeler, nota tıklama, dışına tıklayınca kapanma).
+  - **Sırada:** 1.7 (dedektifin iç sesi: `ChatCubit`, `ChatBar`, `ChatHistorySheet`; mesajlar zaten ilerlemedeki
+    `chatLog`'da), sonra 1.8 (paylaşılan senaryo fonksiyonu + `integration_test`, profil modunda performans, README,
+    `GameHud` sadeleştirme), ardından `phase-1` etiketi.
+  - **Araçlar:** sahne önizlemeleri için `flutter test tool/render_scenes_test.dart`. Telefonda sahne viewport'u
+    panel yüzünden sola kayık: ekran pikselinde sol kenar ≈ 187, genişlik 1920 (2400×1080 ekran).

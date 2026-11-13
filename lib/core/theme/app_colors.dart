@@ -36,6 +36,15 @@ abstract final class AppColors {
   /// Semi-transparent [warning] behind the debug flavor badge.
   static const debugBadge = Color(0x99B5524A);
 
+  /// Aged paper: the pages of the notebook.
+  static const paper = Color(0xFFD9D0B9);
+
+  /// Shaded paper: the selected line and the edges of a page.
+  static const paperShade = Color(0xFFBFB59C);
+
+  /// Faded ink for secondary text on paper.
+  static const inkFaded = Color(0xFF5E584C);
+
   /// Dark ink of typed text drawn on paper (overlay text).
   static const ink = Color(0xFF1B1A17);
 

@@ -32,6 +32,38 @@
   "@inventoryEmpty": {
     "description": "Shown in the item panel while the player carries no items. Very little space: keep it to two short words."
   },
+  "notebookTooltip": "Notebook",
+  "@notebookTooltip": {
+    "description": "Label of the HUD button that opens the notebook, and title of the notebook."
+  },
+  "notebookTabDocuments": "Documents",
+  "@notebookTabDocuments": {
+    "description": "Notebook tab: letters, clippings, receipts, photos."
+  },
+  "notebookTabObservations": "Observations",
+  "@notebookTabObservations": {
+    "description": "Notebook tab: conclusions the detective has drawn."
+  },
+  "notebookTabSuspects": "Suspects",
+  "@notebookTabSuspects": {
+    "description": "Notebook tab: one file per suspect."
+  },
+  "notebookEmptyDocuments": "No papers yet. Somebody always leaves something behind.",
+  "@notebookEmptyDocuments": {
+    "description": "Shown in the Documents tab of the notebook while it is empty. Atmospheric, in the voice of the detective."
+  },
+  "notebookEmptyObservations": "Nothing worth writing down. Not yet.",
+  "@notebookEmptyObservations": {
+    "description": "Shown in the Observations tab of the notebook while it is empty. Atmospheric, in the voice of the detective."
+  },
+  "notebookEmptySuspects": "No names. Only shadows, so far.",
+  "@notebookEmptySuspects": {
+    "description": "Shown in the Suspects tab of the notebook while it is empty. Atmospheric, in the voice of the detective."
+  },
+  "notebookSelectHint": "Pick a note to read it.",
+  "@notebookSelectHint": {
+    "description": "Shown on the right page of the notebook while no note is selected."
+  },
   "debugHotspotsTooltip": "Show hotspots",
   "@debugHotspotsTooltip": {
     "description": "Developer tool, visible only in dev builds: toggles the outlines of the tappable areas."
