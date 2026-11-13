@@ -22,12 +22,13 @@ Aşamalar numara sırasıyla değil, bu sırayla yapılır. Numaralar değişmez
 2. Aşama 1 — Oyun motoru
 3. Aşama 2 — Kalıcı kayıt
 4. Aşama 5 — Bulmacalar ve vaka akışı
-5. Aşama 7, **yalnızca Bölüm 1** (7.0–7.4): repoyu private yapma, hikaye, görseller, Bölüm 1 içeriği ve 10–15 kişiyle oyun testi
+5. Aşama 7, **yalnızca Bölüm 1** (7.0–7.4): repoyu private yapma, hikaye, görseller, Bölüm 1 içeriği ve 10–15 kişiyle oyun testi.
+   **9.1 (çökme raporlama) oyun testinden önce yapılır:** sıra 7.0 → 7.1 → 7.2 → 7.3 → 7.4'ün içeriği → 9.1 → oyun testi
 6. Aşama 3 — Supabase ve kimlik
 7. Aşama 4 — Bulut eşitleme
 8. Aşama 6 — Oyun hissi ve uygulama kabuğu
 9. Aşama 7'nin kalanı (7.5: Bölüm 2–4)
-10. Aşama 8 → 9 → 10 → 11
+10. Aşama 8 → 9 (9.1 hariç; öne alındı) → 10 → 11
 
 **Sıradan doğan bağımlılıklar:**
 - **Aşama 5 → Aşama 2:** Bulmaca durumu, bölüm ve suçlama hakları ilerlemeye eklenir. Kayıt şekli değişirse payload
@@ -40,6 +41,11 @@ Aşamalar numara sırasıyla değil, bu sırayla yapılır. Numaralar değişmez
 - **Oyun testi (7.4) Aşama 3, 4 ve 6'dan önce:** Kayıt yereldir (Aşama 2), hesap veya bulut gerekmez. Ses, ana menü ve
   cila henüz yoktur; test bulmacaları, hikayeyi ve akışı ölçer. Test sürümünün dağıtım yolu (APK, Windows zip veya
   Play iç test) 7.4 detaylandırılırken seçilir.
+- **9.1 → oyun testi (7.4):** `AppLogger` yalnızca `dart:developer`'a yazar; release derlemede bu hiçbir şey yapmaz.
+  Çökme raporlama olmadan testçilerde oluşan hatalar görülemez. Bu yüzden 9.1, test sürümü dağıtılmadan önce kurulur.
+  Araç kararı (açık kararlar tablosu) 9.1 başlarken sorulur; test sürümünün dağıtılacağı platformları (Android,
+  Windows) desteklemelidir. Hesap henüz yoktur (Aşama 3 sonra): raporlar anonimdir, kullanıcı kimliği Aşama 3'te
+  eklenebilir. Aşama 9'un kalanı (9.2–9.4) yerinde kalır.
 - **Aşama 6 → Aşama 3–4:** Ayarlardaki hesap ve eşitleme durumu (6.4) bu sırayla hazır olur; değişiklik gerekmez.
 
 ---
@@ -98,7 +104,7 @@ Aşamalar numara sırasıyla değil, bu sırayla yapılır. Numaralar değişmez
 | 7 | Yön bulma (harita / mekan listesi) | İlk 15–20 sahne oynandıktan sonra ihtiyaca göre |
 | 7 | Görsel üretim aracı (AI) ve ticari kullanım koşulları | Ticari kullanıma açık lisanslı araç; seçim stil denemeleriyle |
 | 8 | Satın alma biçimi, fiyat, ipucu/reklam | Vaka 1'in kalanı tek satın alım; ipucu modeli test sonrası |
-| 9 | Çökme raporlama / analitik | Sentry veya Firebase Crashlytics; minimal analitik |
+| 9 | Çökme raporlama / analitik | Sentry veya Firebase Crashlytics; minimal analitik. Çökme raporlama kararı 9.1 başlarken (7.4'teki oyun testinden önce) sorulur |
 | 10 | iOS derleme yolu | Mac veya bulut CI (Codemagic / GitHub Actions macOS) |
 | 11 | Steam fiyatı, başarımlar | Fiyat benzer oyunlara göre; başarımlar sona bırakılır |
 | 11 | PC'de imleç hotspot üzerinde değişsin mi | Tür standardı değişmesi; mobil ile denge düşünülerek |
@@ -591,7 +597,7 @@ parçalar işaretlidir; ilgili aşama gelince bağlanır.
 *(Başlarken: açık kararları sor, adımları detaylandır, onay al.)*
 
 **Sıra:** İki parçada yapılır (bkz. "Çalışma sırası"). 7.0–7.4 (private repo, Bölüm 1 ve oyun testi) Aşama 5'ten hemen sonra;
-7.5 (Bölüm 2–4) Aşama 6'dan sonra. Oyun testinin sonucu Aşama 3'e geçmeden önce değerlendirilir; bulmaca veya
+7.5 (Bölüm 2–4) Aşama 6'dan sonra. Oyun testinden önce 9.1 (çökme raporlama) kurulur. Oyun testinin sonucu Aşama 3'e geçmeden önce değerlendirilir; bulmaca veya
 hikaye değişikliği gerekiyorsa önce o yapılır.
 
 - [ ] 7.0 **Repoyu private yap** — hikaye, bulmaca çözümleri ve görseller repoya girmeden önce (spoiler ve içerik
@@ -614,6 +620,7 @@ hikaye değişikliği gerekiyorsa önce o yapılır.
   (Steam AI açıklamasının kaynağı, bkz. 11.5).
 - [ ] 7.4 Bölüm 1 içeriği (sahne sayısı hikayeyle belirlenir; tahmin ~40–50, inceleme pencereleri yakın plan
   ihtiyacını azaltır) ve **10–15 kişiyle oyun testi**; yön bulma (harita / mekan listesi) kararı.
+  Test sürümü dağıtılmadan önce 9.1 (çökme raporlama) tamamlanmış olmalıdır.
 - [ ] 7.5 Bölüm 2–4 içeriği. *(Aşama 6'dan sonra yapılır.)*
 
 ## Aşama 8 — Para kazanma (mobil)
@@ -627,7 +634,9 @@ hikaye değişikliği gerekiyorsa önce o yapılır.
 ## Aşama 9 — Kalite ve gözlem
 *(Başlarken: açık kararları sor, adımları detaylandır, onay al.)*
 
-- [ ] 9.1 Çökme raporlama (flavor bazlı, kişisel veri gönderilmez).
+- [ ] 9.1 Çökme raporlama (flavor bazlı, kişisel veri gönderilmez). **Öne alındı:** Bölüm 1 oyun testinden (7.4) önce
+  yapılır (bkz. "Çalışma sırası"). Yakalanmamış hatalar (`FlutterError.onError`, `PlatformDispatcher.onError`)
+  release derlemede de raporlanır; test sürümünün platformlarında (Android, Windows) çalışır.
 - [ ] 9.2 Minimal analitik: bölüm tamamlama, takılınan bulmacalar, suçlama sonuçları.
 - [ ] 9.3 Golden testler (HUD, panel, not defteri), test kapsamı raporu.
 - [ ] 9.4 Kod kalitesi turu ve README'nin son hali (GIF, diyagram, kurulum, testler).
@@ -725,3 +734,6 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   güncellendi).
 - 2026-11-13: Aşama 7'nin başına 7.0 eklendi: hikaye, bulmaca çözümleri ve görseller repoya girmeden önce repo
   private yapılır (spoiler ve içerik koruması). Actions kotası ve portföy görünürlüğü o adımda değerlendirilir.
+- 2026-11-13 (Aşama 0 incelemesi): 9.1 (çökme raporlama) Bölüm 1 oyun testinin (7.4) önüne alındı. Gerekçe: release
+  derlemede `AppLogger` hiçbir yere yazmıyor; testçilerdeki hatalar görünmezdi. Numara aynı kaldı; sıra ve bağımlılık
+  "Çalışma sırası"nda. Aşama 9'un kalanı (9.2–9.4) yerinde.
