@@ -33,6 +33,9 @@ abstract final class AppColors {
   /// Faded red for warnings and wrong answers.
   static const warning = Color(0xFFB5524A);
 
+  /// Semi-transparent [warning] behind the debug flavor badge.
+  static const debugBadge = Color(0x99B5524A);
+
   /// Full black used by scene fade transitions.
   static const fade = Color(0xFF000000);
 

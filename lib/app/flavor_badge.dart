@@ -16,8 +16,6 @@ class FlavorBadge extends StatelessWidget {
 
   final String label;
 
-  static const _alpha = 0.6;
-
   @override
   Widget build(BuildContext context) {
     final style = Theme.of(context).textTheme.labelSmall;
@@ -29,11 +27,9 @@ class FlavorBadge extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xs),
             child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: AppColors.warning.withValues(alpha: _alpha),
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(AppRadii.sm),
-                ),
+              decoration: const BoxDecoration(
+                color: AppColors.debugBadge,
+                borderRadius: BorderRadius.all(Radius.circular(AppRadii.sm)),
               ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
