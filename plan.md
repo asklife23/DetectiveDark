@@ -422,7 +422,7 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
   **Commit:** `feat(scene_engine): render scenes with viewport, overlays, noir filter, hotspots and transitions`
   ve `feat(scene_engine): add inspect panel`
 
-### [ ] 1.5 HUD: eşya paneli ve eşya kullanımı
+### [x] 1.5 HUD: eşya paneli ve eşya kullanımı
 **Amaç:** "Eşyayı al, doğru yerde kullan" hissini kurmak.
 **Yapılacaklar:**
 - `GameScreen`: solda sahne alanı, sağda sabit genişlikte eşya paneli. Sahne viewport'u panelin solunda kalan alana sığar.
@@ -878,3 +878,12 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   `build/scene_previews/` altına PNG olarak çizer. Tablet emülatörü kurulu değil; 4:3 oranı widget testiyle
   (`SceneViewport`) ve Windows'ta pencere yeniden boyutlandırılarak doğrulandı. Görsellerin önceden yüklenmesi
   (`precacheImage`) gerçek görseller gelince (6.5 / 7.3) eklenecek; placeholder'larda yüklenecek dosya yok.
+- 2026-11-13 (1.5): "İncele" isteği cubit durumundan değil, `ItemSidebar`'ın `onExamine` geri çağrısından geçer
+  (tek seferlik bir olayı duruma koymak, aynı eşyaya iki kez uzun basıldığında ikinci isteği yutardı). Uçuşun başlangıç
+  noktası dokunma anında kaydedilir, çünkü alınan nesnenin hotspot'u olay gelmeden önce gizlenir. Uçan kopya inene
+  kadar paneldeki yuva boş kalır, inince ikon belirerek oturur (ayrı bir "parlama" efekti yok; 6.2'deki mikro
+  animasyonlarla birlikte ele alınabilir). Tüketilen eşya `AnimatedSwitcher` ile söner.
+  **Gözlem (kullanıcı kararı):** Eşya seçiliyken bir geçiş hotspot'una (ör. kapı) dokunmak kural gereği yalnızca
+  genel tepkiyi verir ve seçimi temizler; oyuncu sahne değiştirmek için ikinci kez dokunmak zorunda kalır. Kural
+  `CLAUDE.md` bölüm 6'da açıkça yazılı olduğu için değiştirilmedi; oyun testinde rahatsız ederse "eşya kuralı olmayan
+  hotspot'ta seçimi bırak ve normal etkileşimi çalıştır" seçeneği değerlendirilebilir.

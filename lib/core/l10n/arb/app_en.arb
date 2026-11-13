@@ -24,6 +24,14 @@
   "@retryButton": {
     "description": "Button that repeats a failed action, e.g. loading the game content."
   },
+  "inventoryLabel": "Inventory",
+  "@inventoryLabel": {
+    "description": "Accessibility label of the item panel on the right edge of the screen."
+  },
+  "inventoryEmpty": "Nothing yet",
+  "@inventoryEmpty": {
+    "description": "Shown in the item panel while the player carries no items. Very little space: keep it to two short words."
+  },
   "debugHotspotsTooltip": "Show hotspots",
   "@debugHotspotsTooltip": {
     "description": "Developer tool, visible only in dev builds: toggles the outlines of the tappable areas."

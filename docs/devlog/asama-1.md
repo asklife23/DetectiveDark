@@ -111,3 +111,31 @@
   kurulmaz. `CustomPainter` ise doğrudan tuvale çizmemizi sağlar; `shouldRepaint` "önceki çizim hâlâ geçerli mi?"
   sorusunun cevabıdır. `LayoutBuilder` bir widget'a kendisine ayrılan alanın boyutunu verir; normalize koordinatı
   piksele çeviren yer orasıdır (`rect.x * genişlik`).
+
+### Adım 1.5 — HUD: eşya paneli ve eşya kullanımı (2026-11-13)
+- **Ne yaptık:** Ekranın sağına eşya panelini (`ItemSidebar`) ekledik; sahne artık panelin solunda kalan alana
+  sığıyor. `InventoryCubit` taşınan eşyaları ilerlemeden okuyup katalogdaki ad ve ikonla birleştiriyor ve seçili
+  eşyayı tutuyor. Eşyaya dokununca seçilir (altın çerçeve), tekrar dokununca bırakılır. Seçiliyken sahnede bir yere
+  dokununca o eşya "kullanılır" ve seçim kalkar. Uzun basınca eşyanın inceleme kartı açılır (1.4'teki pencerenin
+  aynısı). Alınan eşya sahnedeki yerinden paneldeki yuvasına uçar; tüketilen eşya panelden sönerek çıkar.
+- **Neden:** "Eşyayı al, doğru yerde kullan" point-and-click türünün kalbidir. Mimari açıdan ilginç kısım, üç
+  parçanın birbirini tanımaması: sahne (`scene_engine`) panelin varlığından, panel (`inventory`) sahnenin
+  varlığından habersiz. İkisini `app/` katmanındaki `GameHud` bağlıyor: dokunuşa seçili eşyayı o ekliyor, uçuşu o
+  başlatıyor, eşyayı inceleme penceresinin anlayacağı biçime (`inspectionForItem`) o çeviriyor.
+- **Önemli dosyalar:** `lib/features/inventory/presentation/cubit/inventory_cubit.dart`,
+  `lib/features/inventory/presentation/widgets/item_sidebar.dart`, `lib/app/game/game_hud.dart`,
+  `lib/app/game/item_inspection.dart`, `lib/core/widgets/flight_layer.dart`, `lib/core/widgets/fly_anchors.dart`,
+  `lib/core/di/register_inventory.dart`.
+- **Telefonda nasıl test edilir:** Oyunu aç (dev). Heykele git, anahtara dokun: anahtar sağdaki panele uçmalı.
+  Paneldeki anahtara dokun (çerçeve altın olur), sonra heykelin gövdesine dokun: hiçbir şey olmaz, seçim kalkar.
+  Anahtara uzun bas: inceleme kartı açılır. Geri → kapıya git → anahtarı seç → kilide dokun: kapı açık görünüme
+  geçer, anahtar panelden kaybolur ve panelde "Nothing yet" yazar. Windows'ta aynısını fareyle yap (uzun basma =
+  fare tuşunu basılı tutma).
+- **Öğrenme notu:** **Cubit**, Bloc'un sade halidir: olay sınıfları yoktur, doğrudan metot çağrılır
+  (`toggle`, `clearSelection`) ve `emit` ile yeni durum yayılır. Basit durumlar için yeterlidir. Burada önemli bir
+  ayrım var: *hangi eşyaları taşıdığımız* ilerlemededir (kaydedilir, tek doğruluk kaynağı), *hangisinin seçili
+  olduğu* ise yalnızca arayüz durumudur (kaydedilmez). Cubit ilerlemeyi `watch()` ile dinler; bu yüzden anahtarı
+  kim, nereden verirse versin panel kendiliğinden güncellenir. Uçuş animasyonunda `GlobalKey` kullandık: bir
+  widget'ın ekrandaki gerçek konumunu ve boyutunu (`RenderBox`) öğrenmenin yolu budur. `FlyAnchors` bu anahtarları
+  isimle saklar ("hotspot:statue_key", "item:brass_key"), böylece başlangıç ve bitiş noktaları farklı feature'larda
+  olsa da `app/` katmanı ikisini de bulabilir.

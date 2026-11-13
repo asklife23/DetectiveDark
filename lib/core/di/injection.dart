@@ -1,5 +1,6 @@
 import 'package:detective_dark/core/config/app_config.dart';
 import 'package:detective_dark/core/di/register_core.dart';
+import 'package:detective_dark/core/di/register_inventory.dart';
 import 'package:detective_dark/core/di/register_progress.dart';
 import 'package:detective_dark/core/di/register_scene_engine.dart';
 import 'package:flutter/services.dart';
@@ -22,4 +23,5 @@ Future<void> configureDependencies(
   registerCore(getIt, assetBundle: assetBundle ?? rootBundle);
   registerProgress(getIt);
   registerSceneEngine(getIt);
+  registerInventory(getIt);
 }

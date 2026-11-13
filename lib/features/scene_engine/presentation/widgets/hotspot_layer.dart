@@ -4,6 +4,7 @@ import 'package:detective_dark/core/content/content_text_scope.dart';
 import 'package:detective_dark/core/theme/app_colors.dart';
 import 'package:detective_dark/core/theme/app_durations.dart';
 import 'package:detective_dark/core/theme/app_spacing.dart';
+import 'package:detective_dark/core/widgets/fly_anchors.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/hotspot_definition.dart';
 import 'package:flutter/material.dart';
 
@@ -47,11 +48,16 @@ class HotspotLayer extends StatelessWidget {
                 top: hotspot.rect.y * size.height,
                 width: hotspot.rect.width * size.width,
                 height: hotspot.rect.height * size.height,
-                child: _HotspotArea(
-                  hotspot: hotspot,
-                  label: texts.text(hotspot.labelKey),
-                  showDebug: showDebug,
-                  onTap: () => onTap(hotspot.id),
+                // The anchor lets the app layer find this spot on screen,
+                // e.g. to start the flight of a collected item here.
+                child: FlyAnchor(
+                  id: FlyAnchors.hotspot(hotspot.id),
+                  child: _HotspotArea(
+                    hotspot: hotspot,
+                    label: texts.text(hotspot.labelKey),
+                    showDebug: showDebug,
+                    onTap: () => onTap(hotspot.id),
+                  ),
                 ),
               ),
           ],

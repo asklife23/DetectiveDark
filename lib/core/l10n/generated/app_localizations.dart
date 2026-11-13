@@ -130,6 +130,18 @@ abstract class AppLocalizations {
   /// **'Try again'**
   String get retryButton;
 
+  /// Accessibility label of the item panel on the right edge of the screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get inventoryLabel;
+
+  /// Shown in the item panel while the player carries no items. Very little space: keep it to two short words.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing yet'**
+  String get inventoryEmpty;
+
   /// Developer tool, visible only in dev builds: toggles the outlines of the tappable areas.
   ///
   /// In en, this message translates to:

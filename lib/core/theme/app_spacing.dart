@@ -16,6 +16,12 @@ abstract final class AppSizes {
   /// Icon inside a HUD button.
   static const double hudIcon = 22;
 
+  /// Width of the item panel on the right edge.
+  static const double sidebarWidth = 72;
+
+  /// Border of the selected inventory slot.
+  static const double selectedBorder = 2.5;
+
   /// Line width of thin strokes (borders, the tap ripple).
   static const double hairline = 1.5;
 }

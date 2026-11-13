@@ -4,6 +4,8 @@ import 'package:detective_dark/app/game/game_hud.dart';
 import 'package:detective_dark/app/game/game_status_views.dart';
 import 'package:detective_dark/app/game/game_texts_cubit.dart';
 import 'package:detective_dark/core/content/content_text_scope.dart';
+import 'package:detective_dark/core/events/game_event_bus.dart';
+import 'package:detective_dark/features/inventory/presentation/cubit/inventory_cubit.dart';
 import 'package:detective_dark/features/scene_engine/presentation/bloc/scene_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -28,8 +30,18 @@ class GameScreen extends StatelessWidget {
 
     return MultiBlocProvider(
       providers: [
+        // Not a bloc, but provided the same way: the HUD listens to game
+        // events (e.g. to start the flight of a collected item).
+        RepositoryProvider<GameEventBus>.value(value: getIt<GameEventBus>()),
         BlocProvider(
           create: (_) => getIt<SceneBloc>()..add(const SceneStarted()),
+        ),
+        BlocProvider(
+          create: (_) {
+            final cubit = getIt<InventoryCubit>();
+            unawaited(cubit.load());
+            return cubit;
+          },
         ),
         BlocProvider(
           create: (_) {

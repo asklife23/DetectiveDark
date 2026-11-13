@@ -17,6 +17,18 @@ abstract final class AppDurations {
   /// The inspection panel fading in.
   static const inspectPanelFade = Duration(milliseconds: 180);
 
+  /// A collected item flying from the scene into its inventory slot.
+  static const itemFlight = Duration(milliseconds: 450);
+
+  /// The item icon appearing in its slot once the flying copy has landed.
+  static const itemLand = Duration(milliseconds: 200);
+
+  /// A used-up item fading out of the panel.
+  static const itemFadeOut = Duration(milliseconds: 250);
+
+  /// The frame of an inventory slot changing when it is selected.
+  static const itemSelect = Duration(milliseconds: 150);
+
   /// How long "press back again to exit" stays armed.
   static const exitConfirmWindow = Duration(seconds: 2);
 }

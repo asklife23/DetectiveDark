@@ -27,5 +27,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retryButton => 'Try again';
 
   @override
+  String get inventoryLabel => 'Inventory';
+
+  @override
+  String get inventoryEmpty => 'Nothing yet';
+
+  @override
   String get debugHotspotsTooltip => 'Show hotspots';
 }
