@@ -25,9 +25,9 @@ _Coming soon._
 | Routing | `go_router` (app screens), scene navigation stack (in-game) |
 | Localization | `gen-l10n` (ARB); English at launch, new languages by adding files |
 | Fonts | Courier Prime + IBM Plex Sans (bundled, OFL, Latin Extended) |
-| Local storage | Drift (SQLite) |
-| Backend | Supabase (Auth, Postgres + RLS, Edge Functions) |
-| CI | GitHub Actions |
+| Local storage | Drift (SQLite) — planned (Phase 2) |
+| Backend | Supabase (Auth, Postgres + RLS, Edge Functions) — planned (Phase 3) |
+| CI | GitHub Actions (format, analyze, test, Windows build) |
 
 ## Architecture
 
@@ -107,7 +107,7 @@ flutter test
 - [`plan.md`](plan.md) — roadmap (Turkish)
 - [`docs/game_design.md`](docs/game_design.md) — game design (Turkish)
 - [`docs/adr/`](docs/adr/) — architecture decision records
-- `docs/devlog/` — development log (Turkish)
+- [`docs/devlog/`](docs/devlog/) — development log (Turkish)
 
 ## License
 
