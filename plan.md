@@ -737,3 +737,6 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
 - 2026-11-13 (Aşama 0 incelemesi): 9.1 (çökme raporlama) Bölüm 1 oyun testinin (7.4) önüne alındı. Gerekçe: release
   derlemede `AppLogger` hiçbir yere yazmıyor; testçilerdeki hatalar görünmezdi. Numara aynı kaldı; sıra ve bağımlılık
   "Çalışma sırası"nda. Aşama 9'un kalanı (9.2–9.4) yerinde.
+- 2026-11-13 (Aşama 0 incelemesi): CI'a Android derleme işi eklendi (`.github/workflows/android.yml`): `dev` flavor debug
+  APK. Yalnızca `android/**`, `pubspec.*`, `lib/main_*.dart` veya iş akışının kendisi değişince çalışır (Actions
+  kotasını korumak için ayrı dosya + `paths` filtresi; `ci.yml`'deki işler her push'ta çalışmaya devam eder).

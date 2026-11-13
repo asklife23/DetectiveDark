@@ -1,0 +1,59 @@
+# Builds the Android `dev` flavor, so a broken Gradle file, manifest or entry
+# point is caught on CI instead of on the phone. It runs only when files that
+# can break the Android build change; everything else is covered by ci.yml.
+name: Android build
+
+on:
+  push:
+    branches: [main]
+    paths: &android-paths
+      - 'android/**'
+      - 'pubspec.*'
+      - 'lib/main_*.dart'
+      - '.github/workflows/android.yml'
+  pull_request:
+    paths: *android-paths
+
+# The workflow only reads the repository.
+permissions:
+  contents: read
+
+# A newer push to the same branch cancels the older, now pointless run.
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Keep in sync with ci.yml and the Flutter version used locally.
+  FLUTTER_VERSION: 3.44.8
+
+jobs:
+  android-build:
+    name: Android build (dev flavor)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v7
+
+      # The Android Gradle Plugin needs JDK 17.
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Real env files are git-ignored; the template has the same keys.
+      - name: Build dev debug APK
+        run: flutter build apk --debug --flavor dev -t lib/main_dev.dart --dart-define-from-file=env/example.json

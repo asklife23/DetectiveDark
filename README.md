@@ -27,7 +27,7 @@ _Coming soon._
 | Fonts | Courier Prime + IBM Plex Sans (bundled, OFL, Latin Extended) |
 | Local storage | Drift (SQLite) — planned (Phase 2) |
 | Backend | Supabase (Auth, Postgres + RLS, Edge Functions) — planned (Phase 3) |
-| CI | GitHub Actions (format, analyze, test, Windows build) |
+| CI | GitHub Actions (format, analyze, test, Windows build, Android build) |
 
 ## Architecture
 
