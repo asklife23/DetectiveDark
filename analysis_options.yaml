@@ -14,3 +14,6 @@ linter:
     # This is an app, not a published package: documenting every public
     # member would add noise without helping readers.
     public_member_api_docs: false
+    # Repository interfaces and small services are abstractions on purpose
+    # (Clean Architecture, test doubles), even when they have one method.
+    one_member_abstracts: false

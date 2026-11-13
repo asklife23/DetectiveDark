@@ -1,0 +1,90 @@
+import 'package:detective_dark/features/scene_engine/domain/entities/scene_transition.dart';
+import 'package:equatable/equatable.dart';
+
+/// One thing that happens when an interaction rule runs.
+///
+/// The class is `sealed`: the effect applier must handle every kind, and
+/// adding a kind is an architecture decision (ADR first). `OpenPuzzle` and
+/// `PlayMedia` arrive in Phase 5.
+sealed class Effect extends Equatable {
+  const Effect();
+}
+
+/// Moves to another scene, through [transition].
+final class GoToScene extends Effect {
+  const GoToScene(this.sceneId, {this.transition = SceneTransition.standard});
+
+  final String sceneId;
+  final SceneTransition transition;
+
+  @override
+  List<Object?> get props => [sceneId, transition];
+}
+
+/// Puts an item into the inventory.
+final class GiveItem extends Effect {
+  const GiveItem(this.itemId);
+
+  final String itemId;
+
+  @override
+  List<Object?> get props => [itemId];
+}
+
+/// Removes an item from the inventory (the key stays in the lock).
+final class ConsumeItem extends Effect {
+  const ConsumeItem(this.itemId);
+
+  final String itemId;
+
+  @override
+  List<Object?> get props => [itemId];
+}
+
+/// Adds a note to the notebook.
+final class AddNote extends Effect {
+  const AddNote(this.noteId);
+
+  final String noteId;
+
+  @override
+  List<Object?> get props => [noteId];
+}
+
+/// Sets a flag. Flags are never cleared: the story only moves forward.
+final class SetFlag extends Effect {
+  const SetFlag(this.flag);
+
+  final String flag;
+
+  @override
+  List<Object?> get props => [flag];
+}
+
+/// Hides the tapped hotspot for good (a picked-up object does not return).
+final class HideHotspot extends Effect {
+  const HideHotspot();
+
+  @override
+  List<Object?> get props => [];
+}
+
+/// Makes the detective say a line through the inner voice.
+final class Say extends Effect {
+  const Say(this.messageKey);
+
+  final String messageKey;
+
+  @override
+  List<Object?> get props => [messageKey];
+}
+
+/// Opens the inspection panel above the scene without leaving it (ADR 0010).
+final class Inspect extends Effect {
+  const Inspect(this.inspectionId);
+
+  final String inspectionId;
+
+  @override
+  List<Object?> get props => [inspectionId];
+}

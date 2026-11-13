@@ -238,7 +238,7 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
 11. Heykel yakın planında kaidedeki plakete dokun → sahne değişmeden **inceleme penceresi** açılır: plaket görseli,
     üstünde oyunun çizdiği kazıma yazı ve kısa bir metin. Geri → yalnızca pencere kapanır; bir daha Geri → Villa Önü.
 
-### [ ] 1.1 Domain modelleri ve etkileşim kuralları
+### [x] 1.1 Domain modelleri ve etkileşim kuralları
 **Amaç:** Oyunun dilini saf Dart ile tanımlamak; bütün bulmacaların üzerine kurulacağı koşul + etki sistemini kurmak.
 **Yapılacaklar:**
 - `scene_engine/domain/entities`:
@@ -848,3 +848,8 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
      benim yorumum. Telefonda gördükten sonra onaylanmalı ya da "sahne küçülsün, bar sabit kalsın" denmeli.
   4. **`Esc` = Geri (oyun tasarımı 5.7).** Plan bunu 11.2'ye bırakıyor; Windows'ta her gün fareyle test edildiği için
      Aşama 1'de eklemek ucuz olurdu. Aşama 11'i değiştirdiği için dokunulmadı.
+- 2026-11-13 (1.1): `one_member_abstracts` lint kuralı kapatıldı: tek metotlu repository arayüzleri (ör.
+  `ItemCatalogRepository`) Clean Architecture'da bilinçli soyutlamalardır. `ItemObtained` ve `NoteAdded` olaylarına
+  `sceneId` / `hotspotId` eklendi (uçuş animasyonunun başlangıç noktası için). `ItemUsed` olayını `EffectApplier`
+  üretir (bağlamdaki `usedItemId`). Sahne ve inceleme içeriği tek bir `CaseContent` olarak döner. Katman kurallarını
+  import satırlarından denetleyen `test/architecture/dependency_rules_test.dart` eklendi.
