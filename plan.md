@@ -354,7 +354,7 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
   bayrak testi kırıyor.
   **Commit:** `feat(scene_engine): add JSON content format and vertical slice content`
 
-### [ ] 1.3 Bellekte ilerleme, etki uygulama ve SceneBloc
+### [x] 1.3 Bellekte ilerleme, etki uygulama ve SceneBloc
 **Amaç:** Oyun mantığını arayüzden bağımsız ve test edilebilir kurmak.
 **Yapılacaklar:**
 - `progress/data`: `InMemoryProgressRepository` (Aşama 2'de Drift ile değişecek).
@@ -862,3 +862,9 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   dilimde kullanılmış olur. Overlay stilleri `typewriter` / `engraved` / `brass` (el yazısı fontu paketlenmediği için
   `handwriting` yok; gerektiğinde font kararıyla eklenir). Filtre preset'leri `night` / `interior` / `close_up`.
   Hotspot'lar listede sonra gelen üstte olacak şekilde sıralanır (üst üste binen alanlarda sonuncu kazanır).
+- 2026-11-13 (1.3): Ayrı bir `GoBack` use case'i yazılmadı: Geri, yığındaki bir önceki sahneye aynı `EnterScene` ile
+  gider (tek satırlık bir hedef seçimi için sınıf gereksizdi). Görünüm ve görünür hotspot hesabı saf
+  `SceneViewResolver` servisine alındı (bloc ve `TapHotspot` ortak kullanır). `TapHotspot`, oyuncunun taşımadığı bir
+  eşyayı seçili saymaz ve gizli hotspot'a gelen dokunuşu yok sayar. Kayıt başarısız olursa bloc durumu değiştirmez ve
+  hatayı `addError` ile `AppBlocObserver`'a (log) iletir; oyuncuya gösterilecek hata mesajı Aşama 2'de kalıcı kayıtla
+  birlikte tasarlanmalı.

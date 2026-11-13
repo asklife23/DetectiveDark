@@ -56,3 +56,28 @@
   `build.yaml`'daki `disallow_unrecognized_keys` ayarı önemli: `hotspots` yerine `hotspotz` yazarsan alan sessizce
   yok sayılmaz, hata olur. Koşul ve etkiler ise `{"flag": "x"}` gibi "anahtarın adı türü belirler" biçiminde olduğu
   için elle ayrıştırılır. Veri katmanı hata fırlatmaz; her sorunu dosya adıyla birlikte `ContentFailure` olarak döner.
+
+### Adım 1.3 — Bellekte ilerleme, etki uygulama ve SceneBloc (2026-11-13)
+- **Ne yaptık:** Oyun mantığını çalışır hale getirdik; hâlâ arayüz yok. `InMemoryProgressRepository` ilerlemeyi
+  bellekte tutuyor. Üç use case yazdık: `StartGame` (içeriği yükle; kayıt varsa devam et, yoksa yeni oyun kur),
+  `EnterScene` (sahneye gir: yığın + ziyaret işareti + ilk giriş etkileri, tek kayıt) ve `TapHotspot` (kuralı seç,
+  etkileri uygula, kaydet, olayları yayınla). Hepsinin üstünde `SceneBloc` var: ekrandaki sahneyi, görünümü,
+  görünür hotspot'ları, geçiş fazını ve açık inceleme penceresini tutuyor.
+- **Neden:** Mantık arayüzden bağımsız olunca kabul senaryosunun 11 adımının tamamı ekran çizilmeden test
+  edilebiliyor: `scene_bloc_scenario_test.dart` gerçek JSON içeriği yükleyip oyunu baştan sona oynuyor. Arayüz
+  yazılırken (1.4) "mantık mı bozuk, çizim mi?" sorusu baştan cevaplanmış oluyor. Bloc olayları sırayla işliyor,
+  çünkü kayıt asenkron: sırasız olsaydı anahtara iki hızlı dokunuş kuralı iki kez çalıştırabilirdi.
+- **Önemli dosyalar:** `lib/features/scene_engine/presentation/bloc/scene_bloc.dart`, `scene_event.dart`,
+  `scene_state.dart`, `lib/features/scene_engine/domain/usecases/start_game.dart`, `enter_scene.dart`,
+  `tap_hotspot.dart`, `lib/features/scene_engine/domain/services/scene_view_resolver.dart`,
+  `lib/features/progress/data/repositories/in_memory_progress_repository.dart`, `test/helpers/game_harness.dart`.
+- **Telefonda nasıl test edilir:** Bu adım da ekranı etkilemiyor. Senaryoyu çalıştır:
+  `flutter test test/features/scene_engine/presentation/bloc/scene_bloc_scenario_test.dart`. Dosyayı okursan
+  kabul senaryosunun 1–11. adımlarını sırayla görürsün.
+- **Öğrenme notu:** **Bloc**, olayları (event) alır ve durum (state) üretir: `HotspotTapped` girer, yeni `SceneState`
+  çıkar. Arayüz sadece durumu çizer ve olay gönderir; karar vermez. Geçişte ilginç bir iş bölümü var: bloc süre
+  tutmaz, yalnızca fazı bilir (`idle → covering → revealing → idle`). Ekran tamamen kararınca arayüz
+  `TransitionCovered` gönderir ve bloc sahneyi tam o anda değiştirir. Böylece bloc testlerinde zamanlayıcı yoktur,
+  testler anında ve kararlı çalışır. **Use case** ise tek bir iş kuralını temsil eder ("hotspot'a dokunuldu") ve
+  hep aynı sırayı izler: hesapla → kaydet → başarılıysa olayları yayınla. Kayıt başarısızsa olay yayınlanmaz;
+  ekranda olmamış bir şeyin animasyonu oynamaz.
