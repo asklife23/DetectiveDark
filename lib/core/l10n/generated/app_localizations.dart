@@ -100,11 +100,41 @@ abstract class AppLocalizations {
   /// **'DetectiveDark'**
   String get appTitle;
 
-  /// Temporary atmospheric line on the empty game screen, until the first scene exists.
+  /// Label of the HUD button that returns to the previous scene.
   ///
   /// In en, this message translates to:
-  /// **'The rain hadn’t stopped in three days, and neither had the lies.'**
-  String get gameScreenPlaceholder;
+  /// **'Back'**
+  String get backTooltip;
+
+  /// Label of the button that closes a panel (inspection panel, notebook, message history).
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get closeTooltip;
+
+  /// Shown when the player presses the system back button in a main scene. A second press closes the app.
+  ///
+  /// In en, this message translates to:
+  /// **'Press back again to leave the game.'**
+  String get exitHint;
+
+  /// Shown instead of the game when the game content failed to load.
+  ///
+  /// In en, this message translates to:
+  /// **'The case files could not be opened.'**
+  String get gameLoadFailed;
+
+  /// Button that repeats a failed action, e.g. loading the game content.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get retryButton;
+
+  /// Developer tool, visible only in dev builds: toggles the outlines of the tappable areas.
+  ///
+  /// In en, this message translates to:
+  /// **'Show hotspots'**
+  String get debugHotspotsTooltip;
 }
 
 class _AppLocalizationsDelegate

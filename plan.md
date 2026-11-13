@@ -387,7 +387,7 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
   **Kabul kriterleri:** Kabul senaryosunun tamamı testlerle doğrulanmış (henüz arayüz yok).
   **Commit:** `feat(scene_engine): add scene bloc with effect execution and navigation stack`
 
-### [ ] 1.4 Sahne görünümü
+### [x] 1.4 Sahne görünümü
 **Amaç:** Sahneleri her ekranda doğru oranla çizmek, dokunmaları almak ve sahneler arasında gezinmek.
 **Yapılacaklar:**
 - `lib/app/game/game_screen.dart`: feature widget'larını birleştiren ekran (CLAUDE.md bölüm 3'teki `app/` kuralı).
@@ -868,3 +868,13 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   eşyayı seçili saymaz ve gizli hotspot'a gelen dokunuşu yok sayar. Kayıt başarısız olursa bloc durumu değiştirmez ve
   hatayı `addError` ile `AppBlocObserver`'a (log) iletir; oyuncuya gösterilecek hata mesajı Aşama 2'de kalıcı kayıtla
   birlikte tasarlanmalı.
+- 2026-11-13 (1.4): Tek commit atıldı (planda iki commit vardı): `SceneView` inceleme penceresini doğrudan içerdiği
+  için ikiye bölmek derlenmeyen bir ara commit bırakırdı. Noir filtre: renk tonu + radyal vinyet + bir kez üretilip
+  döşenen 128 px'lik gren görseli (`ImageShader`); shader veya `ColorFilter` gerekmedi, kare başına üç dikdörtgen
+  çizimi. Gren cihaz pikseline göre ölçeklenir (telefonda kaba görünüyordu). Ölçüm 1.8'de profil modunda yapılacak.
+  Hikaye metinleri arayüze `ContentTextScope` (InheritedWidget) ile iner; metinleri `GameTextsCubit` yükler.
+  `core/di` bileşim kökü olduğu için mimari testinde "core feature import etmez" kuralından muaf tutuldu. Geliştirici
+  aracı eklendi: `flutter test tool/render_scenes_test.dart` her sahneyi hotspot çerçeveleriyle
+  `build/scene_previews/` altına PNG olarak çizer. Tablet emülatörü kurulu değil; 4:3 oranı widget testiyle
+  (`SceneViewport`) ve Windows'ta pencere yeniden boyutlandırılarak doğrulandı. Görsellerin önceden yüklenmesi
+  (`precacheImage`) gerçek görseller gelince (6.5 / 7.3) eklenecek; placeholder'larda yüklenecek dosya yok.

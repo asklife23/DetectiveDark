@@ -8,6 +8,18 @@ abstract final class AppSpacing {
   static const double xl = 32;
 }
 
+/// Fixed sizes of interface elements, in logical pixels.
+abstract final class AppSizes {
+  /// Touch target of a round HUD button (back, notebook, close).
+  static const double hudButton = 44;
+
+  /// Icon inside a HUD button.
+  static const double hudIcon = 22;
+
+  /// Line width of thin strokes (borders, the tap ripple).
+  static const double hairline = 1.5;
+}
+
 /// Corner radii.
 abstract final class AppRadii {
   static const double sm = 4;

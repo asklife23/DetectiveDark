@@ -12,6 +12,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'DetectiveDark';
 
   @override
-  String get gameScreenPlaceholder =>
-      'The rain hadn’t stopped in three days, and neither had the lies.';
+  String get backTooltip => 'Back';
+
+  @override
+  String get closeTooltip => 'Close';
+
+  @override
+  String get exitHint => 'Press back again to leave the game.';
+
+  @override
+  String get gameLoadFailed => 'The case files could not be opened.';
+
+  @override
+  String get retryButton => 'Try again';
+
+  @override
+  String get debugHotspotsTooltip => 'Show hotspots';
 }

@@ -4,8 +4,28 @@
   "@appTitle": {
     "description": "Name of the game. Shown in the OS task switcher, the window title and on screen."
   },
-  "gameScreenPlaceholder": "The rain hadn’t stopped in three days, and neither had the lies.",
-  "@gameScreenPlaceholder": {
-    "description": "Temporary atmospheric line on the empty game screen, until the first scene exists."
+  "backTooltip": "Back",
+  "@backTooltip": {
+    "description": "Label of the HUD button that returns to the previous scene."
+  },
+  "closeTooltip": "Close",
+  "@closeTooltip": {
+    "description": "Label of the button that closes a panel (inspection panel, notebook, message history)."
+  },
+  "exitHint": "Press back again to leave the game.",
+  "@exitHint": {
+    "description": "Shown when the player presses the system back button in a main scene. A second press closes the app."
+  },
+  "gameLoadFailed": "The case files could not be opened.",
+  "@gameLoadFailed": {
+    "description": "Shown instead of the game when the game content failed to load."
+  },
+  "retryButton": "Try again",
+  "@retryButton": {
+    "description": "Button that repeats a failed action, e.g. loading the game content."
+  },
+  "debugHotspotsTooltip": "Show hotspots",
+  "@debugHotspotsTooltip": {
+    "description": "Developer tool, visible only in dev builds: toggles the outlines of the tappable areas."
   }
 }

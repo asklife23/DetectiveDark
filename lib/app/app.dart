@@ -20,7 +20,9 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  late final GoRouter _router = createAppRouter();
+  late final GoRouter _router = createAppRouter(
+    showDebugTools: widget.config.showDebugOverlay,
+  );
 
   @override
   void dispose() {

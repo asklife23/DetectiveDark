@@ -81,3 +81,33 @@
   testler anında ve kararlı çalışır. **Use case** ise tek bir iş kuralını temsil eder ("hotspot'a dokunuldu") ve
   hep aynı sırayı izler: hesapla → kaydet → başarılıysa olayları yayınla. Kayıt başarısızsa olay yayınlanmaz;
   ekranda olmamış bir şeyin animasyonu oynamaz.
+
+### Adım 1.4 — Sahne görünümü (2026-11-13)
+- **Ne yaptık:** Oyun ilk kez ekranda. `GameScreen` içeriği ve metinleri yükleyip sahneyi gösteriyor. Sahne beş
+  katmandan oluşuyor: placeholder çizim (ya da gerçek görsel) → oyunun çizdiği yazılar (`OverlayLayer`) → ortak noir
+  filtre (`NoirFilter`) → görünmez dokunma alanları (`HotspotLayer`) → siyah geçiş katmanı (`TransitionOverlay`).
+  Hepsi 16:9 oranlı `SceneViewport`'un içinde. İnceleme penceresi (`InspectPanel`), sol üstte Geri butonu, Android
+  sistem geri tuşu ve dev sürümünde hotspot çerçevelerini gösteren düğme de bu adımda geldi. Dört sahnenin ve
+  plaketin noir placeholder çizimleri `core/placeholders` altında.
+- **Neden:** Hotspot koordinatları ekrana değil görsele göre (0–1 arası) tanımlı. Görsel ve dokunma katmanı aynı
+  16:9 kutunun içinde olduğu için telefon, tablet ya da yeniden boyutlanan pencerede birlikte ölçeklenir; kapının
+  dokunma alanı hiçbir ekranda kapıdan kaymaz. Yazılar görsele gömülmez, üstüne çizilir: yapay zekâ ile üretilecek
+  görsellerde yazı bozuk çıksa bile "17" ve plaket yazısı her zaman doğru ve okunur olur.
+- **Önemli dosyalar:** `lib/app/game/game_screen.dart`, `game_hud.dart`,
+  `lib/features/scene_engine/presentation/widgets/scene_view.dart`, `scene_viewport.dart`, `hotspot_layer.dart`,
+  `overlay_layer.dart`, `noir_filter.dart`, `transition_overlay.dart`, `inspect_panel.dart`,
+  `lib/core/placeholders/`, `lib/core/di/register_scene_engine.dart`, `tool/render_scenes_test.dart`.
+- **Telefonda nasıl test edilir:** `flutter run --flavor dev -t lib/main_dev.dart --dart-define-from-file=env/dev.json`.
+  Villa görünmeli, kapının yanında "17" yazmalı. Kapıya dokun: ekran kısa bir kararmayla kapı yakın planına geçer ve
+  sol üstte Geri belirir. Geri'ye (ya da telefonun geri tuşuna) bas, heykele git, kulağındaki parlayan anahtara
+  dokun: anahtar kaybolur. Kaidedeki plakete dokun: sahne değişmeden pencere açılır; dışına dokununca kapanır.
+  Sol alttaki ızgara düğmesi dokunma alanlarını çerçeveyle gösterir (yalnızca dev). Windows'ta:
+  `flutter run -d windows -t lib/main_dev.dart --dart-define-from-file=env/dev.json`; aynı adımları fareyle dene ve
+  pencereyi yeniden boyutlandır.
+- **Öğrenme notu:** Flutter'da ekran bir **widget ağacıdır** ve her kare yalnızca "kirlenen" kısım yeniden çizilir.
+  `RepaintBoundary` bir alt ağacı ayrı bir katmana alır: anahtarın parıltısı saniyede 60 kez animasyon yaparken
+  arka plandaki çizim tekrar çizilmez. `BlocSelector` de aynı fikrin durum tarafıdır: her katman durumun yalnızca
+  kendi parçasını dinler (görünüm, hotspot listesi, inceleme, geçiş fazı); biri değişince diğerleri yeniden
+  kurulmaz. `CustomPainter` ise doğrudan tuvale çizmemizi sağlar; `shouldRepaint` "önceki çizim hâlâ geçerli mi?"
+  sorusunun cevabıdır. `LayoutBuilder` bir widget'a kendisine ayrılan alanın boyutunu verir; normalize koordinatı
+  piksele çeviren yer orasıdır (`rect.x * genişlik`).

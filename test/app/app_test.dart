@@ -1,26 +1,21 @@
 import 'package:detective_dark/app/app.dart';
 import 'package:detective_dark/app/flavor_badge.dart';
-import 'package:detective_dark/app/game_screen.dart';
-import 'package:detective_dark/core/config/app_config.dart';
-import 'package:detective_dark/core/config/build_target.dart';
-import 'package:detective_dark/core/config/flavor.dart';
+import 'package:detective_dark/app/game/game_screen.dart';
 import 'package:detective_dark/core/l10n/l10n.dart';
 import 'package:detective_dark/core/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:get_it/get_it.dart';
+
+import '../helpers/game_app.dart';
 
 void main() {
-  AppConfig config({bool showDebugOverlay = false}) => AppConfig(
-    flavor: Flavor.dev,
-    target: BuildTarget.mobile,
-    supabaseUrl: '',
-    supabaseAnonKey: '',
-    showDebugOverlay: showDebugOverlay,
-  );
+  setUp(setUpGameDependencies);
+  tearDown(GetIt.instance.reset);
 
   testWidgets('App opens the game screen on the noir theme', (tester) async {
-    await tester.pumpWidget(App(config: config()));
-    await tester.pumpAndSettle();
+    await tester.pumpWidget(App(config: testConfig()));
+    await tester.pumpFor();
 
     expect(find.byType(GameScreen), findsOneWidget);
 
@@ -32,7 +27,8 @@ void main() {
   testWidgets('supported languages come only from the generated list', (
     tester,
   ) async {
-    await tester.pumpWidget(App(config: config()));
+    await tester.pumpWidget(App(config: testConfig()));
+    await tester.pumpFor();
 
     final app = tester.widget<MaterialApp>(find.byType(MaterialApp));
     expect(app.supportedLocales, AppLocalizations.supportedLocales);
@@ -44,18 +40,18 @@ void main() {
     tester.platformDispatcher.localesTestValue = const [Locale('tr', 'TR')];
     addTearDown(tester.platformDispatcher.clearLocalesTestValue);
 
-    await tester.pumpWidget(App(config: config()));
-    await tester.pumpAndSettle();
+    await tester.pumpWidget(App(config: testConfig()));
+    await tester.pumpFor();
 
     final context = tester.element(find.byType(GameScreen));
     expect(Localizations.localeOf(context), const Locale('en'));
-    final english = lookupAppLocalizations(const Locale('en'));
-    expect(find.text(english.gameScreenPlaceholder), findsOneWidget);
+    // The story texts follow the same language: the English content loads.
+    expect(find.bySemanticsLabel('Front door'), findsOneWidget);
   });
 
   testWidgets('shows the flavor badge when the overlay is on', (tester) async {
-    await tester.pumpWidget(App(config: config(showDebugOverlay: true)));
-    await tester.pumpAndSettle();
+    await tester.pumpWidget(App(config: testConfig(showDebugOverlay: true)));
+    await tester.pumpFor();
 
     expect(find.byType(FlavorBadge), findsOneWidget);
     expect(find.text('DEV'), findsOneWidget);
@@ -64,8 +60,8 @@ void main() {
   testWidgets('hides the flavor badge when the overlay is off', (
     tester,
   ) async {
-    await tester.pumpWidget(App(config: config()));
-    await tester.pumpAndSettle();
+    await tester.pumpWidget(App(config: testConfig()));
+    await tester.pumpFor();
 
     expect(find.byType(FlavorBadge), findsNothing);
   });

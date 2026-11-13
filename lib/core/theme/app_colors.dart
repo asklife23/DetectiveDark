@@ -42,6 +42,15 @@ abstract final class AppColors {
   /// Shadowed grooves of letters cut into stone or metal (overlay text).
   static const engraving = Color(0xFF23211D);
 
+  /// Semi-transparent surface behind HUD buttons that sit on the scene.
+  static const hudSurface = Color(0xB3141519);
+
+  /// Outer, fully transparent edge of the glimmer on a pickup.
+  static const glintEdge = Color(0x00E6DFD0);
+
+  /// Outline and label of the developer hotspot overlay.
+  static const debugOutline = Color(0xCC4FD1C5);
+
   /// Full black used by scene fade transitions.
   static const fade = Color(0xFF000000);
 

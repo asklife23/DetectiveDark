@@ -43,6 +43,12 @@ abstract final class OverlayTextStyles {
 
   /// The style called [name]; an unknown name falls back to [typewriter]
   /// (the content validation test reports it).
+  ///
+  /// Overlay text is part of the picture, so it never inherits interface
+  /// styling such as underlines.
   static TextStyle resolve(String name) =>
-      _styles[name] ?? _styles[typewriter]!;
+      (_styles[name] ?? _styles[typewriter]!).copyWith(
+        inherit: false,
+        decoration: TextDecoration.none,
+      );
 }

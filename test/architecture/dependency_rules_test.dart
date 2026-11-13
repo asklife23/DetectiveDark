@@ -98,11 +98,14 @@ void main() {
     expect(violations, isEmpty);
   });
 
-  test('core never imports a feature or the app layer', () {
+  // `core/di` is the composition root: it must know every implementation
+  // to wire them together, so it is the one exception.
+  test('core never imports a feature or the app layer (except core/di)', () {
     final violations = <String>[];
 
     for (final entity in Directory('lib/core').listSync(recursive: true)) {
       if (entity is! File || !entity.path.endsWith('.dart')) continue;
+      if (entity.path.replaceAll(r'\', '/').contains('lib/core/di/')) continue;
       for (final line in entity.readAsLinesSync()) {
         final uri = importPattern.firstMatch(line)?.group(1);
         if (uri == null) continue;

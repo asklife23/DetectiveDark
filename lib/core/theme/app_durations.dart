@@ -7,4 +7,16 @@ abstract final class AppDurations {
   static const sceneFadeOut = Duration(milliseconds: 150);
   static const Duration sceneHold = Duration.zero;
   static const sceneFadeIn = Duration(milliseconds: 150);
+
+  /// The ring that spreads from the point where a hotspot was tapped.
+  static const hotspotRipple = Duration(milliseconds: 350);
+
+  /// One slow pulse of the glimmer on something that can be picked up.
+  static const glintPulse = Duration(milliseconds: 2400);
+
+  /// The inspection panel fading in.
+  static const inspectPanelFade = Duration(milliseconds: 180);
+
+  /// How long "press back again to exit" stays armed.
+  static const exitConfirmWindow = Duration(seconds: 2);
 }
