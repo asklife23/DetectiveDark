@@ -41,12 +41,15 @@ Future<void> bootstrap(AppConfig config) async {
 /// Routes every uncaught error to [logger].
 ///
 /// - [FlutterError.onError]: errors inside the framework (build, layout,
-///   paint, gestures).
+///   paint, gestures). Flutter's detailed report is still printed.
 /// - [PlatformDispatcher.onError]: everything else, e.g. an exception in an
 ///   `async` function nobody awaited. Returning `true` marks it as handled.
 @visibleForTesting
 void registerErrorHandlers(AppLogger logger) {
   FlutterError.onError = (details) {
+    // Keep Flutter's own console report: it names the widget that caused
+    // the error and dumps layout details, which the log line does not.
+    FlutterError.presentError(details);
     logger.error(
       details.exceptionAsString(),
       error: details.exception,

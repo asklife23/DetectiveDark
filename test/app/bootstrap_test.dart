@@ -25,15 +25,20 @@ void main() {
       }
     }
 
-    test('logs framework errors', () {
-      final error = StateError('build failed');
+    test('logs framework errors and keeps the detailed report', () {
+      final details = FlutterErrorDetails(
+        exception: StateError('build failed'),
+      );
+      final presented = <FlutterErrorDetails>[];
+      final presenter = FlutterError.presentError;
+      FlutterError.presentError = presented.add;
+      addTearDown(() => FlutterError.presentError = presenter);
 
-      withHandlers(() {
-        FlutterError.onError!(FlutterErrorDetails(exception: error));
-      });
+      withHandlers(() => FlutterError.onError!(details));
 
+      expect(presented, [details]);
       expect(entries.single.level, LogLevel.error);
-      expect(entries.single.error, error);
+      expect(entries.single.error, details.exception);
     });
 
     test('logs uncaught platform errors and marks them handled', () {
