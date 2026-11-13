@@ -34,7 +34,8 @@
   `.gitattributes` ile satır sonlarını sabitledik.
 - **Neden:** Kurallar ilk satırdan uygulanırsa sonradan toplu düzeltme gerekmez. `bootstrap` bütün giriş
   noktalarının (0.3'te dev/staging/prod, 0.6'da steam) ortak açılış kodu olacak; hata yakalayıcılar en başta
-  kurulduğu için açılışta bile hiçbir hata sessizce kaybolmaz. `Result` sayesinde "başarısız olabilir" bilgisi
+  kurulduğu için açılışta oluşan hatalar da log'a düşer (yalnızca debug'da görünür: `dart:developer` log'u release
+  derlemede hiçbir şey yazmaz; release için çökme raporlama adım 9.1'de gelir). `Result` sayesinde "başarısız olabilir" bilgisi
   fonksiyonun tipinde görünür, UI'a exception sızmaz. `.gitattributes` olmadan Windows (CRLF) ile CI'daki Linux (LF)
   aynı dosyayı farklı görür. Bu da gereksiz diff'lere ve `dart format` uyarılarına yol açar.
 - **Önemli dosyalar:** `analysis_options.yaml`, `.gitattributes`, `lib/app/bootstrap.dart`, `lib/app/app.dart`,
@@ -136,7 +137,7 @@
 - **Önemli dosyalar:** `lib/main_steam.dart`, `lib/core/config/build_target.dart`, `lib/core/config/app_config.dart`,
   `windows/runner/win32_window.cpp`, `windows/runner/flutter_window.cpp`, `.github/workflows/ci.yml`,
   `docs/adr/0009-platform-targets-and-services.md`, `.run/steam.run.xml`.
-- **Nasıl test edilir (Windows):** `flutter run -d windows -t lib/main_dev.dart --dart-define-from-file=env/dev.json`
+- **Telefonda nasıl test edilir:** Bu adım telefonu etkilemiyor; Windows'ta test edilir. `flutter run -d windows -t lib/main_dev.dart --dart-define-from-file=env/dev.json`
   komutunu çalıştır. Pencere açılmalı; üstte "DEV" etiketi, ortada başlık ve cümle görünmeli. Pencereyi küçültmeye
   çalış: belli bir boyutun altına inmemeli. Steam sürümü için `-t lib/main_steam.dart --dart-define-from-file=env/steam.json`
   kullan; etiket görünmez (prod). Android Studio'da cihaz olarak "Windows (desktop)" seçip `steam (Windows)`
