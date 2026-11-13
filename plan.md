@@ -417,7 +417,8 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
 - `flutter run --profile` ile performans kontrolü (hedef: takılmasız 60 fps); sonuç devlog'a.
 - README: mimari diyagramı (Mermaid), etkileşim sisteminin kısa anlatımı ve örnek JSON, nasıl çalıştırılır,
   ekran görüntüsü/GIF alanı (kullanıcı ekler).
-  **Kabul kriterleri:** Tüm testler yeşil; CI yeşil.
+  **Kabul kriterleri:** Tüm testler yeşil; CI yeşil; README'de **Features**, **Architecture** ve **License**
+  bölümleri dolu (yer tutucu metin yok).
   **Commit:** `test: add end-to-end vertical slice test`
   **Aşama sonu:** `phase-1` etiketi.
 
