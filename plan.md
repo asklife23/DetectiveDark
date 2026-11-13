@@ -242,14 +242,18 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
 **Amaç:** Oyunun dilini saf Dart ile tanımlamak; bütün bulmacaların üzerine kurulacağı koşul + etki sistemini kurmak.
 **Yapılacaklar:**
 - `scene_engine/domain/entities`:
-  - `SceneDefinition` (`id`, `parentId?`, `titleKey`, `visual`, `visualVariants`, `hotspots`, `onFirstEnter`)
+  - `CaseDefinition` (`id`, `chapters`) ve `ChapterDefinition` (`id`, `entrySceneId`). (Bölüm bitiş koşulları ve
+    suçlama Aşama 5'te `case_flow`'a eklenir.)
+  - `SceneDefinition` (`id`, `parentId?`, `titleKey`, `visual`, `visualVariants`, `hotspots`, `onFirstEnter`).
+    `onFirstEnter` yalnızca `say`, `setFlag`, `addNote`, `giveItem` içerebilir (gezinme, inceleme ve `hideHotspot` yok).
   - `SceneVisual` (`background?` (asset yolu), `placeholderStyle`, `overlays`, `filterPreset?`)
   - `sealed class VisualOverlay` → `TextOverlay` (`rect`, `textKey`, `style`, `rotation?`): görsele gömülmeyen yazı ve
     sayılar (ADR 0011). Analog saat ibreleri gibi yeni türler bir bulmaca gerektirdiğinde (Aşama 5) eklenir.
   - `InspectionDefinition` (`id`, `titleKey?`, `textKey`, `visual: SceneVisual`): inceleme penceresinin içeriği (ADR 0010).
   - `VisualVariant` (`when`, `visual`): koşula göre görünüm (kapı açık/kapalı). İlk tutan kazanır, hiçbiri tutmazsa varsayılan.
   - `NormalizedRect` (`x`, `y`, `width`, `height`; 0–1 doğrulaması; `contains`)
-  - `HotspotDefinition` (`id`, `rect`, `labelKey`, `visibleWhen?`, `interactions`)
+  - `HotspotDefinition` (`id`, `rect`, `labelKey`, `visibleWhen?`, `interactions`, `glint`). `id` sahne içinde
+    benzersizdir. `glint`: toplanabilir nesnenin hafif parıltısı (sunum ipucu; mantığı etkilemez).
   - `InteractionRule` (`when?`, `effects`)
   - `sealed class Condition` → `FlagSet`, `FlagNotSet`, `HasItem`, `UsingItem`, `HasNote`, `AllOf`, `AnyOf`
   - `sealed class Effect` → `GoToScene(sceneId, transition?)`, `GiveItem`, `ConsumeItem`, `AddNote`, `SetFlag`,
@@ -257,25 +261,43 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
     `Inspect(inspectionId)` (sahneyi değiştirmeden inceleme penceresi açar).
     `OpenPuzzle` ve `PlayMedia` Aşama 5'te eklenir.
   - `SceneTransition` (`type: fade|cut`, `fadeOutMs`, `holdMs`, `fadeInMs`, `sfx?`; varsayılan 150 / 0 / 150)
-- `scene_engine/domain/services`:
-  - `ConditionEvaluator` (saf fonksiyon: koşul + ilerleme + seçili eşya → bool)
+- `scene_engine/domain/services` (hepsi saf Dart):
+  - `ConditionEvaluator` (koşul + ilerleme + seçili eşya → bool)
   - `InteractionResolver` (hotspot + ilerleme + seçili eşya → çalışacak etki listesi). Kurallar:
     - Kurallar yukarıdan aşağı okunur, koşulu tutan **ilk** kural çalışır.
-    - Seçili bir eşyayla dokunulduysa ve hiçbir kural o eşyayı (`usingItem`) karşılamıyorsa: yalnızca genel tepki
-      (`Say(generic_item_no_effect)`). Yanlış eşya normal etkileşimi tetiklemez.
-- `scene_engine/domain/repositories/scene_content_repository.dart` (abstract).
+    - **Eşya seçiliyken** yalnızca koşul ağacında o eşya için `usingItem` geçen kurallar adaydır. Adaylardan koşulu
+      tutan ilki çalışır; yoksa yalnızca genel tepki (`Say(generic_item_no_effect)`). Yanlış eşya normal etkileşimi
+      tetiklemez.
+    - **Eşya seçili değilken** `usingItem` her zaman yanlıştır (o kurallar atlanır).
+  - `SceneStackResolver`: gezinme yığını her zaman hedef sahnenin **ata zinciridir** (`parentId` ile kökten hedefe).
+    `GoToScene` nereden çağrılırsa çağrılsın Geri hep üst sahneye döner; yığın tek bir sahne ID'sinden yeniden
+    kurulabilir. Döngülü veya eksik `parentId` hatadır.
+  - `EffectApplier`: (ilerleme, etkiler, bağlam: sahne, hotspot, seçili eşya, şimdiki zaman) →
+    `EffectOutcome` (yeni ilerleme, yayınlanacak olaylar, gezinme isteği?, açılacak inceleme?). Yan etkisi yoktur;
+    bir kuralın bütün etkileri **tek bir yeni ilerleme** üretir. Aşama 5'te bulmacaların `onSolved` etkileri de bunu kullanır.
+    - `Say` iki şey yapar: mesajı ilerlemedeki `chatLog`'a ekler ve `DetectiveSaid` olayı üretir.
+    - `HideHotspot` anahtarı sahneyle nitelenir: `sceneId/hotspotId` (150+ sahnede `lock` gibi ID'ler tekrar eder).
+- `scene_engine/domain/repositories/scene_content_repository.dart` (abstract; `Result` döner).
 - `inventory/domain`: `ItemDefinition` (`id`, `nameKey`, `descriptionKey`, `iconStyle`, `iconAsset?`), `ItemCatalogRepository`.
 - `notebook/domain`: `NoteDefinition` (`id`, `category: document | observation | suspect`, `titleKey`, `bodyKey`, `imageAsset?`),
   `NoteCatalogRepository`.
-- `progress/domain`: `GameProgress` (`caseId`, `chapterId`, `sceneStack`, `inventory` (sıralı eşya ID'leri), `notes`
-  (sıralı, zaman damgalı), `flags`, `hiddenHotspotIds`, `visitedSceneIds`, `chatLog`, `playTimeSeconds`) ve
-  `ProgressRepository` (abstract): `watch()`, `current`, `addItem`, `removeItem`, `addNote`, `setFlag`, `hideHotspot`,
-  `updateSceneStack`, `markVisited`, `appendChatMessage`. Ekleme işlemleri idempotent'tir.
+- `progress/domain`:
+  - `GameProgress` (`caseId`, `chapterId`, `sceneStack`, `inventory` (sıralı eşya ID'leri), `notes`, `flags`,
+    `hiddenHotspots`, `visitedSceneIds`, `chatLog`, `playTimeSeconds`). Kaydedilen her şekil burada tanımlıdır:
+    `CollectedNote` (`noteId`, `addedAtUtcMs`, `isRead`), `ChatLogEntry` (`sender: detective | system`, `textKey`,
+    `params`, `sentAtUtcMs`). Değişiklikler saf, idempotent kopyalama metotlarıdır (`withItem`, `withoutItem`,
+    `withNote`, `withNoteRead`, `withFlag`, `withHiddenHotspot`, `withSceneStack`, `withVisited`, `withChatEntry`).
+    Kayıtta metin yok; yalnızca ID, bayrak ve anahtar (ADR 0003).
+  - `ProgressRepository` (abstract): `load()` (kayıt yoksa `null`), `current`, `watch()`, `save(GameProgress)`.
+    **Tek yazma yolu `save`'dir ve atomiktir:** bir dokunuşun bütün etkileri tek kayıt olur; yarım uygulanmış kural
+    (ör. anahtar tükendi ama kapı bayrağı yazılmadı) hiçbir zaman diske veya arayüze ulaşmaz.
+- `core/time`: `Clock` (UTC "şimdi"; testte sabit saat). Domain `DateTime.now()` çağırmaz.
 - `core/events`: `sealed class GameEvent` → `SceneEntered(sceneId, isFirstVisit)`, `ItemObtained(itemId)`,
   `ItemUsed(itemId, hotspotId)`, `NoteAdded(noteId)`, `DetectiveSaid(messageKey)`; `GameEventBus` (broadcast stream).
+  Olaylar arayüz tepkisi içindir (animasyon, daktilo efekti); kalıcı durum her zaman ilerlemeden okunur.
 - Unit testler: `ConditionEvaluator` (her koşul türü), `InteractionResolver` (kabul senaryosundaki kapı kurallarının
-  tamamı: anahtarsız, yanlış eşyayla, doğru eşyayla, kapı açıkken; `Inspect` içeren kural), `NormalizedRect`,
-  geçiş varsayılanları.
+  tamamı: anahtarsız, yanlış eşyayla, doğru eşyayla, kapı açıkken; `Inspect` içeren kural), `EffectApplier` (her etki,
+  idempotentlik, olaylar), `SceneStackResolver`, `GameProgress` kopyalama metotları, `NormalizedRect`, geçiş varsayılanları.
   **Kabul kriterleri:** `domain` klasörlerinde Flutter import'u yok; resolver testleri kapı/anahtar senaryosunu kapsıyor.
   **Commit:** `feat(scene_engine): add domain models and interaction rule system`
 
@@ -293,26 +315,41 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
         text_en.json                       # yeni dil = yeni text_xx.json
   ```
   Her dosyada `"formatVersion": 1`. Arayüz metinleri ARB'de, hikaye metinleri içerik dosyalarında.
-- Paketler: `json_annotation`; dev: `json_serializable`, `build_runner`. CI'daki `build_runner` ve üretilen kod
-  kontrolü adımlarını etkinleştir.
-- `data/models` DTO'ları + entity dönüşümleri. Koşul ve etkiler JSON'da tek anahtarlı nesnelerdir
-  (`{"flag": "front_door_open"}`, `{"giveItem": "brass_key"}`); bilinmeyen anahtar anlaşılır bir hatayla reddedilir.
+- **Vaka bütün olarak yüklenir.** Eşyalar, notlar ve sohbet geçmişi bölümler arasında taşınır (Bölüm 1'de alınan
+  eşya Bölüm 3'te kullanılabilir; Bölüm 1'in notu finalde kanıttır). Bu yüzden kataloglar ve metinler bölüm bazında
+  değil **vaka genelinde** çözülür: `case.json`'daki bütün bölümlerin dosyaları açılışta okunur. Sahne, eşya, not,
+  inceleme ID'leri ve metin anahtarları vaka içinde benzersizdir (doğrulama testi zorlar). Tembel yükleme ancak
+  6.5'teki ölçüm gerektirirse eklenir.
+- Paketler: `json_annotation`; dev: `json_serializable`, `build_runner`. CI'daki `build_runner` adımını etkinleştir.
+- `data/models` DTO'ları + entity dönüşümleri. Düz DTO'lar `json_serializable` ile (`checked`,
+  `disallowUnrecognizedKeys`: yanlış yazılmış alan adı sessizce yok sayılmaz). Koşul ve etkiler JSON'da tek anahtarlı
+  nesnelerdir (`{"flag": "front_door_open"}`, `{"giveItem": "brass_key"}`) ve elle ayrıştırılır; bilinmeyen anahtar
+  anlaşılır bir hatayla reddedilir. Hatalar `ContentFailure` olarak döner ve dosya adını + konumu içerir.
   `AssetBundle` enjekte edilen veri kaynağı (test edilebilir).
-- `core/content/`: aktif dile göre metni anahtarla veren servis (önce bölüm metinleri, sonra genel metinler).
+- `core/content/`: aktif dile göre metni anahtarla veren servis (vakanın bütün bölüm metinleri + genel metinler).
+  Eksik anahtar çökmez: anahtarın kendisini gösterir ve log'a yazar.
+- `ContentValidator` (`scene_engine/domain/services`, saf Dart; sorun listesi döner). Testte kullanılır; 7.2'deki
+  editör de aynı sınıfı kullanabilir. Kod tarafında tanımlı adları (overlay stilleri, filtre preset'leri,
+  placeholder stilleri) parametre olarak alır.
 - Dikey dilim içeriği (koordinatlar placeholder çizimlerle uyumlu ayarlanır):
   - `villa_exterior`: `door` → `villa_door_closeup`'a git; `statue` → `statue_closeup`'a git; ilk girişte dedektif yorumu.
     Kapı yanındaki numara plakası görsele çizilmez, `TextOverlay` olarak gelir.
   - `villa_door_closeup` (parent: `villa_exterior`): görünüm varyantı `front_door_open` bayrağına göre (açık/kapalı).
     `lock` hotspot'u: kapı açıksa → `villa_hall`'a git; `brass_key` kullanılırsa → bayrak + anahtarı tüket + "Açıldı";
     aksi halde → "Kilitli."
-  - `statue_closeup` (parent: `villa_exterior`): `statue_key` → `GiveItem(brass_key)` + `HideHotspot` + yorum;
-    `statue_body` → kısa yorum; `statue_plaque` → `Inspect(statue_plaque)` (plaket görseli + kazıma yazı overlay'i + metin).
-  - `villa_hall` (parent: `villa_door_closeup`): `desk_paper` → `AddNote(hall_letter)` + `HideHotspot` + yorum.
+  - `statue_closeup` (parent: `villa_exterior`): `statue_key` (`glint`) → `GiveItem(brass_key)` + `HideHotspot` +
+    `SetFlag(statue_key_taken)` + yorum; görünüm varyantı bu bayrağa göre (anahtarlı/anahtarsız). `statue_body` → kısa
+    yorum; `statue_plaque` → `Inspect(statue_plaque)` (plaket görseli + kazıma yazı overlay'i + metin).
+  - `villa_hall` (parent: `villa_door_closeup`): `desk_paper` (`glint`) → `AddNote(hall_letter)` + `HideHotspot` +
+    `SetFlag(hall_letter_taken)` + yorum; görünüm varyantı bu bayrağa göre (kağıtlı/kağıtsız).
   - `items.json`: `brass_key`. `notes.json`: `hall_letter` (document). `inspections.json`: `statue_plaque`.
   - Tüm metinler İngilizce; atmosferik, kısa.
-- **İçerik doğrulama testi** (CLAUDE.md bölüm 9): referanslar (inceleme ID'leri dahil), metin anahtarları (desteklenen
-  tüm dillerde), hotspot ve overlay koordinatları, "bir kuralda tek `inspect`, `goToScene` ile birlikte değil",
-  "okunan her bayrak bir yerde set ediliyor mu" ve "her sahne bölümün giriş sahnesinden ulaşılabilir mi" (graf taraması).
+- **İçerik doğrulama testi** (CLAUDE.md bölüm 9) `ContentValidator`'ı gerçek içerik üzerinde çalıştırır:
+  referanslar (sahne, eşya, not, inceleme), metin anahtarları (desteklenen tüm dillerde), hotspot ve overlay
+  koordinatları, "bir kuralda tek `inspect`, `goToScene` ile birlikte değil", "okunan her bayrak bir yerde set
+  ediliyor mu", "her sahne bölümün giriş sahnesinden ulaşılabilir mi" (graf taraması). Ek kontroller: ID'ler vaka içinde
+  benzersiz; hotspot ID'leri sahne içinde benzersiz; `parentId` var ve döngüsüz; `onFirstEnter` yalnızca izinli
+  etkileri içeriyor; overlay stili, filtre preset'i ve placeholder stili kodda tanımlı.
   **Kabul kriterleri:** Tüm içerik yükleniyor; doğrulama testi geçiyor; bilerek bozulan bir ID veya yanlış yazılmış bir
   bayrak testi kırıyor.
   **Commit:** `feat(scene_engine): add JSON content format and vertical slice content`
@@ -321,33 +358,50 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
 **Amaç:** Oyun mantığını arayüzden bağımsız ve test edilebilir kurmak.
 **Yapılacaklar:**
 - `progress/data`: `InMemoryProgressRepository` (Aşama 2'de Drift ile değişecek).
-- Use case'ler: `TapHotspot` (resolver + etkileri uygula), `ApplyEffects` (etkileri sırayla uygular: ilerleme
-  değişiklikleri ve olay yayını; `GoToScene` gezinme isteği olarak döner), `GoBack`.
+- Use case'ler (`scene_engine/domain/usecases`): hepsi aynı kalıbı izler: `EffectApplier` ile yeni ilerlemeyi hesapla →
+  `ProgressRepository.save` (tek atomik yazım) → başarılıysa olayları `GameEventBus`'a yayınla.
+  - `StartGame`: içeriği yükler; kayıt varsa onu, yoksa giriş sahnesiyle yeni bir `GameProgress` kurar (Aşama 2'de
+    "kaldığın yerden devam" aynı yoldan gelir).
+  - `TapHotspot` (resolver + etkiler), `EnterScene` (yığın, ziyaret işareti, `SceneEntered`, ilk ziyarette
+    `onFirstEnter`; hepsi tek kayıt), `GoBack`.
 - `SceneBloc`:
-  - Olaylar: `SceneStarted`, `HotspotTapped(hotspotId, usingItemId?)`, `BackPressed`, `TransitionCovered`, `TransitionFinished`.
-  - Durum: `stack`, `currentScene`, `currentVisual` (varyant çözülmüş), `visibleHotspots` (`visibleWhen` ve gizlenenler
-    uygulanmış), `transitionPhase` (`idle` / `covering` / `revealing`), `pendingTransition`, `canGoBack`,
-    `activeInspection`.
-  - İnceleme: `Inspect` etkisi `activeInspection`'ı doldurur; yeni olay `InspectionClosed`. Pencere açıkken hotspot
-    dokunuşları yok sayılır; `BackPressed` önce pencereyi kapatır, yığına dokunmaz. İnceleme ilerlemeye yazılmaz.
+  - Olaylar: `SceneStarted`, `HotspotTapped(hotspotId, usingItemId?)`, `BackPressed`, `TransitionCovered`,
+    `TransitionFinished`, `InspectionRequested(inspection)`, `InspectionClosed`.
+  - Durum: `status` (`loading` / `ready` / `failed` + `Failure`), `stack`, `currentScene`, `currentVisual` (varyant
+    çözülmüş), `visibleHotspots` (`visibleWhen` ve gizlenenler uygulanmış), `transitionPhase` (`idle` / `covering` /
+    `revealing`), `pendingTransition`, `canGoBack`, `activeInspection`.
+  - **Olaylar sırayla işlenir** (tek olay işleyici, sıralı dönüştürücü; ek paket yok). Kayıt Aşama 2'de asenkron
+    olacağı için iki hızlı dokunuş aynı kuralı iki kez çalıştıramaz.
+  - İnceleme: `Inspect` etkisi `activeInspection`'ı doldurur. Pencere açıkken hotspot dokunuşları yok sayılır;
+    `BackPressed` önce pencereyi kapatır, yığına dokunmaz. İnceleme ilerlemeye yazılmaz. `InspectionRequested`,
+    eşya inceleme kartı (1.5) için dışarıdan pencere açar.
   - İlerleme akışı (`watch()`) değiştikçe görünüm ve görünür hotspot'lar yeniden hesaplanır.
   - Geçiş zamanlaması arayüzdeki animasyondadır; Bloc yalnızca fazı tutar. Ekran tamamen karardığında arayüz
-    `TransitionCovered` gönderir, Bloc sahneyi o an değiştirir.
+    `TransitionCovered` gönderir, Bloc sahneyi o an değiştirir (`EnterScene`).
   - Geçiş sürerken gelen dokunmalar yok sayılır.
-  - Sahneye girişte: `markVisited`, `updateSceneStack`, `SceneEntered`; ilk ziyaretse `onFirstEnter` etkileri.
+  - **Geri geçişi:** sahneye girerken kullanılan geçiş *tipi* (`fade` / `cut`) oturum boyunca hatırlanır ve Geri'de
+    varsayılan sürelerle kullanılır (`holdMs` ve `sfx` tekrarlanmaz). Kayıttan dönülen sahnede varsayılan `fade`.
 - `bloc_test`: kabul senaryosunun 1–11. adımlarının mantığı, geçiş sırasında çift dokunma, ana sahnede geri (etkisiz),
-  inceleme açıkken Geri ve hotspot dokunuşu.
+  inceleme açıkken Geri ve hotspot dokunuşu, içerik yüklenemezse `failed`. Use case testleri: kayıt başarısızsa olay
+  yayınlanmaz.
   **Kabul kriterleri:** Kabul senaryosunun tamamı testlerle doğrulanmış (henüz arayüz yok).
   **Commit:** `feat(scene_engine): add scene bloc with effect execution and navigation stack`
 
 ### [ ] 1.4 Sahne görünümü
-**Amaç:** Sahneleri her ekranda doğru oranla çizmek ve dokunmaları almak.
+**Amaç:** Sahneleri her ekranda doğru oranla çizmek, dokunmaları almak ve sahneler arasında gezinmek.
 **Yapılacaklar:**
+- `lib/app/game/game_screen.dart`: feature widget'larını birleştiren ekran (CLAUDE.md bölüm 3'teki `app/` kuralı).
+  Bu adımda: sahne alanı + Geri butonu; yükleniyor ve hata durumları (metinler ARB'den). Panel, defter ve mesaj barı
+  sonraki adımlarda eklenir.
+- **Geri:** sol üstte, `canGoBack` iken görünür. Android sistem geri tuşu `PopScope` ile `BackPressed`'e bağlanır;
+  ana sahnede "Çıkmak için tekrar bas" mesajı (ARB).
 - `SceneViewport`: verilen alana 16:9 oranını koruyarak sığar (contain); boşluklar koyu letterbox.
 - Arka plan: `background` doluysa `Image.asset` (ekran boyutuna göre `cacheWidth`), boşsa `placeholderStyle`'a göre
-  `CustomPainter`: villa cephesi, kapı yakın planı (kapalı ve açık), heykel yakın planı, hol (masa ve kağıt).
-  Noir: gece mavisi/siyah, ay ışığı, sis katmanları. Görsel olarak anlaşılır ve şık olmalı. Gren ve vinyeti
-  placeholder'lar değil ortak noir filtre çizer.
+  `CustomPainter`: villa cephesi, kapı yakın planı (kapalı ve açık), heykel yakın planı (anahtarlı ve anahtarsız),
+  hol (kağıtlı ve kağıtsız), plaket. Noir: gece mavisi/siyah, ay ışığı, sis katmanları. Görsel olarak anlaşılır ve
+  şık olmalı. Gren ve vinyeti placeholder'lar değil ortak noir filtre çizer.
+- Placeholder çizimleri `core/placeholders/` altında, stil adıyla kayıtlıdır. Sahne (`scene_engine`) ve eşya ikonları
+  (`inventory`) aynı kayıt defterini kullanır; feature'lar birbirinin `presentation` katmanını import etmez.
 - `OverlayLayer`: `TextOverlay`'leri görselle aynı normalize koordinatlarla çizer; yazı `rect`'e sığacak şekilde
   ölçeklenir; stil preset'leri (`typewriter`, `handwriting`, `engraved`...) `core/theme`'de.
 - `NoirFilter`: gren + vinyet + renk tonu; preset'ler `core/theme`'de, sahne `filterPreset` ile seçer. Uygulama yolu
@@ -355,63 +409,73 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
   gren varsayılan olarak statik. Katman sırası: arka plan → overlay → filtre → hotspot → geçiş.
 - `InspectPanel`: sahnenin üstünde küçük pencere; görsel sahneyle aynı hattan çizilir (görsel + overlay + filtre),
   altında metin. Dışına dokun / kapat / Geri ile kapanır.
-- Toplanabilir nesneler (anahtar, kağıt) sahnede hafifçe parıldar: dikkat çeker ama bağırmaz.
+- `glint` işaretli hotspot'lar sahnede hafifçe parıldar: dikkat çeker ama bağırmaz.
 - `HotspotLayer`: normalize koordinat → piksel; şeffaf dokunma alanları; erişilebilirlik için `Semantics` etiketleri;
   dokunulan noktada kısa bir dalga efekti. Dev flavor'da açılıp kapanabilen **debug overlay**: hotspot dikdörtgenleri ve ID'leri.
 - `TransitionOverlay`: siyah katman; `fadeOutMs` → `holdMs` → `fadeInMs`; `cut` tipinde anında.
 - Arka plan (görsel + overlay + filtre) ve hotspot katmanı ayrı `RepaintBoundary`.
 - Fare tıklaması dokunmayla aynı çalışır; Windows'ta farklı pencere boyutlarında da denenir.
+- Widget testleri: viewport oranı, hotspot dokunuşu → olay, Geri butonu görünürlüğü, inceleme penceresinin kapanması.
   **Kabul kriterleri:** Kabul senaryosunun gezinme adımları telefonda ve Windows'ta çalışıyor; tablet emülatöründe ve
   yeniden boyutlanan pencerede hotspot'lar ve overlay yazılar kaymıyor, yazılar okunuyor; inceleme penceresi (adım 11)
   çalışıyor; filtre 60 fps hedefini bozmuyor.
   **Commit:** `feat(scene_engine): render scenes with viewport, overlays, noir filter, hotspots and transitions`
   ve `feat(scene_engine): add inspect panel`
 
-### [ ] 1.5 HUD: Geri butonu, eşya paneli ve eşya kullanımı
-**Amaç:** Sabit arayüzü ve "eşyayı al, doğru yerde kullan" hissini kurmak.
+### [ ] 1.5 HUD: eşya paneli ve eşya kullanımı
+**Amaç:** "Eşyayı al, doğru yerde kullan" hissini kurmak.
 **Yapılacaklar:**
-- `lib/app/game/game_screen.dart`: feature widget'larını birleştiren ekran (CLAUDE.md bölüm 3'teki `app/` kuralı).
-  Solda sahne alanı, sağda sabit genişlikte eşya paneli, sol üstte Geri butonu.
-- Geri butonu `canGoBack` iken görünür. Android sistem geri tuşu `PopScope` ile `BackPressed`'e bağlanır;
-  ana sahnede "Çıkmak için tekrar bas" mesajı.
+- `GameScreen`: solda sahne alanı, sağda sabit genişlikte eşya paneli. Sahne viewport'u panelin solunda kalan alana sığar.
 - `inventory/presentation`: `InventoryCubit` (ilerlemedeki eşyalar + katalog → sıralı liste; seçili eşya).
-  Dokun → seç / tekrar dokun → bırak. Uzun bas → inceleme kartı (1.4'teki `InspectPanel` yeniden kullanılır).
+  Dokun → seç / tekrar dokun → bırak. Seçili eşya envanterden çıkarsa seçim kendiliğinden kalkar.
 - `GameScreen`, `HotspotTapped`'e seçili eşyayı ekler; dokunuştan sonra seçim temizlenir.
-- `ItemSidebar`: dikey, yarı saydam koyu yüzey; seçili eşya belirgin çerçeve; boş durum metni.
-- **Uçuş animasyonu:** Alınan nesne sahnedeki konumundan paneldeki yuvasına uçar (`Overlay` + `GlobalKey`;
-  ~450 ms, `easeInOutCubic`), yuvaya oturunca kısa parlama. Tüketilen eşya panelden sönerek çıkar.
-- Testler: `InventoryCubit` için `bloc_test` (seçim, tüketme); Geri butonu görünürlüğü için widget testi.
-  **Kabul kriterleri:** Kabul senaryosunun 1–7. adımları telefonda çalışıyor (dedektif mesajları hariç).
+- **Eşya inceleme kartı:** uzun basınca `InventoryCubit` bir "incele" isteği yayar; `GameScreen` eşyayı bir
+  `InspectionDefinition`'a çevirir (başlık = ad, metin = açıklama, görsel = eşyanın placeholder stili / asset'i) ve
+  `SceneBloc`'a `InspectionRequested` gönderir. Böylece pencere, Geri davranışı ve dokunma kilidi tek yerde kalır;
+  `inventory`, `scene_engine`'in `presentation` katmanını import etmez.
+- `ItemSidebar`: dikey, yarı saydam koyu yüzey; seçili eşya belirgin çerçeve; boş durum metni (ARB).
+- **Uçuş animasyonu:** Alınan nesne sahnedeki konumundan paneldeki yuvasına uçar (~450 ms, `easeInOutCubic`), yuvaya
+  oturunca kısa parlama. Tüketilen eşya panelden sönerek çıkar. Başlangıç ve bitiş noktaları `core/widgets` içindeki
+  bir çapa kayıt defteriyle (`GlobalKey`) bulunur; uçuşu `app/` katmanı `ItemObtained` olayıyla başlatır (`Overlay`).
+- Testler: `InventoryCubit` için `bloc_test` (seçim, tüketme, incele isteği); panel için widget testi.
+  **Kabul kriterleri:** Kabul senaryosunun 1–7. adımları telefonda ve Windows'ta çalışıyor (dedektif mesajları hariç).
   **Commit:** `feat(inventory): add item sidebar with selection, use and collect animation`
 
 ### [ ] 1.6 Not defteri
 **Amaç:** Okunan her şeyin toplandığı ve ileride finalde kanıt seçilecek olan defteri kurmak.
 **Yapılacaklar:**
-- `notebook/presentation`: `NotebookCubit` (notlar, kategoriler, okunmamış sayısı).
+- `notebook/domain`: `MarkNoteRead` use case (ilerlemeye yazar). Okundu bilgisi `GameProgress`'tedir; Aşama 2'den
+  sonra uygulama kapanıp açılınca rozet geri gelmez.
+- `notebook/presentation`: `NotebookCubit` (ilerlemedeki notlar + katalog, kategoriler, okunmamış sayısı).
 - HUD'da defter düğmesi (eşya panelinin üstünde) + okunmamış rozeti.
 - `NotebookScreen`: sekmeler **Belgeler / Gözlemler / Şüpheliler**; yatay ekrana uygun iki sütun (solda liste,
-  sağda içerik); eski kağıt dokusu, daktilo başlıklar. Boş sekme için atmosferik boş durum metni.
-- Not eklenince kağıt deftere uçar (eşya uçuş animasyonu yeniden kullanılır).
-- Testler: `NotebookCubit` (ekleme, okundu işaretleme, kategoriler).
-  **Kabul kriterleri:** Kabul senaryosunun 8–9. adımları çalışıyor.
+  sağda içerik); eski kağıt dokusu, daktilo başlıklar. Boş sekme için atmosferik boş durum metni. Sahnenin üstünde
+  açılır (router rotası değil); Geri ve sistem geri tuşu önce defteri kapatır.
+- Not eklenince kağıt deftere uçar (eşya uçuş animasyonu yeniden kullanılır; tetikleyici `NoteAdded`).
+- Testler: `NotebookCubit` (ekleme, okundu işaretleme, kategoriler), `MarkNoteRead`.
+  **Kabul kriterleri:** Kabul senaryosunun 8–9. adımları telefonda ve Windows'ta çalışıyor.
   **Commit:** `feat(notebook): add notebook with documents, observations and suspects`
 
 ### [ ] 1.7 Dedektifin iç sesi
 **Amaç:** Dedektifin oyuncuya konuştuğu mesaj katmanı (ileride ipucu sistemi de bunu kullanacak).
 **Yapılacaklar:**
-- `detective_chat/domain`: `ChatMessage` (`id`, `sender: detective | system`, `textKey`, `params`, `timestamp`). Tek yönlüdür.
-- `ChatBloc`: `GameEventBus`'taki `DetectiveSaid` olaylarını dinler; mesajları `ProgressRepository.appendChatMessage`
-  ile ilerlemeye yazar; okunmamış sayısını tutar.
-- `ChatBar`: alt kenarda kompakt; son mesaj daktilo efektiyle yazılır (dokununca anında tamamlanır).
-- `ChatHistorySheet`: dokununca açılan mesaj geçmişi.
-- Testler: olay → mesaj; okunmamış sayısı; geçmiş sırası.
-  **Kabul kriterleri:** Kabul senaryosunun tamamı (1–11) telefonda çalışıyor.
+- Mesajlar zaten ilerlemededir (`chatLog`; `Say` etkisi 1.1'deki `EffectApplier`'da yazar). `detective_chat` yalnızca
+  gösterir: kendi kalıcı modeli yoktur.
+- `ChatCubit`: geçmişi `ProgressRepository.watch()`'tan okur; `GameEventBus`'taki `DetectiveSaid` yalnızca "yeni mesaj
+  geldi" tepkisini (daktilo efekti, okunmamış sayısı) tetikler. Okunmamış sayısı arayüz durumudur (kaydedilmez).
+- `ChatBar`: sahne alanının alt kenarında, sahnenin **üstüne** bindirilmiş kompakt bar; son mesaj daktilo efektiyle
+  yazılır (dokununca anında tamamlanır). Mesaj okunacak kadar kaldıktan sonra bar kendiliğinden küçük bir düğmeye
+  çekilir; böylece sahne küçülmez ve alt kenardaki hotspot'lar kalıcı olarak kapanmaz. Süreler `core/theme`'de.
+- `ChatHistorySheet`: bara veya düğmeye dokununca açılan mesaj geçmişi; Geri önce bunu kapatır.
+- Testler: olay → yeni mesaj tepkisi; okunmamış sayısı; geçmiş sırası.
+  **Kabul kriterleri:** Kabul senaryosunun tamamı (1–11) telefonda ve Windows'ta çalışıyor.
   **Commit:** `feat(detective_chat): add detective inner voice bar and history`
 
 ### [ ] 1.8 Uçtan uca test ve cila
 **Amaç:** Aşamayı sağlam kapatmak.
 **Yapılacaklar:**
-- `integration_test`: kabul senaryosunun tamamı otomatik.
+- Kabul senaryosunun tamamı tek bir paylaşılan senaryo fonksiyonu olarak yazılır ve iki yerden çalıştırılır:
+  `test/` altında widget testi (her push'ta CI'da) ve `integration_test` (gerçek cihazda: telefon ve Windows).
 - Telefonda manuel kontrol listesi: hızlı çift dokunma, eşya seçiliyken Geri, sistem geri tuşu, arka plana alıp dönme, tablet oranı.
 - Windows'ta aynı senaryo fareyle.
 - `flutter run --profile` ile performans kontrolü (hedef: takılmasız 60 fps); sonuç devlog'a.
@@ -741,3 +805,46 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
 - 2026-11-13 (Aşama 0 incelemesi): CI'a Android derleme işi eklendi (`.github/workflows/android.yml`): `dev` flavor debug
   APK. Yalnızca `android/**`, `pubspec.*`, `lib/main_*.dart` veya iş akışının kendisi değişince çalışır (Actions
   kotasını korumak için ayrı dosya + `paths` filtresi; `ci.yml`'deki işler her push'ta çalışmaya devam eder).
+- 2026-11-13 (Aşama 1 öncesi mimari inceleme): Aşama 1 adımları `docs/game_design.md`, `CLAUDE.md` ve ADR'lerle
+  karşılaştırılıp düzeltildi. Oyun tasarımı, ADR'ler ve diğer aşamalar değişmedi. Değişiklikler ve gerekçeleri:
+  - **Atomik kayıt (1.1, 1.3):** `ProgressRepository`'nin tek tek yazan metotları (`addItem`, `setFlag`...) kaldırıldı;
+    tek yazma yolu `save(GameProgress)`. Etkiler saf `EffectApplier` ile tek bir yeni ilerlemeye çevrilir. Eski
+    tasarımda üç etkili bir kural üç ayrı yazım demekti: Aşama 2'de araya uygulama kapanması girerse anahtar tükenmiş
+    ama kapı kapalı kalabilirdi (çözülemeyen oyun), arayüz de ara durumları çizerdi.
+  - **Sohbet ve okundu durumu ilerlemede (1.1, 1.6, 1.7):** `ChatBloc`'un `DetectiveSaid` olayını dinleyip ilerlemeye
+    yazması kaldırıldı (sunum katmanından ikinci bir yazma yolu; bloc ayakta değilse mesaj kaybolurdu). `Say` mesajı
+    aynı atomik kayıtta `chatLog`'a ekler. `ChatMessage` yerine `progress/domain`'de `ChatLogEntry`; notlara `isRead`
+    eklendi (yoksa rozet her açılışta geri gelirdi). `uuid` gerektiren mesaj `id`'si kaldırıldı.
+  - **Vaka genelinde katalog ve metin (1.2):** Eski plan metinleri ve katalogları bölüm bazında çözüyordu; Bölüm 2'de
+    Bölüm 1'in eşyası, notu veya sohbet mesajı gösterilemezdi. ID'ler ve metin anahtarları vaka içinde benzersiz.
+  - **Yığın = ata zinciri (1.1):** `GoToScene`'in yığına ne yaptığı tanımsızdı. Artık yığın hedef sahnenin `parentId`
+    zinciridir; Geri her zaman üst sahneye döner.
+  - **Gizlenen hotspot anahtarı `sceneId/hotspotId` (1.1):** Hotspot ID'leri yalnızca sahne içinde benzersiz.
+  - **Resolver kuralı netleşti (1.1):** eşya seçiliyken yalnızca o eşya için `usingItem` içeren kurallar aday.
+  - **Alınan nesnenin görseli (1.2):** "Anahtar sahneden kaybolur" için mevcut model yeterli değildi (`hideHotspot`
+    yalnızca dokunma alanını kaldırır). Şimdilik bayrak + görünüm varyantı kullanılıyor (`statue_key_taken`,
+    `hall_letter_taken`); hotspot'a sunum ipucu olarak `glint` eklendi.
+  - **`onFirstEnter` kısıtı (1.1):** yalnızca `say`, `setFlag`, `addNote`, `giveItem`.
+  - **Sıralı olay işleme, `status`, `StartGame` (1.3):** çift dokunma yarışı; içerik yüklenemezse hata ekranı; yeni
+    oyun / kayıttan devam tek yoldan.
+  - **Geri butonu 1.5'ten 1.4'e alındı:** 1.4'ün kabul kriteri gezinmeyi istiyor, Geri olmadan doğrulanamaz.
+  - **Feature sınırları (1.4, 1.5):** placeholder çizimleri `core/placeholders`'ta; eşya inceleme kartı ve uçuş
+    animasyonu `app/` katmanında birleşir. Eski planda `inventory`, `scene_engine`'in `InspectPanel`'ini doğrudan
+    kullanıyordu (yasak: feature başka feature'ın `presentation`'ını import edemez).
+  - **`ContentValidator` test yerine `lib/`'te (1.2);** ek kontroller eklendi. Bilinmeyen JSON alanı reddedilir.
+  - **Mesaj barı sahnenin üstünde ve kendiliğinden küçülür (1.7):** 20:9 telefonda altta boş alan yok; sabit bar
+    ya sahneyi ~%12 küçültür ya da alt kenardaki hotspot'ları kalıcı kapatırdı.
+  - **1.8:** senaryo CI'da widget testi olarak da çalışır (`integration_test` cihaz ister).
+- 2026-11-13: **Kullanıcı kararı bekleyen** (Aşama 1 bunlar olmadan ilerliyor):
+  1. **Nesne katmanı (sprite).** Alınan her nesne için şimdi iki tam sahne görseli gerekiyor (nesneli / nesnesiz); bir
+     sahnede iki toplanabilir nesne varsa dört görsel. Gerçek görsellerde (Aşama 7) bu sanat bütçesini katlar. Öneri:
+     hotspot'a opsiyonel bir `sprite` (görsel) alanı; görünürken sahneye çizilir, gizlenince kaybolur. Katman sırasını
+     (arka plan → **nesneler** → overlay → filtre → ...) ve dolayısıyla `CLAUDE.md` bölüm 6 ile ADR 0011'i etkiler.
+     7.3'ten önce karar verilmeli.
+  2. **Geri geçişi (ADR 0007: "Back uses the same transition type").** Giriş geçişinin tipi yalnızca oturum boyunca
+     hatırlanıyor; kayıttan dönülünce varsayılan `fade`. Kalıcı olması isteniyorsa yığın girdileri geçiş tipini de
+     saklamalı (kayıt şekli ve ADR 0003 etkilenir).
+  3. **Mesaj barının yeri.** `CLAUDE.md` "alt: kompakt mesaj barı" diyor; sahnenin üstüne binip kendiliğinden küçülmesi
+     benim yorumum. Telefonda gördükten sonra onaylanmalı ya da "sahne küçülsün, bar sabit kalsın" denmeli.
+  4. **`Esc` = Geri (oyun tasarımı 5.7).** Plan bunu 11.2'ye bırakıyor; Windows'ta her gün fareyle test edildiği için
+     Aşama 1'de eklemek ucuz olurdu. Aşama 11'i değiştirdiği için dokunulmadı.
