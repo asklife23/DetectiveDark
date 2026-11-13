@@ -1,10 +1,34 @@
 import 'package:detective_dark/app/bootstrap.dart';
+import 'package:detective_dark/core/config/app_config.dart';
+import 'package:detective_dark/core/config/flavor.dart';
 import 'package:detective_dark/core/logging/app_logger.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  group('checkBuildFlavor', () {
+    final config = AppConfig.fromEnvironment(Flavor.dev);
+
+    test('accepts the matching flavor and builds without one', () {
+      expect(() => checkBuildFlavor(config, 'dev'), returnsNormally);
+      expect(() => checkBuildFlavor(config, null), returnsNormally);
+    });
+
+    test('stops start-up and names the right entry point on a mismatch', () {
+      expect(
+        () => checkBuildFlavor(config, 'prod'),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('lib/main_prod.dart'),
+          ),
+        ),
+      );
+    });
+  });
 
   group('registerErrorHandlers', () {
     late List<LogEntry> entries;

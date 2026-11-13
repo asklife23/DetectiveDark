@@ -21,12 +21,7 @@ Future<void> bootstrap(AppConfig config) async {
   const logger = AppLogger('app');
   registerErrorHandlers(logger);
 
-  if (!config.matchesBuildFlavor(appFlavor)) {
-    throw StateError(
-      'Entry point flavor "${config.flavor.name}" does not match the build '
-      'flavor "$appFlavor". Use lib/main_$appFlavor.dart.',
-    );
-  }
+  checkBuildFlavor(config, appFlavor);
   logger.info('Starting DetectiveDark (${config.debugLabel})');
 
   Bloc.observer = const AppBlocObserver(AppLogger('bloc'));
@@ -60,4 +55,17 @@ void registerErrorHandlers(AppLogger logger) {
     logger.error('Uncaught error', error: error, stackTrace: stackTrace);
     return true;
   };
+}
+
+/// Stops start-up when the entry point does not belong to the native build
+/// flavor, e.g. `--flavor prod -t lib/main_dev.dart`. [buildFlavor] is
+/// Flutter's `appFlavor`.
+@visibleForTesting
+void checkBuildFlavor(AppConfig config, String? buildFlavor) {
+  if (config.matchesBuildFlavor(buildFlavor)) return;
+
+  throw StateError(
+    'Entry point flavor "${config.flavor.name}" does not match the build '
+    'flavor "$buildFlavor". Use lib/main_$buildFlavor.dart.',
+  );
 }
