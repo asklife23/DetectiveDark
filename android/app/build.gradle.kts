@@ -16,8 +16,8 @@ android {
 
     defaultConfig {
         applicationId = "io.github.asklife23.detectivedark"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
+        // SDK levels and version come from Flutter (pubspec.yaml `version`).
+        // See https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -48,8 +48,9 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // TODO(phase-10.1): sign with the upload keystore (never committed).
+            // Until then release builds use the debug keys, so
+            // `flutter run --release` works. Such a build must not be published.
             signingConfig = signingConfigs.getByName("debug")
         }
     }
