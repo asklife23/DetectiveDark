@@ -64,13 +64,16 @@ flutter pub get
 flutter run --flavor dev -t lib/main_dev.dart --dart-define-from-file=env/dev.json
 ```
 
+The template sets `SHOW_DEBUG_OVERLAY` to `false`. To see the "DEV" badge, set it to `true` in
+`env/dev.json` (or delete the key: without it the badge is on for `dev` only).
+
 Android Studio picks up ready-made `dev`, `staging` and `prod` run configurations from `.run/`.
 
 | Env key | Meaning |
 |---|---|
 | `SUPABASE_URL` | Supabase project URL (filled in Phase 3) |
 | `SUPABASE_ANON_KEY` | Supabase anon / publishable key — never the service role key |
-| `SHOW_DEBUG_OVERLAY` | Shows the flavor badge on screen (default: on for `dev` only) |
+| `SHOW_DEBUG_OVERLAY` | Shows the flavor badge on screen. Optional; when the key is missing: on for `dev` only |
 
 iOS flavors are set up in Phase 10.
 
