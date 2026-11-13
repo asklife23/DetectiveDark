@@ -157,3 +157,42 @@ Yok.
 | `759d477` | `docs(readme): mark planned tech and link the devlog` |
 
 Her biri kalite kapısından geçti (format 0 değişiklik, analyze 0 sorun, test 47/47).
+
+## Kararlar ve ikinci tur (2026-11-13)
+
+Kullanıcı beş konuda karar verdi; hepsi uygulandı. Yukarıdaki bulgu metinleri ilk incelemedeki durumu anlatır;
+güncel durum bu bölümdedir.
+
+| Karar | Ne yapıldı | Commit |
+|---|---|---|
+| K1 (Ö4) | 9.1 (çökme raporlama) Bölüm 1 oyun testinin (7.4) önüne alındı; çalışma sırası, bağımlılık notları, açık kararlar tablosu ve "Notlar" güncellendi | `d8c5a66` |
+| K2 (Ö5) | `.github/workflows/android.yml`: `dev` flavor debug APK; yalnızca `android/**`, `pubspec.*`, `lib/main_*.dart` veya iş akışının kendisi değişince çalışır | `8e4e0f2` |
+| K3 | Kök dizine `LICENSE` ("All rights reserved", yalnızca görüntüleme); README'de lisans bölümü; fontlar OFL ile ayrı | `2b745b1` |
+| K4 | Plan 1.8 kabul kriteri: README'de Features, Architecture ve License bölümleri dolu | `244fb2e` |
+| K5 | `CLAUDE.md` ve plan 0.2: `Success` / `Failed` | `c6a6ae8` |
+
+Düzeltilen küçük bulgular:
+
+| # | Ne yapıldı | Commit |
+|---|---|---|
+| 1 | `FlutterError.onError` artık `FlutterError.presentError`'ı da çağırıyor; testi var | `216f513` |
+| 2, 3 | Flavor kontrolü `checkBuildFlavor(config, buildFlavor)` fonksiyonuna çıkarıldı; iki yolu da test ediliyor | `551d161` |
+| 5 | `test/app/router/app_router_test.dart` eklendi | `24db467` |
+| 9 | Rozet rengi `AppColors.debugBadge` tokenına taşındı | `c16a096` |
+| 10 | Gradle şablon yorumları değiştirildi; imzalama `TODO`'su 10.1'i gösteriyor | `a06e0c6` |
+| 14 | Devlog: hata log'u cümlesi düzeltildi (yalnızca debug), 0.6 başlığı standart biçime çekildi | `8366565` |
+
+Bilerek bırakılanlar (karar gerektiriyor ya da şimdi yapmanın yararı yok):
+
+- **2 (kalan kısım):** Flavor uyuşmazlığında uygulama hâlâ boş ekranda kalıyor. Ekranda hata göstermek bir tasarım
+  kararı; 9.1'de çökme raporlamayla birlikte ele alınabilir.
+- **3 (kalan kısım):** `bootstrap()`'ın tamamı (`runApp` dahil) test edilmiyor; Aşama 1.8'deki `integration_test`
+  bunu kapsayacak.
+- **4:** `--dart-define` ile ikinci test turu CI'ı değiştirir; karar gerektirir.
+- **6, 8:** Zararsız; kural "küçük yardımcılar hariç" diyor.
+- **7:** `AppBlocObserver`'ın release'teki maliyeti; 9.1'de log'lar çökme raporuna iz (breadcrumb) olarak
+  bağlanabileceği için o adımda karar verilmeli.
+- **11:** Steam giriş noktasının Android'de derlenebilmesi; platform servisleri gelince (Aşama 8 / 11) DI'da korunur.
+- **12, 13:** Action'ları SHA ile sabitleme ve `main`'de `cancel-in-progress`; CI politikası kararı.
+
+Kalite kapısı (son durum): format 0 değişiklik, analyze 0 sorun, test 50/50.
