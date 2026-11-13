@@ -22,7 +22,7 @@ Aşamalar numara sırasıyla değil, bu sırayla yapılır. Numaralar değişmez
 2. Aşama 1 — Oyun motoru
 3. Aşama 2 — Kalıcı kayıt
 4. Aşama 5 — Bulmacalar ve vaka akışı
-5. Aşama 7, **yalnızca Bölüm 1** (7.1–7.4): hikaye, görseller, Bölüm 1 içeriği ve 10–15 kişiyle oyun testi
+5. Aşama 7, **yalnızca Bölüm 1** (7.0–7.4): repoyu private yapma, hikaye, görseller, Bölüm 1 içeriği ve 10–15 kişiyle oyun testi
 6. Aşama 3 — Supabase ve kimlik
 7. Aşama 4 — Bulut eşitleme
 8. Aşama 6 — Oyun hissi ve uygulama kabuğu
@@ -590,10 +590,18 @@ parçalar işaretlidir; ilgili aşama gelince bağlanır.
 ## Aşama 7 — Hikaye, içerik ve görseller
 *(Başlarken: açık kararları sor, adımları detaylandır, onay al.)*
 
-**Sıra:** İki parçada yapılır (bkz. "Çalışma sırası"). 7.1–7.4 (Bölüm 1 ve oyun testi) Aşama 5'ten hemen sonra;
+**Sıra:** İki parçada yapılır (bkz. "Çalışma sırası"). 7.0–7.4 (private repo, Bölüm 1 ve oyun testi) Aşama 5'ten hemen sonra;
 7.5 (Bölüm 2–4) Aşama 6'dan sonra. Oyun testinin sonucu Aşama 3'e geçmeden önce değerlendirilir; bulmaca veya
 hikaye değişikliği gerekiyorsa önce o yapılır.
 
+- [ ] 7.0 **Repoyu private yap** — hikaye, bulmaca çözümleri ve görseller repoya girmeden önce (spoiler ve içerik
+  koruması). Bu adım bitmeden `docs/story/`, bulmaca çözümü içeren JSON veya gerçek görsel commit edilmez.
+  `gh repo edit asklife23/DetectiveDark --visibility private --accept-visibility-change-consequences`
+  (dışa dönük ve geri alınması zor bir işlem: çalıştırmadan önce kullanıcıdan onay alınır).
+  Private repoda GitHub Actions dakika sınırını kontrol et (ücretsiz planda aylık kota; Windows ve macOS
+  makineleri kotadan daha hızlı düşer); gerekirse CI'ı sadece `main` push'larında çalıştır (`pull_request`
+  tetikleyicisini kaldır). README'deki CI rozeti private repoda herkese görünmez; portföy görünürlüğü
+  (ör. içeriksiz açık bir vitrin reposu) bu adım başlarken konuşulur.
 - [ ] 7.1 Vaka 1 kurgusu (kullanıcıyla birlikte): olay, kurban, 7 şüpheli, gerçek çözüm, bulmaca zinciri, bölüm kapanışları.
   Sonuç `docs/story/` altında.
 - [ ] 7.2 Dev flavor'da hotspot ve overlay editörü: hotspot ve yazı (overlay) dikdörtgenlerini sürükleyip koordinatları
@@ -715,3 +723,5 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   eğlenceli olduğunu doğrula; bulut eşitleme eğlenceyi etkilemez. Bölüm 1 sonundaki hesap bağlama önerisi 5.4'ten
   3.3'e, kayıt incelemenin sesi 5.3'ten 6.1'e taşındı. `Sıradaki adım` komutu artık bu sırayı izler (CLAUDE.md
   güncellendi).
+- 2026-11-13: Aşama 7'nin başına 7.0 eklendi: hikaye, bulmaca çözümleri ve görseller repoya girmeden önce repo
+  private yapılır (spoiler ve içerik koruması). Actions kotası ve portföy görünürlüğü o adımda değerlendirilir.
