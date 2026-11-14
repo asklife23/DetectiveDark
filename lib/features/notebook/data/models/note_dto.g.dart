@@ -56,20 +56,46 @@ const _$NoteCategoryEnumMap = {
   NoteCategory.person: 'person',
 };
 
-NotesFileDto _$NotesFileDtoFromJson(Map<String, dynamic> json) =>
-    $checkedCreate('NotesFileDto', json, ($checkedConvert) {
-      $checkKeys(json, allowedKeys: const ['formatVersion', 'notes']);
-      final val = NotesFileDto(
-        formatVersion: $checkedConvert(
-          'formatVersion',
-          (v) => (v as num).toInt(),
-        ),
-        notes: $checkedConvert(
-          'notes',
+NoteExtensionDto _$NoteExtensionDtoFromJson(Map<String, dynamic> json) =>
+    $checkedCreate('NoteExtensionDto', json, ($checkedConvert) {
+      $checkKeys(json, allowedKeys: const ['note', 'entries']);
+      final val = NoteExtensionDto(
+        note: $checkedConvert('note', (v) => v as String),
+        entries: $checkedConvert(
+          'entries',
           (v) => (v as List<dynamic>)
-              .map((e) => NoteDto.fromJson(e as Map<String, dynamic>))
+              .map((e) => NoteEntryDto.fromJson(e as Map<String, dynamic>))
               .toList(),
         ),
       );
       return val;
     });
+
+NotesFileDto _$NotesFileDtoFromJson(
+  Map<String, dynamic> json,
+) => $checkedCreate('NotesFileDto', json, ($checkedConvert) {
+  $checkKeys(
+    json,
+    allowedKeys: const ['formatVersion', 'notes', 'noteExtensions'],
+  );
+  final val = NotesFileDto(
+    formatVersion: $checkedConvert('formatVersion', (v) => (v as num).toInt()),
+    notes: $checkedConvert(
+      'notes',
+      (v) =>
+          (v as List<dynamic>?)
+              ?.map((e) => NoteDto.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+    ),
+    noteExtensions: $checkedConvert(
+      'noteExtensions',
+      (v) =>
+          (v as List<dynamic>?)
+              ?.map((e) => NoteExtensionDto.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+    ),
+  );
+  return val;
+});

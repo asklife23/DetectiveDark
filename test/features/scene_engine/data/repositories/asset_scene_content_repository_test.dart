@@ -118,7 +118,7 @@ void main() {
     final message = await failureMessage({chapterAsset('scenes.json'): null});
 
     expect(message, contains('scenes.json'));
-    expect(message, contains('missing'));
+    expect(message, contains('chapter "ch01" is incomplete'));
   });
 
   test('invalid JSON fails with the file name', () async {

@@ -1,4 +1,6 @@
+import 'package:detective_dark/core/content/case_manifest.dart';
 import 'package:detective_dark/core/content/content_asset_source.dart';
+import 'package:detective_dark/core/content/content_paths.dart';
 import 'package:detective_dark/core/error/failure.dart';
 import 'package:detective_dark/core/error/result.dart';
 import 'package:json_annotation/json_annotation.dart';
@@ -37,14 +39,36 @@ T parseContentFile<T>(
   String file,
   Map<String, dynamic> json,
   T Function(Map<String, dynamic> json) parse,
-) {
+) => inContentFile(file, () => parse(json));
+
+/// Runs [body]; a parsing failure is rethrown as a [ContentException] that
+/// names [file]. For work on a file that happens after it was parsed
+/// (turning DTOs into entities, merging chapter extensions).
+T inContentFile<T>(String file, T Function() body) {
   try {
-    return parse(json);
+    return body();
   } on CheckedFromJsonException catch (error) {
     throw ContentException(file, describeJsonError(error), cause: error);
   } on FormatException catch (error) {
     throw ContentException(file, error.message, cause: error);
   }
+}
+
+/// Reads every file of one kind of a chapter, in name order, and parses
+/// each with [parse]. A single `scenes.json` gives one entry, a `scenes/`
+/// folder one per file; an optional kind the chapter leaves out gives none.
+Future<List<(String file, T content)>> readChapterFiles<T>(
+  ContentAssetSource source,
+  ChapterManifest chapter,
+  ContentType type,
+  T Function(Map<String, dynamic> json) parse,
+) async {
+  final result = <(String, T)>[];
+  for (final file in chapter.filesOf(type)) {
+    final json = await source.readObject(file);
+    result.add((file, parseContentFile(file, json, parse)));
+  }
+  return result;
 }
 
 /// A readable one-line description of a generated-DTO parsing error.

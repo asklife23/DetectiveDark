@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:detective_dark/core/content/content_asset_source.dart';
 import 'package:detective_dark/core/content/content_paths.dart';
 import 'package:detective_dark/core/content/content_texts.dart';
@@ -17,6 +19,9 @@ import 'package:detective_dark/features/scene_engine/domain/services/content_val
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../helpers/content_folders.dart';
+import '../helpers/content_validation.dart';
+
 /// The content safety net (CLAUDE.md section 9): loads the REAL game
 /// content from the asset bundle and runs every consistency check on it.
 ///
@@ -33,37 +38,25 @@ void main() {
     placeholderStyles: PlaceholderStyles.names,
   );
 
-  /// Loads everything and validates it; [change] may break the scenes
-  /// first, to prove that the checks really fire on the real content.
+  /// Loads the first [chapterLimit] chapters (all when null) and validates
+  /// them; [change] may break the scenes first, to prove that the checks
+  /// really fire on the real content.
   Future<List<ContentIssue>> validate({
     CaseContent Function(CaseContent content)? change,
     double reservedBottomStrip = SceneLayout.chatStripHeight,
+    int? chapterLimit,
+    bool reportUnusedTexts = false,
   }) async {
-    final content = (await AssetSceneContentRepository(
+    final loaded = await loadCaseForValidation(
       source,
-    ).loadCase(caseId)).valueOrNull!;
-    final items = (await AssetItemCatalogRepository(
-      source,
-    ).loadItems(caseId)).valueOrNull!;
-    final notes = (await AssetNoteCatalogRepository(
-      source,
-    ).loadNotes(caseId)).valueOrNull!;
-
-    final textKeys = <String, Set<String>>{};
-    for (final locale in AppLocalizations.supportedLocales) {
-      final texts = await ContentTextLoader(
-        source,
-      ).load(caseId, locale.languageCode);
-      textKeys[locale.languageCode] = texts.valueOrNull!.keys.toSet();
-    }
-
-    return const ContentValidator().validate(
-      content: change == null ? content : change(content),
-      items: items,
-      notes: notes,
-      textKeysByLanguage: textKeys,
+      caseId,
+      chapterLimit: chapterLimit,
+    );
+    return validateLoadedCase(
+      change == null ? loaded : loaded.withContent(change(loaded.content)),
       styles: styles,
       reservedBottomStrip: reservedBottomStrip,
+      reportUnusedTexts: reportUnusedTexts,
     );
   }
 
@@ -93,9 +86,38 @@ void main() {
   });
 
   test('the content is consistent', () async {
-    final issues = await validate();
+    final issues = await validate(reportUnusedTexts: true);
 
-    expect(issues, isEmpty, reason: issues.join('\n'));
+    // Warnings do not fail the test, but they are shown on every run:
+    // the one place where test output is the point.
+    // ignore: avoid_print
+    issues.warnings.forEach(print);
+    expect(issues.errors, isEmpty, reason: issues.errors.join('\n'));
+  });
+
+  test('every chapter prefix is consistent on its own (chapter 1; chapters '
+      '1–2; ...): an early chapter never depends on a later one', () async {
+    final chapters = await chapterCount(source, caseId);
+    expect(chapters, greaterThan(0));
+
+    for (var limit = 1; limit <= chapters; limit++) {
+      final errors = (await validate(chapterLimit: limit)).errors;
+
+      expect(
+        errors,
+        isEmpty,
+        reason: 'first $limit chapter(s):\n${errors.join('\n')}',
+      );
+    }
+  });
+
+  test('every folder with content files is declared in pubspec.yaml', () {
+    final problems = contentFolderProblems(
+      pubspecYaml: File('pubspec.yaml').readAsStringSync(),
+      foldersOnDisk: contentFoldersOnDisk(Directory.current),
+    );
+
+    expect(problems, isEmpty, reason: problems.join('\n'));
   });
 
   group('the checks fire on the real content', () {

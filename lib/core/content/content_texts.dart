@@ -54,11 +54,20 @@ class ContentTextLoader {
 
   final ContentAssetSource _source;
 
-  /// Loads the shared texts plus the texts of every chapter of [caseId].
-  /// Keys must be unique across all of these files.
-  Future<Result<ContentTexts>> load(String caseId, String languageCode) async {
+  /// Loads the shared texts plus the texts of every chapter of [caseId]
+  /// that is present in this build. Keys must be unique across all of these
+  /// files. [chapterLimit] keeps only the first N chapters.
+  Future<Result<ContentTexts>> load(
+    String caseId,
+    String languageCode, {
+    int? chapterLimit,
+  }) async {
     try {
-      final manifest = await CaseManifest.read(_source, caseId);
+      final manifest = await CaseManifest.read(
+        _source,
+        caseId,
+        chapterLimit: chapterLimit,
+      );
       final paths = [
         ContentPaths.commonTexts(languageCode),
         for (final chapter in manifest.chapters)

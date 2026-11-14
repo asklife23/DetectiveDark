@@ -8,20 +8,54 @@ import 'package:detective_dark/features/scene_engine/domain/entities/scene_visua
 import 'package:detective_dark/features/scene_engine/domain/services/interaction_resolver.dart';
 import 'package:equatable/equatable.dart';
 
+/// How serious a [ContentIssue] is.
+enum ContentSeverity {
+  /// The content is wrong: the content validation test fails.
+  error,
+
+  /// Probably a leftover or an oversight: reported, the test still passes.
+  warning,
+}
+
 /// One problem found in the game content.
 class ContentIssue extends Equatable {
-  const ContentIssue(this.location, this.message);
+  const ContentIssue(
+    this.location,
+    this.message, {
+    this.severity = ContentSeverity.error,
+  });
 
   /// Where it is, e.g. `scene villa_hall / hotspot desk_paper`.
   final String location;
 
   final String message;
 
-  @override
-  List<Object?> get props => [location, message];
+  final ContentSeverity severity;
+
+  bool get isError => severity == ContentSeverity.error;
+
+  bool get isWarning => severity == ContentSeverity.warning;
 
   @override
-  String toString() => '$location: $message';
+  List<Object?> get props => [location, message, severity];
+
+  @override
+  String toString() =>
+      isWarning ? 'warning: $location: $message' : '$location: $message';
+}
+
+extension ContentIssues on Iterable<ContentIssue> {
+  /// The issues that make the content wrong.
+  List<ContentIssue> get errors => [
+    for (final issue in this)
+      if (issue.isError) issue,
+  ];
+
+  /// The issues that are only reported.
+  List<ContentIssue> get warnings => [
+    for (final issue in this)
+      if (issue.isWarning) issue,
+  ];
 }
 
 /// Names that exist in code and are only referenced by content.
@@ -59,6 +93,10 @@ class ContentValidator {
   /// [reservedBottomStrip] is the share of the scene height, along its
   /// bottom edge, that the interface keeps for itself (the detective
   /// message bar). No hotspot may reach into it.
+  ///
+  /// [usedTextKeys], when given, is filled with every text key the content
+  /// refers to. Hand the set to [unusedTextWarnings] once every validator
+  /// has run.
   List<ContentIssue> validate({
     required CaseContent content,
     required Map<String, ItemDefinition> items,
@@ -66,6 +104,7 @@ class ContentValidator {
     required Map<String, Set<String>> textKeysByLanguage,
     required KnownStyleNames styles,
     double reservedBottomStrip = 0,
+    Set<String>? usedTextKeys,
   }) {
     final run = _Run(
       content,
@@ -74,6 +113,7 @@ class ContentValidator {
       textKeysByLanguage,
       styles,
       reservedBottomStrip,
+      usedTextKeys ?? {},
     )..text('common texts', InteractionResolver.genericItemNoEffectKey);
     content.scenes.values.forEach(run.scene);
     for (final inspection in content.inspections.values) {
@@ -112,6 +152,29 @@ class ContentValidator {
 
     return List.unmodifiable(run.issues);
   }
+
+  /// A warning for every text key that nothing refers to: most likely the
+  /// text of something that was removed or renamed.
+  ///
+  /// [usedKeys] is what the validators collected (`usedTextKeys`). Only
+  /// meaningful for a whole case: a text of chapter 1 may be used by
+  /// chapter 2 only.
+  static List<ContentIssue> unusedTextWarnings({
+    required Map<String, Set<String>> textKeysByLanguage,
+    required Set<String> usedKeys,
+  }) {
+    final unused = <String>{
+      for (final keys in textKeysByLanguage.values) ...keys,
+    }.difference(usedKeys).toList()..sort();
+    return [
+      for (final key in unused)
+        ContentIssue(
+          'texts',
+          'text "$key" is never used',
+          severity: ContentSeverity.warning,
+        ),
+    ];
+  }
 }
 
 /// The state of one validation run.
@@ -123,6 +186,7 @@ class _Run {
     this.textKeys,
     this.styles,
     this.reservedBottomStrip,
+    this.usedTextKeys,
   );
 
   /// Absorbs floating point noise such as `0.76 + 0.11 = 0.8700000000000001`.
@@ -136,6 +200,7 @@ class _Run {
   final Map<String, Set<String>> textKeys;
   final KnownStyleNames styles;
   final double reservedBottomStrip;
+  final Set<String> usedTextKeys;
 
   final issues = <ContentIssue>[];
   final _flagsRead = <String, String>{};
@@ -145,8 +210,13 @@ class _Run {
   void add(String where, String message) =>
       issues.add(ContentIssue(where, message));
 
+  void warn(String where, String message) => issues.add(
+    ContentIssue(where, message, severity: ContentSeverity.warning),
+  );
+
   /// [key] must exist in every supported language.
   void text(String where, String key) {
+    usedTextKeys.add(key);
     textKeys.forEach((language, keys) {
       if (!keys.contains(key)) add(where, 'missing text "$key" ($language)');
     });

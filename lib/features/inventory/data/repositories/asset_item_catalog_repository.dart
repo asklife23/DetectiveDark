@@ -7,35 +7,41 @@ import 'package:detective_dark/features/inventory/data/models/item_dto.dart';
 import 'package:detective_dark/features/inventory/domain/entities/item_definition.dart';
 import 'package:detective_dark/features/inventory/domain/repositories/item_catalog_repository.dart';
 
-/// Loads the item catalog from the `items.json` of every chapter.
+/// Loads the item catalog from the item files of every chapter
+/// (`items.json` or `items/*.json`).
 class AssetItemCatalogRepository implements ItemCatalogRepository {
-  const AssetItemCatalogRepository(this._source);
+  const AssetItemCatalogRepository(this._source, {this.chapterLimit});
 
   final ContentAssetSource _source;
+
+  /// Loads only the first N chapters (content validation per prefix).
+  final int? chapterLimit;
 
   @override
   Future<Result<Map<String, ItemDefinition>>> loadItems(String caseId) {
     return guardContent(() async {
-      final manifest = await CaseManifest.read(_source, caseId);
+      final manifest = await CaseManifest.read(
+        _source,
+        caseId,
+        chapterLimit: chapterLimit,
+      );
       final items = <String, ItemDefinition>{};
 
       for (final chapter in manifest.chapters) {
-        final path = ContentPaths.chapterFile(
-          caseId,
-          chapter.id,
-          ContentPaths.itemsFile,
+        final files = await readChapterFiles(
+          _source,
+          chapter,
+          ContentType.items,
+          ItemsFileDto.fromJson,
         );
-        final chapterItems = parseContentFile(
-          path,
-          await _source.readObject(path),
-          (json) => ItemsFileDto.fromJson(json).items,
-        );
-        mergeUnique(
-          items,
-          chapterItems.map((item) => MapEntry(item.id, item.toEntity())),
-          file: path,
-          kind: 'item',
-        );
+        for (final (file, content) in files) {
+          mergeUnique(
+            items,
+            content.items.map((item) => MapEntry(item.id, item.toEntity())),
+            file: file,
+            kind: 'item',
+          );
+        }
       }
 
       return Map.unmodifiable(items);

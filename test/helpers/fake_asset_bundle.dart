@@ -5,14 +5,29 @@ import 'package:flutter/services.dart';
 
 /// An [AssetBundle] that serves strings from memory, so content loaders can
 /// be tested with small, deliberately broken JSON.
+///
+/// Like a real bundle it also serves the asset manifest (the list of its
+/// own files), which the content loaders use to find the files of a
+/// chapter.
 class FakeAssetBundle extends CachingAssetBundle {
   FakeAssetBundle(this.files);
+
+  /// The file Flutter writes at build time: asset path → its variants.
+  static const _manifestKey = 'AssetManifest.bin';
 
   /// Asset path → file content.
   final Map<String, String> files;
 
   @override
   Future<ByteData> load(String key) async {
+    if (key == _manifestKey) {
+      return const StandardMessageCodec().encodeMessage({
+        for (final path in files.keys)
+          path: [
+            {'asset': path},
+          ],
+      })!;
+    }
     final content = files[key];
     if (content == null) throw FlutterError('Unable to load asset: $key');
     return ByteData.sublistView(utf8.encode(content));

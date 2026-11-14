@@ -138,7 +138,10 @@ SceneDto _$SceneDtoFromJson(Map<String, dynamic> json) =>
 
 ScenesFileDto _$ScenesFileDtoFromJson(Map<String, dynamic> json) =>
     $checkedCreate('ScenesFileDto', json, ($checkedConvert) {
-      $checkKeys(json, allowedKeys: const ['formatVersion', 'scenes']);
+      $checkKeys(
+        json,
+        allowedKeys: const ['formatVersion', 'scenes', 'sceneExtensions'],
+      );
       final val = ScenesFileDto(
         formatVersion: $checkedConvert(
           'formatVersion',
@@ -146,9 +149,22 @@ ScenesFileDto _$ScenesFileDtoFromJson(Map<String, dynamic> json) =>
         ),
         scenes: $checkedConvert(
           'scenes',
-          (v) => (v as List<dynamic>)
-              .map((e) => SceneDto.fromJson(e as Map<String, dynamic>))
-              .toList(),
+          (v) =>
+              (v as List<dynamic>?)
+                  ?.map((e) => SceneDto.fromJson(e as Map<String, dynamic>))
+                  .toList() ??
+              const [],
+        ),
+        sceneExtensions: $checkedConvert(
+          'sceneExtensions',
+          (v) =>
+              (v as List<dynamic>?)
+                  ?.map(
+                    (e) =>
+                        SceneExtensionDto.fromJson(e as Map<String, dynamic>),
+                  )
+                  .toList() ??
+              const [],
         ),
       );
       return val;

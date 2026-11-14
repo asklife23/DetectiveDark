@@ -14,81 +14,77 @@ import 'package:detective_dark/features/scene_engine/domain/repositories/scene_c
 
 /// Loads scenes, inspections and triggers from the JSON files in the asset
 /// bundle.
+///
+/// Each kind of content is one file or one folder per chapter, and a later
+/// chapter may extend the scenes of an earlier one (`sceneExtensions`, ADR
+/// 0018). All of that is resolved here, in the data layer: the domain gets
+/// one merged [CaseContent].
 class AssetSceneContentRepository implements SceneContentRepository {
-  const AssetSceneContentRepository(this._source);
+  const AssetSceneContentRepository(this._source, {this.chapterLimit});
 
   final ContentAssetSource _source;
+
+  /// Loads only the first N chapters (content validation per prefix).
+  final int? chapterLimit;
 
   @override
   Future<Result<CaseContent>> loadCase(String caseId) {
     return guardContent(() async {
-      final manifest = await CaseManifest.read(_source, caseId);
+      final manifest = await CaseManifest.read(
+        _source,
+        caseId,
+        chapterLimit: chapterLimit,
+      );
       final scenes = <String, SceneDefinition>{};
       final inspections = <String, InspectionDefinition>{};
       final sceneChapters = <String, String>{};
       final triggers = <String, TriggerDefinition>{};
 
       for (final chapter in manifest.chapters) {
-        final scenesPath = ContentPaths.chapterFile(
-          caseId,
-          chapter.id,
-          ContentPaths.scenesFile,
+        final sceneFiles = await readChapterFiles(
+          _source,
+          chapter,
+          ContentType.scenes,
+          ScenesFileDto.fromJson,
         );
-        final chapterScenes = parseContentFile(
-          scenesPath,
-          await _source.readObject(scenesPath),
-          (json) => ScenesFileDto.fromJson(
-            json,
-          ).scenes.map((scene) => scene.toEntity()).toList(),
+        _addScenes(sceneFiles, chapter.id, scenes, sceneChapters);
+        _applyExtensions(sceneFiles, chapter.id, scenes, sceneChapters);
+
+        final inspectionFiles = await readChapterFiles(
+          _source,
+          chapter,
+          ContentType.inspections,
+          InspectionsFileDto.fromJson,
         );
-        mergeUnique(
-          scenes,
-          chapterScenes.map((scene) => MapEntry(scene.id, scene)),
-          file: scenesPath,
-          kind: 'scene',
-        );
-        for (final scene in chapterScenes) {
-          sceneChapters[scene.id] = chapter.id;
+        for (final (file, content) in inspectionFiles) {
+          final entities = inContentFile(
+            file,
+            () => [for (final dto in content.inspections) dto.toEntity()],
+          );
+          mergeUnique(
+            inspections,
+            entities.map((inspection) => MapEntry(inspection.id, inspection)),
+            file: file,
+            kind: 'inspection',
+          );
         }
 
-        final inspectionsPath = ContentPaths.chapterFile(
-          caseId,
-          chapter.id,
-          ContentPaths.inspectionsFile,
+        final triggerFiles = await readChapterFiles(
+          _source,
+          chapter,
+          ContentType.triggers,
+          TriggersFileDto.fromJson,
         );
-        final chapterInspections = parseContentFile(
-          inspectionsPath,
-          await _source.readObject(inspectionsPath),
-          (json) => InspectionsFileDto.fromJson(
-            json,
-          ).inspections.map((inspection) => inspection.toEntity()).toList(),
-        );
-        mergeUnique(
-          inspections,
-          chapterInspections.map((item) => MapEntry(item.id, item)),
-          file: inspectionsPath,
-          kind: 'inspection',
-        );
-
-        final triggersPath = ContentPaths.chapterFile(
-          caseId,
-          chapter.id,
-          ContentPaths.triggersFile,
-        );
-        final triggersJson = await _source.readOptionalObject(triggersPath);
-        if (triggersJson != null) {
-          final chapterTriggers = parseContentFile(
-            triggersPath,
-            triggersJson,
-            (json) => TriggersFileDto.fromJson(
-              json,
-            ).triggers.map((trigger) => trigger.toEntity()).toList(),
+        for (final (file, content) in triggerFiles) {
+          final entities = inContentFile(
+            file,
+            () => [for (final dto in content.triggers) dto.toEntity()],
           );
           // A map literal keeps insertion order: chapter, then file order.
           mergeUnique(
             triggers,
-            chapterTriggers.map((trigger) => MapEntry(trigger.id, trigger)),
-            file: triggersPath,
+            entities.map((trigger) => MapEntry(trigger.id, trigger)),
+            file: file,
             kind: 'trigger',
           );
         }
@@ -112,5 +108,61 @@ class AssetSceneContentRepository implements SceneContentRepository {
         triggers: List.unmodifiable(triggers.values),
       );
     });
+  }
+
+  /// The scenes a chapter defines itself.
+  void _addScenes(
+    List<(String, ScenesFileDto)> files,
+    String chapterId,
+    Map<String, SceneDefinition> scenes,
+    Map<String, String> sceneChapters,
+  ) {
+    for (final (file, content) in files) {
+      final entities = inContentFile(
+        file,
+        () => [for (final dto in content.scenes) dto.toEntity()],
+      );
+      mergeUnique(
+        scenes,
+        entities.map((scene) => MapEntry(scene.id, scene)),
+        file: file,
+        kind: 'scene',
+      );
+      for (final scene in entities) {
+        sceneChapters[scene.id] = chapterId;
+      }
+    }
+  }
+
+  /// What a chapter adds to the scenes of earlier chapters. The extended
+  /// scene stays a scene of its own chapter.
+  void _applyExtensions(
+    List<(String, ScenesFileDto)> files,
+    String chapterId,
+    Map<String, SceneDefinition> scenes,
+    Map<String, String> sceneChapters,
+  ) {
+    for (final (file, content) in files) {
+      for (final extension in content.sceneExtensions) {
+        final target = scenes[extension.scene];
+        if (target == null) {
+          throw ContentException(
+            file,
+            'sceneExtensions: unknown scene "${extension.scene}"',
+          );
+        }
+        if (sceneChapters[extension.scene] == chapterId) {
+          throw ContentException(
+            file,
+            'sceneExtensions: scene "${extension.scene}" is not from an '
+            'earlier chapter; edit the scene itself',
+          );
+        }
+        scenes[extension.scene] = inContentFile(
+          file,
+          () => extension.applyTo(target),
+        );
+      }
+    }
   }
 }

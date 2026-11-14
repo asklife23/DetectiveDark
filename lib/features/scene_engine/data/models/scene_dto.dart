@@ -1,5 +1,6 @@
 import 'package:detective_dark/features/scene_engine/data/models/condition_codec.dart';
 import 'package:detective_dark/features/scene_engine/data/models/effect_codec.dart';
+import 'package:detective_dark/features/scene_engine/data/models/scene_extension_dto.dart';
 import 'package:detective_dark/features/scene_engine/data/models/scene_visual_dto.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/hotspot_definition.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/hotspot_sprite.dart';
@@ -140,14 +141,20 @@ class SceneDto {
   }
 }
 
-/// `scenes.json`: the scenes of one chapter.
+/// A scenes file (`scenes.json` or one file of `scenes/`): the scenes of
+/// one chapter and, optionally, extensions of scenes of earlier chapters.
 @JsonSerializable()
 class ScenesFileDto {
-  const ScenesFileDto({required this.formatVersion, required this.scenes});
+  const ScenesFileDto({
+    required this.formatVersion,
+    this.scenes = const [],
+    this.sceneExtensions = const [],
+  });
 
   factory ScenesFileDto.fromJson(Map<String, dynamic> json) =>
       _$ScenesFileDtoFromJson(json);
 
   final int formatVersion;
   final List<SceneDto> scenes;
+  final List<SceneExtensionDto> sceneExtensions;
 }

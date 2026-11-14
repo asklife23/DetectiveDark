@@ -388,3 +388,43 @@
   cubit'in dinlediği akışlar olayları test gövdesindeki sahte saate teslim etmiyordu ve rozet hiç güncellenmiyordu.
   Dart'ta bir akış, **dinlendiği zone'da** teslim eder. Çözüm: widget testinde her şeyi test gövdesinin içinde kurmak.
   Hata oyunda değil testteydi; ama nedenini anlamadan "bekleme ekleyip" geçiştirmek yerine kök nedeni bulmak gerekir.
+
+### Adım 1.14 — İçerik düzeni: çoklu dosya, bölüm genişletmeleri, eksik bölüm (2026-11-14)
+- **Ne yaptık:** İçerik dosya yapısını Bölüm 1 yazılmadan kesinleştirdik (ADR 0018). Dört parça:
+  1. **Tür başına dosya veya klasör.** Bölüm klasöründe `scenes.json` **veya** `scenes/*.json` olabilir (aynısı
+     `items`, `notes`, `inspections`, `triggers` için). Klasördeki dosyalar ad sırasıyla okunup tek dosyaymış gibi
+     birleştirilir; ikisi birden varsa hata. Dosyalar Flutter'ın asset manifest'inden listelenir
+     (`ContentAssetSource.list`).
+  2. **Bölüm genişletmeleri.** Sonraki bölüm, önceki bölümün içeriğini **kendi dosyasından** genişletir:
+     `sceneExtensions` (yeni hotspot'lar sona; yeni kurallar ve görünüm varyantları mevcutların **önüne**) ve
+     `noteExtensions` (yeni satırlar sona). Birleştirme `data` katmanında; `domain` tek bir birleşmiş `CaseContent`
+     görür, kayıt şekli değişmez.
+  3. **Eksik bölümün atlanması.** `case.json`'da listelenen ama pakette hiç dosyası olmayan bölüm atlanır (demo
+     derlemesi). Yarım bölüm, eksik ilk bölüm ve "eksik bölümden sonra gelen var olan bölüm" hatadır. Kural tek yerde:
+     `CaseManifest`. Sahne, eşya, not ve metin yükleyicileri aynı "mevcut bölümler" listesini kullanır.
+  4. **Doğrulama.** `ContentIssue.severity` (hata / uyarı); ilk uyarı kullanılmayan metin anahtarı. İçerik doğrulama
+     testi artık her **bölüm önekini** ayrı doğruluyor (B1; B1–2; ...) ve `assets/content` altında dosya içeren her
+     klasörün `pubspec.yaml`'da tanımlı olduğunu kontrol ediyor.
+  Gerçek içerik (`ch01`) değişmedi; hepsi `test/helpers/two_chapter_fixture.dart`'taki sahte iki bölümlü vakayla
+  sınandı.
+- **Neden:** Bunlar kayıt şeklini değil **içerik dosyalarını** belirliyor. 40–50 sahne tek `scenes.json`'da binlerce
+  satır olurdu. Bölüm 2, Bölüm 1'in dosyasını düzenlemek zorunda kalsaydı ücretli içerik ücretsiz demoya sızar ve
+  Bölüm 1, Bölüm 2'ye bağımlı hale gelirdi. Bu kararları Bölüm 1 yazıldıktan sonra almak, yazılmış onlarca dosyayı
+  elle yeniden düzenlemek demekti.
+- **Önemli dosyalar:** `lib/core/content/case_manifest.dart`, `content_paths.dart` (`ContentType`),
+  `content_asset_source.dart` (`list`), `content_loading.dart` (`readChapterFiles`),
+  `scene_engine/data/models/scene_extension_dto.dart`, `scene_engine/data/repositories/asset_scene_content_repository.dart`,
+  `notebook/data/models/note_dto.dart` (`NoteExtensionDto`), `scene_engine/domain/services/content_validator.dart`
+  (`ContentSeverity`, `unusedTextWarnings`), testler: `test/content/content_layout_test.dart`,
+  `test/helpers/two_chapter_fixture.dart`, `test/helpers/content_folders.dart`, `test/helpers/content_validation.dart`.
+- **Telefonda nasıl test edilir:** Görünür fark yok; oyun eskisi gibi açılmalı (içerik artık manifest'ten listelenerek
+  bulunuyor, bu yüzden bir kez açıp Villa Önü'nün geldiğini görmek yeterli).
+- **Öğrenme notu:** Flutter'da asset'ler derleme sırasında pakete konur ve yanlarına bir **asset manifest** yazılır:
+  paketteki dosyaların listesi. Çalışan uygulama diski dolaşamaz; "bu klasörde hangi dosyalar var" sorusunun tek
+  cevabı bu manifest'tir (`AssetManifest.loadFromAssetBundle(...).listAssets()`). Buradan sinsi bir tuzak doğuyor:
+  `pubspec.yaml`'daki klasör girdisi alt klasörleri **kapsamaz**. `scenes/` klasörünü açıp `pubspec.yaml`'a eklemeyi
+  unutursan uygulama "dosya yok" demez; manifest'te o dosyalar hiç olmadığı için klasörü boş görür ve içerik sessizce
+  eksik kalır. Sessiz hatalar en pahalı hatalardır; bu yüzden diski dolaşıp `pubspec.yaml` ile karşılaştıran bir test
+  yazdık: unutulan klasör artık adıyla birlikte kırmızı bir testtir. İkinci ders **önek doğrulaması**: "Bölüm 1,
+  Bölüm 2 olmadan da tutarlı mı" sorusunu elle kontrol etmek imkânsız; test her öneki ayrı yükleyip doğrulayınca demo
+  derlemesinin bozuk çıkması baştan engellenmiş olur.

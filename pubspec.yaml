@@ -43,7 +43,11 @@ flutter:
     - assets/fonts/courier_prime/OFL.txt
     - assets/fonts/ibm_plex_sans/OFL.txt
     # Game content (scenes, items, notes, texts). A folder entry covers only
-    # the files directly inside it, so every chapter folder is listed.
+    # the files directly inside it, so EVERY folder that holds content files
+    # is listed (also `scenes/` when a chapter splits its scenes into several
+    # files). The content validation test fails when one is missing: content
+    # files are found through the asset manifest, so a forgotten folder would
+    # silently be empty.
     - assets/content/common/
     - assets/content/cases/case01/
     - assets/content/cases/case01/chapters/ch01/

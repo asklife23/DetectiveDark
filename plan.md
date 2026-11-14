@@ -696,7 +696,7 @@ satırdır (ADR 0015).
   sönüyor; `suspect` kelimesi `lib/`, `test/` ve `assets/` altında kalmıyor.
   **Commit:** `feat(notebook): add note entries and the People category`
 
-### [ ] 1.14 İçerik düzeni: çoklu dosya, bölüm genişletmeleri, eksik bölüm
+### [x] 1.14 İçerik düzeni: çoklu dosya, bölüm genişletmeleri, eksik bölüm
 **Amaç:** İçerik dosya yapısını Bölüm 1 yazılmadan kesinleştirmek (ADR 0018): büyük bölümler birden çok dosyaya
 bölünebilsin, sonraki bölüm öncekini kendi dosyasından genişletebilsin, demo yalnızca ilk bölümle derlenebilsin.
 **Yapılacaklar:**
@@ -1544,3 +1544,18 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   işaretlenir. Düğme tepkisi için `NotebookCubit` `GameEventBus`'ı dinler (`NoteUpdated` → `updatePulse`). Not sayfası
   `note_page.dart` dosyasına ayrıldı (`notebook_screen.dart` 150 satır sınırına yaklaşmıştı). README'deki "suspects"
   ifadesi de "people" yapıldı.
+- 2026-11-14 (1.14): Plandan küçük sapmalar ve yorumlar. (a) Sabit dosya adları (`ContentPaths.scenesFile`...) yerine
+  `ContentType` enum'u geldi (`scenes`, `items`, `notes`, `inspections`, `triggers`; 1.16'da `dialogues`); 1.12'de
+  eklenen `readOptionalObject` gereksiz kaldığı için silindi (opsiyonel tür = listede dosya yok). (b) Klasörde yalnızca
+  **doğrudan içindeki `.json`** dosyaları okunur; alt klasörler ve başka uzantılar yok sayılır. (c) Bir dosyada `scenes`
+  / `notes` listesi artık opsiyonel: yalnızca genişletme içeren dosya yazılabilir. (d) Ek kural: eksik bir bölümden
+  **sonra** gelen var olan bölüm hatadır (B1 var, B2 yok, B3 var): B3, B2'yi genişletiyor olabilir. (e) "Yarım bölüm"
+  = klasöründe en az bir dosya var ama zorunlu bir tür (`scenes`, `items`, `notes`, `inspections`) yok; eksik metin
+  dosyası eskisi gibi metin yükleyicide hatadır. Eksik zorunlu dosyanın mesajı "file is missing" yerine "chapter ... is
+  incomplete" oldu (mevcut bir testin beklentisi buna göre güncellendi). (f) Kullanılmayan metin uyarısı doğrulayıcının
+  içinde değil yanında: `ContentValidator.validate(usedTextKeys: ...)` kullanılan anahtarları toplar,
+  `ContentValidator.unusedTextWarnings` uyarıları üretir; böylece 1.16'da konuşma doğrulayıcısının kullandığı metinler
+  de aynı kümeye eklenebilir. Koddan kullanılan tek genel anahtar (`generic_item_no_effect`) zaten doğrulayıcıda
+  işaretli olduğu için ayrı bir liste parametresi gerekmedi. (g) `pubspec.yaml` kontrolü ve fixture yardımcıları
+  `test/helpers/` altında (diski okudukları için `lib/`'e konmadı). Test paketi (`FakeAssetBundle`) gerçek paket gibi
+  `AssetManifest.bin` de sunar.
