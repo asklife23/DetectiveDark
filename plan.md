@@ -610,16 +610,25 @@ geliştirici menüsü ve Aşama 5'teki bulmacalar kendi kayıt kodunu yazmayacak
   2. tetikleyiciler (bu adımda boş bir kanca; 1.12'de dolar);
   3. ilerleme değiştiyse **tek** `save`; başarısızsa `Failed` döner ve olay yayınlanmaz;
   4. olaylar `GameEventBus`'a.
-- `TapHotspot` ve `EnterScene` hatta taşınır; kendi `save` / `publish` çağrıları kalkar. `MarkNoteRead` de hattı
-  kullanır (ön değişiklik = `withNoteRead`, etki yok). `StartGame` zaten `EnterScene` üzerinden yazar.
-- Mimari testi (`test/architecture`): `ProgressRepository.save` çağrısı `lib/` içinde yalnızca `EffectPipeline`'da
-  (ve repository uygulamalarının kendisinde) bulunur.
+- `TapHotspot` ve `EnterScene` hatta taşınır; kendi `save` / `publish` çağrıları kalkar. `StartGame` zaten
+  `EnterScene` üzerinden yazar.
+- **Tek istisna `MarkNoteRead`** (ADR 0014): doğrudan `save` çağırmaya devam eder, kodu değişmez. Gerekçe: `isRead`'i
+  hiçbir koşul okumaz (tetikleyici ateşleyemez), etki çalıştırmaz, olay üretmez; hatta taşımak `notebook/domain` →
+  `scene_engine/domain` import'u doğurur ve `scene_engine` zaten `notebook`'u import ettiği için iki yönlü bağımlılık
+  olurdu. Hattı tarafsız bir yere taşımak ise `EffectApplier`, `TriggerRunner`, `Condition` ve `Effect`'i de taşımayı
+  gerektirirdi (çok daha büyük değişiklik).
+- Mimari testi (`test/architecture`):
+  - `ProgressRepository.save` çağrısı `lib/` içinde yalnızca `EffectPipeline`'da, `MarkNoteRead`'de (adıyla izinli
+    tek istisna) ve repository uygulamalarının kendisinde bulunur.
+  - **Feature'lar arası döngü yok:** import satırlarından feature bağımlılık grafı çıkarılır (A → B: A'nın herhangi
+    bir dosyası B'yi import ediyor); graf döngüsüz olmalıdır. İki yönlü import ve daha uzun döngüler testi kırar.
 - DI: `EffectPipeline` tek örnek olarak kaydedilir; use case'ler onu alır.
 - Testler: hat (kayıt başarısız → olay yok; değişiklik yok → kayıt yok; olay sırası: baştaki olaylar, sonra etkilerin
   olayları). `TapHotspot`, `EnterScene`, `MarkNoteRead`, `SceneBloc` ve kabul testleri **değiştirilmeden** geçer
-  (yalnızca kurulum satırları değişebilir).
-  **Kabul kriterleri:** Oyunda gözle görülür hiçbir fark yok; mevcut testlerin beklentileri aynı; mimari testi yeni
-  kuralı zorluyor.
+  (yalnızca kurulum satırları değişebilir). Mimari testinin iki yeni kuralı, bilerek bozulan sahte bir import
+  listesiyle de sınanır (döngü ve izinsiz `save` yakalanıyor).
+  **Kabul kriterleri:** Oyunda gözle görülür hiçbir fark yok; mevcut testlerin beklentileri aynı; mimari testi iki yeni
+  kuralı (tek yazma yolu, döngüsüz feature grafı) zorluyor.
   **Commit:** `refactor(scene_engine): route progress changes through one effect pipeline`
 
 ### [ ] 1.12 Tetikleyiciler
@@ -696,8 +705,12 @@ bölünebilsin, sonraki bölüm öncekini kendi dosyasından genişletebilsin, d
   okunur ve tek dosyaymış gibi birleştirilir. Metinler dil başına tek dosya kalır (`text_xx.json`).
 - `ContentAssetSource`'a listeleme: verilen önekin altındaki asset yolları (Flutter'ın asset manifest API'si; güncel
   dokümantasyondan uygulanır). Test paketi (`fake_asset_bundle.dart`) aynı listeyi bellekten verir. Yeni içerik
-  klasörleri `pubspec.yaml`'a eklenir (klasör girdisi alt klasörleri kapsamaz); bunu unutmak "dosya bulunamadı"
-  yerine sessiz eksik içerik üreteceği için doğrulama testi, diskteki içerik dosyalarıyla paketteki listeyi karşılaştırır.
+  klasörleri `pubspec.yaml`'a eklenir (klasör girdisi alt klasörleri kapsamaz).
+- **`pubspec.yaml` kontrolü (içerik doğrulama testi):** `assets/content` altında içinde dosya bulunan **her klasör**
+  `pubspec.yaml`'ın `flutter.assets` listesinde tanımlı olmalıdır. Test diski dolaşır, `pubspec.yaml`'ı okur ve eksik
+  klasörü adıyla bildirerek **kırılır**. (Klasör eklemeyi unutmak "dosya bulunamadı" hatası değil, sessizce eksik
+  içerik üretirdi: listeleme yalnızca paketlenen dosyaları görür.) Tersi de kontrol edilir: `pubspec.yaml`'da olup
+  diskte olmayan içerik klasörü hatadır.
 - **Eksik bölümün atlanması:** `case.json`'da listelenen ama pakette klasöründe **hiç** dosyası olmayan bölüm atlanır.
   Bir kısmı eksik bölüm (ör. `scenes` var, `items` yok) hatadır. İlk bölüm eksikse hata. Kural tek yerde
   (`CaseManifest`) uygulanır; sahne, eşya, not ve metin yükleyicileri aynı "mevcut bölümler" listesini kullanır.
@@ -722,7 +735,8 @@ bölünebilsin, sonraki bölüm öncekini kendi dosyasından genişletebilsin, d
   verilir).
 - Testler **sahte içerikle** (`test/` altında iki bölümlü fixture): klasörden yükleme, dosya + klasör çakışması, ad
   sırası, her genişletme türü ve hata durumları, önüne/sonuna ekleme sırası, eksik ikinci bölüm (oyun B1 ile açılır),
-  yarım bölüm (hata), önek doğrulaması (B1'in B2 bayrağını okuması yakalanır), uyarı (kullanılmayan anahtar).
+  yarım bölüm (hata), eksik ilk bölüm (hata), `pubspec.yaml` kontrolü (geçici klasör + sahte pubspec metniyle: eksik
+  girdi yakalanır), önek doğrulaması (B1'in B2 bayrağını okuması yakalanır), uyarı (kullanılmayan anahtar).
   Gerçek içerik (`ch01`) bu adımda değişmez.
   **Kabul kriterleri:** Gerçek içerik aynen yükleniyor ve doğrulanıyor; fixture'da B2'nin `villa_hall`'e eklediği
   hotspot ve kural birleşmiş içerikte doğru sırada; B2 klasörü silinince oyun B1 ile açılıyor.
@@ -795,9 +809,14 @@ sahnede durur, mantık testlerle kanıtlanmıştır; panel 1.17'de gelir.
       {"id": "show_letter", "trigger": {"showNote": "hall_letter"}, "promptKey": "...", "answer": ["..."]}
     ]}]}
   ```
-- `dialogue/data`: DTO'lar + `AssetDialogueCatalogRepository`. Koşul ve etkiler `scene_engine/domain`'deki `RuleParser`
-  arayüzüyle ayrıştırılır (uygulaması `scene_engine/data`'daki codec'ler; DI ile verilir): bir feature'ın `data`
-  katmanı başka bir feature'ın `data` katmanını import edemez.
+- `dialogue/data`: konuşmanın **kendi** DTO'ları + `AssetDialogueCatalogRepository`. Koşul ve etkiler
+  `scene_engine/domain`'deki `RuleParser` arayüzüyle ayrıştırılır (`parseCondition`, `parseEffects`; uygulaması
+  `scene_engine/data`'daki codec'ler; DI ile verilir): bir feature'ın `data` katmanı başka bir feature'ın `data`
+  katmanını import edemez. `RuleParser` arayüzü ve uygulaması bu adımda eklenir; sahne DTO'ları codec'leri doğrudan
+  kullanmaya devam eder.
+- **Bağımlılık yönü tektir: `dialogue` → `scene_engine`** (1.11'deki döngü testi zorlar). `scene_engine` hiçbir
+  dosyasında `dialogue`'u import etmez: `Talk` etkisi ve `topicAsked` koşulu yalnızca ID (string) taşır; sahne
+  doğrulayıcısı var olan konuşma / konu ID'lerini düz veri olarak (`Map<String, Set<String>>`) parametreyle alır.
 - `dialogueExtensions` (1.14'teki düzenle; konular sona eklenir; hedef önceki bölümde; konu ID'si çakışırsa hata):
   ```json
   "dialogueExtensions": [{"dialogue": "pharmacist", "topics": [ ...sona eklenir... ]}]
@@ -809,14 +828,18 @@ sahnede durur, mantık testlerle kanıtlanmıştır; panel 1.17'de gelir.
   görünür konu için `isAsked` / `isNew`. Bir kez sorulan konu, koşulu sonradan bozulsa bile listede kalır.
 - Use case'ler (hepsi `EffectPipeline` üzerinden):
   - `StartConversation(dialogueId)`: karşılama anahtarını döner (`first` daha önce duyulmadıysa `first`, yoksa
-    `then`) ve `first`'ü `spokenLines`'a yazar.
+    `then`) ve `first`'ü `spokenLines`'a yazar. Bu yazım da **etki hattından** geçer (ön değişiklik =
+    `withSpokenLine`, etki yok): tetikleyiciler değerlendirilir, tek `save`. `talk` etkisinin kendisi bir şey kaydetmez.
   - `AskTopic(dialogueId, topicId)`: konu görünür değilse hiçbir şey yapmaz. İlk soruluşta `do` etkilerini uygular,
     `askedTopics`'e yazar, `TopicAsked` olayı üretir; tetikleyiciler aynı kayıtta değerlendirilir. Tekrar soruluşta
     ilerleme değişmez. Her durumda oynatılacak `answer` satırlarını döner.
 - Konu `do` izinli etkileri: `say`, `setFlag`, `addNote`, `addNoteEntry`, `giveItem`, `consumeItem`.
   Konuşma satırları `chatLog`'a yazılmaz.
-- `ContentValidator` (konuşma kataloğunu parametre olarak alır): konuşma ID'leri vaka içinde, konu ID'leri konuşma
-  içinde benzersiz; `nameKey`, `greeting`, `noReactionKey`, `promptKey` ve boş olmayan `answer` metinleri var; portre
+- Doğrulama iki parçadır (döngü olmasın diye): `scene_engine`'deki `ContentValidator` sahne tarafını (`talk` ve
+  `topicAsked` referansları, kural kısıtları) verilen ID'lerle kontrol eder; `dialogue/domain`'deki `DialogueValidator`
+  konuşmaları kontrol eder ve koşul / etki referans kontrolleri için `ContentValidator`'ın açtığı yardımcıları
+  kullanır. İkisi de `ContentIssue` listesi döner; içerik doğrulama testi birleştirir. Kontroller: konuşma ID'leri
+  vaka içinde, konu ID'leri konuşma içinde benzersiz; `nameKey`, `greeting`, `noReactionKey`, `promptKey` ve boş olmayan `answer` metinleri var; portre
   stili kodda tanımlı; `do` yalnızca izinli etkiler; koşullarda `usingItem` yok; `trigger` tam olarak bir `showItem`
   veya `showNote` içerir ve gösterdiği eşya / not vardır; `talk` ve `topicAsked` var olan konuşmayı / konuyu gösterir;
   bir kuralda en fazla bir `talk`, `goToScene` / `inspect` ile birlikte değil; `talk` `onFirstEnter`, tetikleyici ve
@@ -890,8 +913,13 @@ sahnede durur, mantık testlerle kanıtlanmıştır; panel 1.17'de gelir.
 ### [ ] 1.19 Geliştirici menüsü (yalnızca dev)
 **Amaç:** 50 sahnelik bir bölümde belirli bir duruma saniyeler içinde gelebilmek; her denemede baştan oynamamak.
 **Yapılacaklar:**
-- `lib/app/dev/`: yalnızca geliştirici araçları açıkken (`AppConfig.showDebugOverlay`) görünen menü; mevcut hotspot
-  düğmesinin yanından açılır. Prod'da erişilemez (widget testiyle doğrulanır).
+- `lib/app/dev/`: geliştirici menüsü; mevcut hotspot düğmesinin yanından açılır.
+- **Prod, staging ve Steam derlemesinde açılamaz; kodu o derlemelere girmez.** Menü bir çalışma zamanı bayrağına
+  (`AppConfig.showDebugOverlay`, `SHOW_DEBUG_OVERLAY`) bağlı **değildir**: yalnızca `lib/main_dev.dart` menüyü
+  (`lib/app/dev/`) import eder ve `bootstrap`'e verir; `main_staging.dart`, `main_prod.dart` ve `main_steam.dart`
+  vermez. Oyun kodu menüyü yalnızca opsiyonel, enjekte edilmiş bir widget oluşturucu olarak tanır; verilmemişse düğme
+  çizilmez. Böylece diğer giriş noktalarından derlenen uygulamada menü kodu hiç yoktur (tree shaking) ve hiçbir env
+  değeriyle açılamaz. Mimari testi: `lib/` içinde `app/dev/`'i import eden tek dosya `main_dev.dart`'tır.
 - İşlevler: sahne listesinden atlama; eşya / not / bayrak ekleme; ilerlemeyi sıfırlama; adlandırılmış durum yükleme.
   Hepsi etki hattından geçer (atlama = `EnterScene`; ekleme = `giveItem` / `addNote` / `setFlag` etkileri; sıfırlama
   ve preset = yeni bir `GameProgress` + giriş).
@@ -902,12 +930,32 @@ sahnede durur, mantık testlerle kanıtlanmıştır; panel 1.17'de gelir.
      "items": ["pill_bottle"], "notes": ["hall_letter"], "flags": ["front_door_open"]}
   ]}
   ```
-- İçerik doğrulama testi preset'lerdeki her sahne, eşya, not ve bayrağın içerikte var olduğunu kontrol eder.
+- **Preset dosyası yalnızca dev flavor'ında paketlenir** (Flutter'ın flavor'a bağlı asset paketlemesi; dokümanda
+  örnekler klasör yoluyladır, bu yüzden klasör girdisi kullanılır):
+  ```yaml
+  flutter:
+    assets:
+      - path: assets/dev/
+        flavors:
+          - dev
+  ```
+  Prod ve staging APK'sına girmez. Windows'ta flavor olmadığı için orada (Steam dahil) hiç paketlenmez; bu kabul
+  edildi: Windows'ta `main_dev.dart` ile çalışırken menünün diğer işlevleri çalışır, preset listesi boş görünür
+  (dosya yoksa menü çökmez). **Adım başlarken doğrulanacak** (doküman açıkça yazmıyor): flavor'sız derlemede
+  (`flutter build windows`) ve `--flavor prod` APK'sında dosyanın gerçekten bulunmadığı, `--flavor dev`'de bulunduğu;
+  tek dosya yolu ile de çalışıp çalışmadığı. Sonuç devlog'a yazılır.
+  **Uygun çıkmazsa yedek yol:** preset'ler asset olmaz; `lib/app/dev/` içinde Dart sabiti olarak durur (yalnızca
+  `main_dev.dart`'tan erişildiği için diğer derlemelere girmez). Bu, "ID'ler kodda yazılmaz" kuralının geliştirici
+  aracına özel bir istisnası olur ve kullanıcıya sorulur.
+- İçerik doğrulama testi preset'lerdeki her sahne, eşya, not ve bayrağın içerikte var olduğunu kontrol eder. Test
+  dosyayı **diskten** okur (`flutter test` flavor'sız çalışır; paket içinde dosya yoktur).
 - Menü metinleri ARB'de (kodda kullanıcıya görünen literal olmaz).
 - Kaydı JSON olarak panoya verme / alma bu adımda **yok**; 2.2'de eklenir (kayıt DTO'su orada doğar).
-- Testler: preset ayrıştırma ve doğrulama; menü işlevleri (atla, ekle, sıfırla, preset) için widget testleri.
-  **Kabul kriterleri:** Dev'de `market_with_pills` yüklenince oyun çarşıda, şişe panelde, mektup defterde açılıyor;
-  prod ve staging'de menü yok.
+- Testler: preset ayrıştırma ve doğrulama; menü işlevleri (atla, ekle, sıfırla, preset; preset dosyası yokken boş
+  liste) için widget testleri; menü verilmeden kurulan oyunda düğmenin olmadığı; mimari testi (`app/dev/` import'u).
+  **Kabul kriterleri:** Android dev'de `market_with_pills` yüklenince oyun çarşıda, şişe panelde, mektup defterde
+  açılıyor; prod, staging ve Steam giriş noktalarında menü yok ve `SHOW_DEBUG_OVERLAY` ile de açılmıyor; prod APK'sında
+  `assets/dev/presets.json` yok.
   **Commit:** `feat(app): add developer menu`
 
 ### [ ] 1.20 Çarşı demosunun kabul testi ve cila
@@ -1467,3 +1515,25 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
     - Yeni olaylar: `NoteUpdated` (istenen) ve `TopicAsked` (benim eklemem; arayüz tepkisi ve 9.2 analitiği için).
     - Aşama 5'in yeni adımı 5.7 olarak numaralandı. 1b için ayrı devlog dosyası açılmaz; `asama-1.md` sürer.
     - "En küçük hedef telefon yüksekliği" = 360 dp (1.7'deki ölçüyle aynı).
+- 2026-11-14 (Aşama 1b kararları, kullanıcı): Yukarıdaki sekiz çelişki maddesi karara bağlandı; yorumların hepsi
+  onaylandı. İlgili adımlar, `CLAUDE.md` ve ADR 0014 / 0016 / 0018 güncellendi.
+  1. **`RuleParser`: onaylandı.** Arayüz `scene_engine/domain`'de, uygulaması `scene_engine/data`'da, DI ile verilir;
+     `dialogue/data` kendi DTO'larını tutar (1.16).
+  2. **Dosya listeleme: onaylandı.** Ek: içerik doğrulama testi `assets/content` altındaki her klasörün
+     `pubspec.yaml`'da tanımlı olduğunu kontrol eder; unutulan klasör testi kırar (1.14).
+  3. **Eksik bölüm: onaylandı.** Klasörde hiç dosya yoksa atlanır; yarım bölüm ve eksik ilk bölüm hatadır (1.14).
+  4. **`greeting.then`: onaylandı;** `spokenLines`'a yazma da tek etki hattından geçer (`StartConversation`, 1.16).
+  5. **`MarkNoteRead`: hattın tek istisnası** (iki seçenekten daha az değişiklik isteyeni). Hattı tarafsız bir yere
+     taşımak `EffectApplier`, `TriggerRunner`, `Condition` ve `Effect`'i de `scene_engine`'den çıkarmayı gerektirirdi;
+     istisna ise sıfır kod değişikliğidir ve `isRead`'i hiçbir koşul okumadığı için tetikleyicileri etkilemez. Gerekçe
+     ADR 0014'te. **Feature'lar arasında iki yönlü import yasak;** mimari testi feature grafındaki döngüyü yakalar (1.11).
+     Aynı kural yüzünden konuşma doğrulaması ikiye bölündü: bağımlılık yalnızca `dialogue` → `scene_engine` (1.16).
+  6. **Kayıt "değişiklik varsa":** onaylandı (1.11).
+  7. **`show_letter` kahvecide:** onaylandı (1.16).
+  8. **`presets.json` prod ve Steam paketine girmez.** Flutter dokümanı (docs.flutter.dev, flavors ve pubspec sayfaları,
+     2026-11-14) `assets` girdisinde `path` + `flavors` alt alanını tanımlıyor; örnekler klasör yoluyla. Doküman
+     flavor'sız derlemede ne olduğunu ve Windows desteğini **açıkça yazmıyor**; 1.19 başlarken derleme çıktısıyla
+     doğrulanacak, uygun çıkmazsa yedek yol (Dart sabiti) sorulacak. Windows'ta paketlenmemesi kabul edildi.
+     Menü kodu yalnızca `main_dev.dart`'tan bağlanır; prod, staging ve Steam derlemesinde yoktur, env bayrağıyla
+     açılamaz (1.19). Not: bu, menüyü `staging`'de de kapatır (karar "prod ve Steam" diyordu; staging'i de dışarıda
+     bırakmak daha güvenli taraf, istenirse `main_staging.dart` da bağlayabilir).

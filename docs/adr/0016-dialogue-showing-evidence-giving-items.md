@@ -64,7 +64,8 @@ Rules:
   `inspect`, `talk` and `hideHotspot` are not allowed; a character who leaves is a flag plus `visibleWhen`
   on the hotspot.
 - The greeting takes the `first`/`then` form of `say` (ADR 0013) and uses the same `spokenLines` set.
-  Recording that the first greeting was heard is the one progress change caused by opening the panel.
+  Recording that the first greeting was heard is the one progress change caused by opening the panel. It is
+  written by the `StartConversation` use case through the effect pipeline, not by the `talk` effect.
 
 **Showing evidence and giving items.** A topic with a `trigger` is not in the question list at first. It
 plays when the matching item or note is shown, then stays in the list under its `promptKey` as asked.
@@ -90,5 +91,9 @@ Giving is simply `consumeItem` in `do`.
 - Authors must make sure a topic cannot be lost for good when it gates progress: a `visibleWhen` that
   depends on an item the player may already have given away hides an unasked question forever. The
   walkthrough check (phase 7.4) is the safety net.
-- Dialogue conditions and effects reuse the scene engine's rule parser through a domain interface, because
-  a feature's data layer may not import another feature's data layer (ADR 0001).
+- `dialogue/data` keeps its own DTOs. Conditions and effects are parsed through `RuleParser`, an interface in
+  `scene_engine/domain` implemented by the codecs in `scene_engine/data` and handed over by DI, because a
+  feature's data layer may not import another feature's data layer (ADR 0001).
+- The dependency runs one way, `dialogue` → `scene_engine` (ADR 0014 forbids cycles). `talk` and
+  `topicAsked` carry plain IDs, the scene validator receives the known dialogue and topic IDs as data, and
+  dialogues are checked by a `DialogueValidator` in `dialogue/domain`.

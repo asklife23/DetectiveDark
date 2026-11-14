@@ -115,11 +115,16 @@ Her feature içinde:
   UI'a exception sızmaz.
 - İlerlemenin tek doğruluk kaynağı `ProgressRepository`'dir. Sahne, eşya paneli, not defteri, konuşma paneli ve chat
   bu kaynaktan okur.
-- **Tek etki hattı (ADR 0014):** İlerlemeyi değiştiren her use case (hotspot dokunuşu, sahneye giriş, konuşma konusu,
-  kanıt gösterme, notu okundu işaretleme, geliştirici menüsü, ileride bulmaca `onSolved`) `EffectPipeline`'ı kullanır:
+- **Tek etki hattı (ADR 0014):** İlerlemeyi değiştiren her use case (hotspot dokunuşu, sahneye giriş, konuşmayı
+  başlatma, konuşma konusu, kanıt gösterme, geliştirici menüsü, ileride bulmaca `onSolved`) `EffectPipeline`'ı kullanır:
   etkiler (`EffectApplier`, saf) → tetikleyiciler (sabit noktaya kadar) → **tek** atomik `save` → olaylar (yalnızca
-  kayıt başarılıysa). `ProgressRepository.save` hattın dışında hiçbir yerden çağrılmaz (mimari testi denetler).
-  Yeni bir yazma yolu eklemek yerine hatta yeni bir çağıran eklenir.
+  kayıt başarılıysa). Yeni bir yazma yolu eklemek yerine hatta yeni bir çağıran eklenir.
+  **Tek istisna `MarkNoteRead`'dir** (doğrudan `save`): `isRead`'i hiçbir koşul okumaz, etki ve olay üretmez.
+  `ProgressRepository.save` başka hiçbir yerden çağrılmaz (mimari testi denetler); yeni istisna eklemek ADR ister.
+- **Feature'lar arasında döngü yoktur.** A feature'ı B'yi import ediyorsa B, A'yı (dolaylı olarak da) import edemez;
+  mimari testi feature bağımlılık grafını import satırlarından çıkarır ve döngüde kırılır. Yön sabittir:
+  `dialogue` → `scene_engine` → `notebook` / `inventory` / `progress`. Ters yönde bilgi gerekiyorsa entity değil düz
+  veri (ID listesi) parametreyle verilir.
 - Koşul ve etkileri JSON'dan ayrıştıran kod `scene_engine/data`'dadır. Başka bir feature'ın `data` katmanı
   (ör. `dialogue`) buna `scene_engine/domain`'deki `RuleParser` arayüzü üzerinden ulaşır; `data` → `data` import'u yoktur.
 - **Platforma özel servisler** (satın alma / sahiplik, hesap, bulut kaydı) domain arayüzleri arkasındadır
@@ -317,6 +322,9 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
 - Klavye: `Esc` = Geri (açık pencereyi kapatır, yoksa üst sahneye döner; ana sahnede etkisizdir).
 - **Geliştirici menüsü (yalnızca dev):** sahneye atlama, eşya/not/bayrak ekleme, ilerlemeyi sıfırlama,
   `assets/dev/presets.json`'dan adlandırılmış durum yükleme. Değişiklikler etki hattından geçer.
+  Menüyü (`lib/app/dev/`) yalnızca `lib/main_dev.dart` import edip `bootstrap`'e verir; staging, prod ve Steam giriş
+  noktaları vermez, bu yüzden o derlemelerde kodu yoktur ve hiçbir env bayrağıyla açılamaz (mimari testi denetler).
+  `assets/dev/` yalnızca `dev` flavor'ında paketlenir (`pubspec.yaml`: `flavors: [dev]`); Windows'ta hiç paketlenmez.
 - Sahne viewport'u panelin solunda kalan alana sığdırılır; hotspot'lar asla panelin altında kalmaz.
 - HUD güvenli alanlara (çentik, kamera deliği) uyar.
 
@@ -403,7 +411,9 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
     bağımlı olamaz (demo derlemesi yalnızca ilk bölümle çalışır).
   - **Uyarılar** testi kırmaz, raporlanır: kullanılmayan metin anahtarı; hedefi mevcut sahnenin çocuğu, ebeveyni veya
     bir kök sahne olmayan `goToScene`; hiçbir `talk` ile açılmayan konuşma.
-  - `assets/dev/presets.json`'daki her sahne, eşya, not ve bayrak içerikte vardır.
+  - `assets/dev/presets.json`'daki her sahne, eşya, not ve bayrak içerikte vardır (dosya diskten okunur).
+  - `assets/content` altında dosya içeren **her klasör** `pubspec.yaml`'ın asset listesinde tanımlıdır (unutulan klasör
+    sessizce eksik içerik demektir; test kırılır).
 
 ### Karar kayıtları (ADR)
 `docs/adr/NNNN-kebab-title.md`, İngilizce, kısa: **Context / Decision / Consequences**.

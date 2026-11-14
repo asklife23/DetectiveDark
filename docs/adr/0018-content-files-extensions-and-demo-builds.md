@@ -44,9 +44,18 @@ listed from the asset manifest and read in name order. Having both the file and 
 - Extensions are **not** switched on by the player's chapter. The author guards them with conditions. A
   "chapter reached" condition arrives with the chapter flow (phase 5.4).
 
+**Every content folder is declared.** A folder entry in `pubspec.yaml` does not cover subfolders, and a
+listing only sees bundled files, so a forgotten entry would silently drop content instead of failing. The
+content validation test therefore walks `assets/content` on disk and fails when a folder that holds files is
+not listed under `flutter.assets` (or a listed content folder does not exist).
+
 **Missing chapters are skipped.** A chapter listed in `case.json` whose folder has no files in the bundle is
-left out. A chapter that is only partly present is an error. Packaging a build without the paid chapters is
-phase 11 work.
+left out. A chapter that is only partly present is an error, and so is a missing first chapter. Packaging a
+build without the paid chapters is phase 11 work.
+
+**Developer presets stay out of release builds.** `assets/dev/` is bundled only for the `dev` flavor
+(`flavors: [dev]` on the asset entry). Windows has no flavors, so it is never bundled there, Steam included.
+The developer menu is wired in by `main_dev.dart` only, so its code is absent from every other build.
 
 **Validation per prefix.** The content validation test validates every chapter prefix on its own (chapter
 1; chapters 1–2; ...). An earlier chapter can therefore never depend on an ID, a flag or a text of a later
