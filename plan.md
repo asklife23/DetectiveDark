@@ -456,6 +456,25 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
   **Kabul kriterleri:** Kabul senaryosunun 8–9. adımları telefonda ve Windows'ta çalışıyor.
   **Commit:** `feat(notebook): add notebook with documents, observations and suspects`
 
+### [ ] 1.6b Nesne katmanı
+**Amaç:** Alınabilen nesneleri arka plandan ayırmak: bir nesne için iki tam sahne görseli (nesneli / nesnesiz)
+yerine tek arka plan + küçük bir nesne görseli (ADR 0012). Gerçek görsellerde (Aşama 7) sanat bütçesini korur.
+**Yapılacaklar:**
+- `HotspotDefinition`'a opsiyonel `sprite` (`HotspotSprite`: `rect`, `placeholderStyle`, `image?`). `rect` sahne
+  görseline göre normalize (0–1) ve hotspot'un dokunma alanından bağımsızdır. JSON: hotspot içinde `"sprite": {...}`.
+- Hotspot görünürken nesnesi çizilir; `hideHotspot` veya `visibleWhen` ile gizlenince çizilmez. `image` boşsa
+  `placeholderStyle`'daki painter çizer; doluysa şeffaf arka planlı görsel (gerçek görsele geçiş tek satır JSON).
+- Katman sırası: arka plan → **nesneler** → overlay → noir filtre → hotspot → geçiş. Nesneler filtrenin altında
+  kalır ki arka planla aynı filmden çıkmış görünsün. İnceleme penceresinde nesne katmanı yoktur.
+- `ContentValidator`: nesne `rect`'i 0–1 aralığında, `placeholderStyle` kodda tanımlı.
+- Dikey dilim: anahtar (`statue_key`) ve kağıt (`desk_paper`) nesne katmanına taşınır; `statue_closeup` ve
+  `villa_hall` tek arka plana iner; `statue_key_taken` / `hall_letter_taken` bayrakları ve görünüm varyantları kalkar.
+- `CLAUDE.md` bölüm 6, ADR 0012 (ADR 0011'e bağlı), 7.3'e şeffaf arka plan notu.
+- Testler: DTO ayrıştırma, doğrulayıcı (bozuk rect, bilinmeyen stil), widget testi (nesne çiziliyor / gizlenince yok).
+  **Kabul kriterleri:** Kabul senaryosunun 5., 8. ve 10. adımları aynı görünür: anahtar ve kağıt alınınca sahneden
+  kaybolur, geri dönünce yoktur; sahne başına tek arka plan stili kalır.
+  **Commit:** `feat(scene_engine): add object layer with hotspot sprites`
+
 ### [ ] 1.7 Dedektifin iç sesi
 **Amaç:** Dedektifin oyuncuya konuştuğu mesaj katmanı (ileride ipucu sistemi de bunu kullanacak).
 **Yapılacaklar:**
@@ -467,6 +486,9 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
   yazılır (dokununca anında tamamlanır). Mesaj okunacak kadar kaldıktan sonra bar kendiliğinden küçük bir düğmeye
   çekilir; böylece sahne küçülmez ve alt kenardaki hotspot'lar kalıcı olarak kapanmaz. Süreler `core/theme`'de.
 - `ChatHistorySheet`: bara veya düğmeye dokununca açılan mesaj geçmişi; Geri önce bunu kapatır.
+- **Bar hiçbir hotspot'u kapatmaz:** barın (ve küçülmüş düğmenin) kaplayabileceği alt şerit, sahne yüksekliğinin
+  oranı olarak tek bir sabittir (`core/theme`). Bar bu şeridin dışına taşmaz; içerik doğrulama testi hiçbir
+  hotspot'un bu şeride girmediğini kontrol eder.
 - Testler: olay → yeni mesaj tepkisi; okunmamış sayısı; geçmiş sırası.
   **Kabul kriterleri:** Kabul senaryosunun tamamı (1–11) telefonda ve Windows'ta çalışıyor.
   **Commit:** `feat(detective_chat): add detective inner voice bar and history`
@@ -681,6 +703,9 @@ hikaye değişikliği gerekiyorsa önce o yapılır.
   (palet, ışık, dönem, kompozisyon, prompt şablonları, referans görseller); görsellerde yazı/sayı olmaması (prompt +
   elle temizlik; kritik yazılar overlay); yakın planları ana görselden kırpma/inpainting ile tutarlılık; noir filtre
   preset'lerinin gerçek görsellerle ayarı; çözünürlük ve boyut bütçesi (WebP); placeholder → `background` geçişi.
+  **Alınabilen nesneler (ADR 0012) arka plana çizilmez:** arka plan nesnesiz üretilir; nesne ayrı, **şeffaf arka
+  planlı** (alfa kanallı WebP/PNG) bir görsel olarak üretilir ve hotspot'un `sprite` alanına bağlanır. Nesnenin ışığı
+  ve perspektifi arka planla uyumlu olmalı; gölgesi nesne görseline dahil edilir.
   Her görsel için üretim kaydı (araç, model, tarih, prompt, elle yapılan düzenlemeler): `docs/art/ai-usage.md`
   (Steam AI açıklamasının kaynağı, bkz. 11.5).
 - [ ] 7.4 Bölüm 1 içeriği (sahne sayısı hikayeyle belirlenir; tahmin ~40–50, inceleme pencereleri yakın plan
@@ -730,7 +755,8 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
 - [ ] 11.1 **KULLANICI:** Steamworks hesabı, vergi ve banka bilgileri, oyun başına $100 Steam Direct ücreti
   (oyun $1.000 gelire ulaşınca geri ödenir). Uygulama kimlikleri: oyun, demo, Vaka 2 DLC.
   Ücret ödendikten sonra yayın için bekleme süresi ve en az 2 hafta "Yakında" sayfası şartı var; takvime yazılır.
-- [ ] 11.2 PC deneyimi: pencere / tam ekran, çözünürlük ve yüksek DPI, klavye kısayolları (`Esc` = geri / menü),
+- [ ] 11.2 PC deneyimi: pencere / tam ekran, çözünürlük ve yüksek DPI, klavye kısayolları (`Esc` = geri Aşama 1'de
+  eklendi; burada menü ve diğer kısayollar),
   fare imleci davranışı, ayarlar ekranına görüntü seçenekleri.
 - [ ] 11.3 Steam platform servisleri: sahiplik ve DLC kontrolü (önce API gerektirmeyen yol: DLC içeriği ayrı
   depot olarak yalnızca sahibine yüklenir), kayıt için Steam Auto-Cloud (Drift dosyasının yolu tanımlanır),
@@ -892,6 +918,18 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   yazılır; nota dokununca `MarkNoteRead` ilerlemeye yazar. Kağıt dokusu yerine düz kağıt rengi kullanıldı (doku görseli
   7.3'teki sanat işiyle gelir). `GameHud` state sınıfı 150 satırı aştı; 1.8'deki cilada uçuş mantığı ayrı bir sınıfa
   alınacak.
+- 2026-11-14: **Kullanıcı kararları** (yukarıdaki "Kullanıcı kararı bekleyen" maddeleri ve 1.2 / 1.5 gözlemleri):
+  1. **Nesne katmanı: onaylandı.** Yeni adım 1.6b (1.7'den önce), ADR 0012, `CLAUDE.md` bölüm 6; 7.3'e şeffaf arka
+     planlı nesne görseli notu eklendi.
+  2. **Geri geçiş tipi:** kayıttan dönünce varsayılan kararma kabul edildi; geçiş tipi kayda yazılmaz (ADR 0007'ye
+     işlendi, kayıt şekli değişmedi).
+  3. **Mesaj barı:** sahnenin üstüne binen tasarım uygun; şart: bar hiçbir hotspot'u kapatmaz. Barın alt şeridi tek
+     sabit, içerik doğrulama testi hotspot'ların şeride girmediğini kontrol eder (1.7'ye eklendi). Kullanıcı 1.7
+     bitince telefonda bakıp onaylayacak.
+  4. **`Esc` = Geri:** Windows'ta Aşama 1'de eklenir (11.2 güncellendi).
+  5. **Eşya seçiliyken geçiş noktası:** kural aynı kalır (yalnızca genel tepki, seçim temizlenir); **oyun testinde
+     (7.4) tekrar bakılacak**.
+  6. **`build_runner` komutu:** `CLAUDE.md` bölüm 4 kurulu sürüme göre düzeltildi (`dart run build_runner build`).
 - 2026-11-13: **DEVAM NOTU** (kullanım limiti nedeniyle 1.6'dan sonra duruldu)
   - **Biten:** 1.1–1.6 commit'li ve push'lu. Kalite kapısı son durumda: format OK, analyze 0 sorun, test 302/302.
   - **Cihaz doğrulaması:** 1.4 ve 1.5 telefonda ve Windows'ta doğrulandı. 1.6 **yalnızca telefonda** doğrulandı

@@ -135,7 +135,8 @@ Her feature içinde:
 ## 4. Kalite kapısı (her commit öncesi zorunlu)
 
 Sırayla çalıştır:
-1. Kod üretimi olan adımlarda: `dart run build_runner build --delete-conflicting-outputs`
+1. Kod üretimi olan adımlarda: `dart run build_runner build`
+   (kurulu `build_runner` 2.15'te `--delete-conflicting-outputs` bayrağı kaldırıldı; çakışan çıktılar kendiliğinden silinir)
 2. `dart format .`
 3. `flutter analyze` → **0 sorun** (info dahil)
 4. `flutter test` → **tamamı geçmeli**

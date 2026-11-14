@@ -18,6 +18,9 @@ transition must not trigger a second action.
   spent in black, e.g. while a sound effect plays), `fadeInMs`, optional `sfx` (sound arrives in Phase 6).
   Defaults live in `AppDurations`.
 - Back uses the same transition type to return to the parent scene.
+  The type is remembered for the running session only: after loading a save, Back from the restored
+  scene uses the default fade. Stack entries do not store a transition type, so the save format
+  (ADR 0003) stays free of presentation details (decided 2026-11-14).
 - `SceneBloc` holds only the transition phase (`idle` / `covering` / `revealing`); the UI owns the timing.
   When the screen is fully black the UI sends `TransitionCovered` and the bloc swaps the scene.
 - Taps are ignored while a transition runs.
