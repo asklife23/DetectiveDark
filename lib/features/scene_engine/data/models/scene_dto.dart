@@ -2,6 +2,7 @@ import 'package:detective_dark/features/scene_engine/data/models/condition_codec
 import 'package:detective_dark/features/scene_engine/data/models/effect_codec.dart';
 import 'package:detective_dark/features/scene_engine/data/models/scene_visual_dto.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/hotspot_definition.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/hotspot_sprite.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/scene_definition.dart';
 import 'package:json_annotation/json_annotation.dart';
 
@@ -26,6 +27,29 @@ class InteractionRuleDto {
   );
 }
 
+/// JSON form of a [HotspotSprite].
+@JsonSerializable()
+class SpriteDto {
+  const SpriteDto({
+    required this.rect,
+    required this.placeholderStyle,
+    this.image,
+  });
+
+  factory SpriteDto.fromJson(Map<String, dynamic> json) =>
+      _$SpriteDtoFromJson(json);
+
+  final RectDto rect;
+  final String placeholderStyle;
+  final String? image;
+
+  HotspotSprite toEntity() => HotspotSprite(
+    rect: rect.toEntity(),
+    placeholderStyle: placeholderStyle,
+    image: image,
+  );
+}
+
 /// JSON form of a [HotspotDefinition].
 @JsonSerializable()
 class HotspotDto {
@@ -36,6 +60,7 @@ class HotspotDto {
     this.visibleWhen,
     this.interactions = const [],
     this.glint = false,
+    this.sprite,
   });
 
   factory HotspotDto.fromJson(Map<String, dynamic> json) =>
@@ -47,6 +72,7 @@ class HotspotDto {
   final Map<String, dynamic>? visibleWhen;
   final List<InteractionRuleDto> interactions;
   final bool glint;
+  final SpriteDto? sprite;
 
   HotspotDefinition toEntity() {
     try {
@@ -61,6 +87,7 @@ class HotspotDto {
           interactions.map((rule) => rule.toEntity()),
         ),
         glint: glint,
+        sprite: sprite?.toEntity(),
       );
     } on FormatException catch (error) {
       throw FormatException('hotspot "$id": ${error.message}');

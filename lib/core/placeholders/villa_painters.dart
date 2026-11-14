@@ -194,11 +194,10 @@ class VillaDoorPainter extends CustomPainter {
       oldDelegate.isOpen != isOpen;
 }
 
-/// The entrance hall: a desk under a lamp, with or without the letter.
+/// The entrance hall: a desk under a lamp. The letter on the desk is a
+/// separate object ([LetterSpritePainter]).
 class VillaHallPainter extends CustomPainter {
-  const VillaHallPainter({required this.hasLetter});
-
-  final bool hasLetter;
+  const VillaHallPainter();
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -259,37 +258,44 @@ class VillaHallPainter extends CustomPainter {
         PlaceholderPalette.black,
         0.006,
       );
+  }
 
-    if (hasLetter) {
-      brush
-        ..polygon([
-          brush.point(0.452, 0.622),
-          brush.point(0.548, 0.616),
-          brush.point(0.558, 0.694),
-          brush.point(0.444, 0.700),
-        ], PlaceholderPalette.paper)
-        ..line(
-          brush.point(0.465, 0.642),
-          brush.point(0.535, 0.638),
-          PlaceholderPalette.paperShade,
-          0.004,
-        )
-        ..line(
-          brush.point(0.464, 0.660),
-          brush.point(0.538, 0.656),
-          PlaceholderPalette.paperShade,
-          0.004,
-        )
-        ..line(
-          brush.point(0.463, 0.678),
-          brush.point(0.515, 0.675),
-          PlaceholderPalette.paperShade,
-          0.004,
-        );
+  @override
+  bool shouldRepaint(VillaHallPainter oldDelegate) => false;
+}
+
+/// A sheet of paper lying on a desk, as an object in a scene: it fills its
+/// box and leaves the rest transparent.
+class LetterSpritePainter extends CustomPainter {
+  const LetterSpritePainter();
+
+  static const _lineWidth = 0.042;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final brush = PlaceholderBrush(canvas, size);
+    brush.polygon([
+      brush.point(0.100, 0.126),
+      brush.point(0.900, 0.063),
+      brush.point(0.983, 0.884),
+      brush.point(0.033, 0.947),
+    ], PlaceholderPalette.paper);
+
+    // Three lines of writing; the last one is short.
+    for (final (fromX, fromY, toX, toY) in const [
+      (0.208, 0.337, 0.792, 0.295),
+      (0.200, 0.526, 0.817, 0.484),
+      (0.192, 0.716, 0.625, 0.684),
+    ]) {
+      brush.line(
+        brush.point(fromX, fromY),
+        brush.point(toX, toY),
+        PlaceholderPalette.paperShade,
+        _lineWidth,
+      );
     }
   }
 
   @override
-  bool shouldRepaint(VillaHallPainter oldDelegate) =>
-      oldDelegate.hasLetter != hasLetter;
+  bool shouldRepaint(LetterSpritePainter oldDelegate) => false;
 }

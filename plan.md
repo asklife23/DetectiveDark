@@ -456,7 +456,7 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
   **Kabul kriterleri:** Kabul senaryosunun 8–9. adımları telefonda ve Windows'ta çalışıyor.
   **Commit:** `feat(notebook): add notebook with documents, observations and suspects`
 
-### [ ] 1.6b Nesne katmanı
+### [x] 1.6b Nesne katmanı
 **Amaç:** Alınabilen nesneleri arka plandan ayırmak: bir nesne için iki tam sahne görseli (nesneli / nesnesiz)
 yerine tek arka plan + küçük bir nesne görseli (ADR 0012). Gerçek görsellerde (Aşama 7) sanat bütçesini korur.
 **Yapılacaklar:**
@@ -930,11 +930,18 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   5. **Eşya seçiliyken geçiş noktası:** kural aynı kalır (yalnızca genel tepki, seçim temizlenir); **oyun testinde
      (7.4) tekrar bakılacak**.
   6. **`build_runner` komutu:** `CLAUDE.md` bölüm 4 kurulu sürüme göre düzeltildi (`dart run build_runner build`).
+- 2026-11-14 (1.6b): Nesne görseli alanının adı `sprite` (`rect`, `placeholderStyle`, `image?`). Nesne `rect`'i
+  dokunma alanından bağımsız: anahtarda ikisi aynı, kağıtta dokunma alanı biraz daha büyük. Gerçek görsel `rect`'e
+  `BoxFit.fill` ile oturur (sanatçı nesneyi tam o kutuya kırparak dışa aktarır). `statue_key_taken` ve
+  `hall_letter_taken` bayrakları içerikten kalktı; placeholder stilleri `statue_closeup_key` / `villa_hall_letter`
+  silindi, `sprite_brass_key` / `sprite_letter` eklendi. Bilinen sınır (ADR 0012): nesne arka plandaki bir şeyin
+  arkasında kısmen kalamaz; gerekirse ileride ön plan katmanı. 1.6'nın Windows doğrulaması
+  `integration_test/notebook_mouse_test.dart` ile yapıldı (gerçek Windows derlemesi, test tarafından üretilen fare
+  olayları); `integration_test` paketi bu yüzden 1.8'den önce eklendi.
 - 2026-11-13: **DEVAM NOTU** (kullanım limiti nedeniyle 1.6'dan sonra duruldu)
   - **Biten:** 1.1–1.6 commit'li ve push'lu. Kalite kapısı son durumda: format OK, analyze 0 sorun, test 302/302.
-  - **Cihaz doğrulaması:** 1.4 ve 1.5 telefonda ve Windows'ta doğrulandı. 1.6 **yalnızca telefonda** doğrulandı
-    (kağıt alınıyor, rozet çıkıyor, mektup defterde okunuyor). **1.6'nın Windows'ta fareyle doğrulaması yapılmadı**;
-    1.7'ye başlamadan önce yapılmalı (defter düğmesi, sekmeler, nota tıklama, dışına tıklayınca kapanma).
+  - **Cihaz doğrulaması:** 1.4 ve 1.5 telefonda ve Windows'ta doğrulandı. 1.6 telefonda doğrulandı; Windows'ta
+    fareyle doğrulaması 2026-11-14'te yapıldı (yukarıdaki 1.6b notu).
   - **Sırada:** 1.7 (dedektifin iç sesi: `ChatCubit`, `ChatBar`, `ChatHistorySheet`; mesajlar zaten ilerlemedeki
     `chatLog`'da), sonra 1.8 (paylaşılan senaryo fonksiyonu + `integration_test`, profil modunda performans, README,
     `GameHud` sadeleştirme), ardından `phase-1` etiketi.

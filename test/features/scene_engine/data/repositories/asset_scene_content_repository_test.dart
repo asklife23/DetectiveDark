@@ -68,6 +68,11 @@ void main() {
               'rect': {'x': 0, 'y': 0, 'width': 0.5, 'height': 1},
               'labelKey': 'hotspot_gate',
               'glint': true,
+              'sprite': {
+                'rect': {'x': 0.1, 'y': 0.2, 'width': 0.05, 'height': 0.1},
+                'placeholderStyle': 'sprite_brass_key',
+                'image': 'assets/art/key.webp',
+              },
               'visibleWhen': {'notFlag': 'gate_gone'},
               'interactions': [
                 {
@@ -98,6 +103,9 @@ void main() {
 
     final gate = scene.hotspot('gate')!;
     expect(gate.glint, isTrue);
+    expect(gate.sprite!.rect.x, 0.1);
+    expect(gate.sprite!.placeholderStyle, 'sprite_brass_key');
+    expect(gate.sprite!.image, 'assets/art/key.webp');
     expect(gate.rect.width, 0.5);
     expect(gate.visibleWhen, const FlagNotSet('gate_gone'));
     expect(gate.interactions.first.when, const UsingItem('key'));

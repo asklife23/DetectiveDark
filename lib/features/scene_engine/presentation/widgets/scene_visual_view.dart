@@ -1,21 +1,31 @@
 import 'package:detective_dark/core/placeholders/placeholder_art.dart';
 import 'package:detective_dark/core/theme/noir_filter_presets.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/hotspot_sprite.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/scene_visual.dart';
 import 'package:detective_dark/features/scene_engine/presentation/widgets/noir_filter.dart';
 import 'package:detective_dark/features/scene_engine/presentation/widgets/overlay_layer.dart';
+import 'package:detective_dark/features/scene_engine/presentation/widgets/sprite_layer.dart';
 import 'package:flutter/widgets.dart';
 
-/// Draws one [SceneVisual]: the picture, the overlay text on top of it and
-/// the noir filter above both.
+/// Draws one [SceneVisual]: the picture, the objects lying in it, the
+/// overlay text and the noir filter above them all.
 ///
 /// Scenes and the inspection panel share this widget, so they always go
-/// through the same pipeline: background → overlays → filter. The
+/// through the same pipeline: background → objects → overlays → filter
+/// (only scenes have objects). The
 /// [RepaintBoundary] keeps this static picture apart from the animated
 /// layers above it (hotspot glimmer, transitions).
 class SceneVisualView extends StatelessWidget {
-  const SceneVisualView({required this.visual, super.key});
+  const SceneVisualView({
+    required this.visual,
+    this.sprites = const [],
+    super.key,
+  });
 
   final SceneVisual visual;
+
+  /// The objects of the visible hotspots (ADR 0012).
+  final List<HotspotSprite> sprites;
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +34,7 @@ class SceneVisualView extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           _Background(visual: visual),
+          SpriteLayer(sprites: sprites),
           OverlayLayer(overlays: visual.overlays),
           NoirFilter(preset: NoirFilterPresets.resolve(visual.filterPreset)),
         ],

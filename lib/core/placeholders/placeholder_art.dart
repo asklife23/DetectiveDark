@@ -20,18 +20,12 @@ class PlaceholderArt extends StatelessWidget {
     PlaceholderStyles.villaExterior => const VillaExteriorPainter(),
     PlaceholderStyles.villaDoorClosed => const VillaDoorPainter(isOpen: false),
     PlaceholderStyles.villaDoorOpen => const VillaDoorPainter(isOpen: true),
-    PlaceholderStyles.statueCloseupWithKey => const StatueCloseupPainter(
-      hasKey: true,
-    ),
-    PlaceholderStyles.statueCloseup => const StatueCloseupPainter(
-      hasKey: false,
-    ),
-    PlaceholderStyles.villaHallWithLetter => const VillaHallPainter(
-      hasLetter: true,
-    ),
-    PlaceholderStyles.villaHall => const VillaHallPainter(hasLetter: false),
+    PlaceholderStyles.statueCloseup => const StatueCloseupPainter(),
+    PlaceholderStyles.villaHall => const VillaHallPainter(),
     PlaceholderStyles.statuePlaque => const StatuePlaquePainter(),
     PlaceholderStyles.itemBrassKey => const BrassKeyPainter(),
+    PlaceholderStyles.spriteBrassKey => const BrassKeySpritePainter(),
+    PlaceholderStyles.spriteLetter => const LetterSpritePainter(),
     _ => const UnknownPlaceholderPainter(),
   };
 

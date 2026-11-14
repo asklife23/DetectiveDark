@@ -94,7 +94,12 @@ void main() {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  SceneVisualView(visual: visual),
+                  SceneVisualView(
+                    visual: visual,
+                    sprites: [
+                      for (final hotspot in hotspots) ?hotspot.sprite,
+                    ],
+                  ),
                   HotspotLayer(
                     hotspots: hotspots,
                     showDebug: true,

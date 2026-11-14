@@ -161,6 +161,9 @@ Aynı oyun ve aynı içerik her platformda çalışır; yalnızca satış biçim
 - **Ortak noir filtre:** Tüm sahne ve inceleme görsellerine aynı film greni, vinyet ve renk tonu uygulanır. Farklı
   zamanlarda üretilmiş görseller bu katman sayesinde tek bir filmden çıkmış gibi görünür. Oyunun çizdiği yazılar
   filtrenin altında kalır ki görsele kaynaşsın, ama her zaman okunur.
+- **Alınabilen nesneler ayrı görseldir:** Sahnede durup alınabilen nesneler (anahtar, mektup) arka plana çizilmez;
+  şeffaf arka planlı küçük görseller olarak sahnenin üstüne yerleştirilir ve alınınca kaybolur. Böylece her sahne
+  için tek arka plan yeter (nesneli / nesnesiz iki görsel gerekmez). Nesneler de noir filtrenin altında kalır.
 - **Açıklık:** Steam, yapay zekâ ile üretilmiş içeriğin mağaza sayfasında açıklanmasını ister. Hangi görselin nasıl
   üretildiği üretim sırasında kayıt altına alınır.
 - **Dil:** İlk çıkışta oyun yalnızca **İngilizce**dir. Türkçe ve diğer diller sonradan eklenebilir; altyapı hazırdır
@@ -194,3 +197,7 @@ Aynı oyun ve aynı içerik her platformda çalışır; yalnızca satış biçim
   için sahne sayısını ve gezinmeyi azaltmak; AI'nın bozuk yazı üretmesine karşı bulmaca cevaplarını güvenceye almak;
   farklı zamanlarda üretilen görselleri tek bir görünümde birleştirmek. Sahne sayısı hikaye yazılırken belirlenecek.
   (ADR 0010, 0011)
+- 2026-11-14: Nesne katmanı eklendi: alınabilen nesneler arka plandan ayrı, şeffaf arka planlı görsellerdir. Gerekçe:
+  alınan her nesne için ikinci bir tam sahne görseli üretmek (n nesnede 2ⁿ görsel) sanat bütçesini katlıyordu ve AI
+  ile üretilen görsellerde tutarlılığı bozuyordu. (ADR 0012)
+- 2026-11-14: `Esc` = Geri (5.7) Steam aşamasını beklemeden Aşama 1'de eklendi; menü kısayolu Steam aşamasında.

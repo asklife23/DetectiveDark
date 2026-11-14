@@ -1,6 +1,5 @@
 import 'package:detective_dark/features/scene_engine/domain/entities/hotspot_definition.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/inspection_definition.dart';
-import 'package:detective_dark/features/scene_engine/domain/entities/scene_visual.dart';
 import 'package:detective_dark/features/scene_engine/presentation/bloc/scene_bloc.dart';
 import 'package:detective_dark/features/scene_engine/presentation/widgets/hotspot_layer.dart';
 import 'package:detective_dark/features/scene_engine/presentation/widgets/inspect_panel.dart';
@@ -12,8 +11,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 /// The scene on screen, built from the state of the [SceneBloc].
 ///
-/// Layer order, bottom to top: picture (background → overlays → noir
-/// filter) → hotspots → inspection panel → transition. Each layer listens
+/// Layer order, bottom to top: picture (background → objects → overlays →
+/// noir filter) → hotspots → inspection panel → transition. Each layer listens
 /// only to the part of the state it draws, so a pulsing hotspot or a fade
 /// never repaints the picture.
 class SceneView extends StatelessWidget {
@@ -37,11 +36,22 @@ class SceneView extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          BlocSelector<SceneBloc, SceneState, SceneVisual?>(
-            selector: (state) => state.visual,
-            builder: (context, visual) => visual == null
-                ? const SizedBox.expand()
-                : SceneVisualView(visual: visual),
+          BlocBuilder<SceneBloc, SceneState>(
+            // The picture changes with the visual and with the objects in
+            // it: a collected object disappears together with its hotspot.
+            buildWhen: (previous, current) =>
+                previous.visual != current.visual ||
+                previous.visibleHotspots != current.visibleHotspots,
+            builder: (context, state) {
+              final visual = state.visual;
+              if (visual == null) return const SizedBox.expand();
+              return SceneVisualView(
+                visual: visual,
+                sprites: [
+                  for (final hotspot in state.visibleHotspots) ?hotspot.sprite,
+                ],
+              );
+            },
           ),
           RepaintBoundary(
             child: BlocSelector<SceneBloc, SceneState, List<HotspotDefinition>>(

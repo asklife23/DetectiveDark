@@ -43,12 +43,10 @@ void paintBrassKey(PlaceholderBrush brush, Offset center, double scale) {
     );
 }
 
-/// The garden statue up close: a marble bust on a pedestal with a plaque,
-/// with or without the key hooked behind its ear.
+/// The garden statue up close: a marble bust on a pedestal with a plaque.
+/// The key behind its ear is a separate object ([BrassKeySpritePainter]).
 class StatueCloseupPainter extends CustomPainter {
-  const StatueCloseupPainter({required this.hasKey});
-
-  final bool hasKey;
+  const StatueCloseupPainter();
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -110,16 +108,12 @@ class StatueCloseupPainter extends CustomPainter {
         PlaceholderPalette.stoneDark,
         0.006,
       )
-      ..oval(brush.rect(0.558, 0.25, 0.022, 0.07), PlaceholderPalette.stone);
-
-    if (hasKey) paintBrassKey(brush, brush.point(0.607, 0.305), 0.14);
-
-    brush.fogBand(0.78, 0.22, 0.16);
+      ..oval(brush.rect(0.558, 0.25, 0.022, 0.07), PlaceholderPalette.stone)
+      ..fogBand(0.78, 0.22, 0.16);
   }
 
   @override
-  bool shouldRepaint(StatueCloseupPainter oldDelegate) =>
-      oldDelegate.hasKey != hasKey;
+  bool shouldRepaint(StatueCloseupPainter oldDelegate) => false;
 }
 
 /// The brass plaque of the statue, filling the picture. The inscription is
@@ -182,4 +176,19 @@ class BrassKeyPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(BrassKeyPainter oldDelegate) => false;
+}
+
+/// The brass key as an object in a scene: it fills its box and leaves the
+/// rest transparent, so the scene shows through.
+class BrassKeySpritePainter extends CustomPainter {
+  const BrassKeySpritePainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final brush = PlaceholderBrush(canvas, size);
+    paintBrassKey(brush, brush.point(0.457, 0.233), 0.933);
+  }
+
+  @override
+  bool shouldRepaint(BrassKeySpritePainter oldDelegate) => false;
 }

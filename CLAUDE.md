@@ -187,7 +187,12 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
   - Seçili eşyayla dokunulduysa ve hiçbir kural o eşyayı karşılamıyorsa yalnızca genel tepki verilir
     (`generic_item_no_effect`); yanlış eşya normal etkileşimi tetiklemez. Dokunuştan sonra seçim temizlenir.
   - Hotspot'lar `visibleWhen` ile koşullu görünür; `hideHotspot` ile kalıcı gizlenir (alınan nesne bir daha görünmez).
-  - Sahneler `visualVariants` ile duruma göre görünüm değiştirir (kapı açık/kapalı).
+  - **Nesne katmanı (ADR 0012):** Hotspot'un opsiyonel `sprite` alanı sahnede duran nesnenin görselidir: normalize
+    `rect` (sahne görseline göre, dokunma alanından bağımsız), `placeholderStyle` ve opsiyonel `image` (şeffaf arka
+    planlı görsel; boşsa placeholder painter çizer). Nesne yalnızca hotspot'u görünürken çizilir; `hideHotspot`
+    veya `visibleWhen` ile gizlenince görseli de kaybolur. Alınan nesne için bayrak + görünüm varyantı yazılmaz.
+  - Sahneler `visualVariants` ile duruma göre görünüm değiştirir (kapı açık/kapalı). Varyant sahnenin kendisi
+    değiştiğinde kullanılır; sahnede duran, alınabilen nesneler için `sprite` kullanılır.
   - Bu sistemin çözümleyicisi (`InteractionResolver`) saf Dart'tır ve kapsamlı unit testlerle korunur.
     Yeni bir etki/koşul türü eklemek mimari bir karardır: önce sor, sonra ADR yaz.
 - **Toplananlar iki türlüdür:** **Eşyalar** (sağ panelde, kullanılır, `consumeItem` ile tükenebilir) ve
@@ -215,8 +220,9 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
   görsel gerektirmez.
 - **Noir filtre (ADR 0011):** Tüm arka planlara ve inceleme görsellerine ortak bir filtre katmanı uygulanır:
   film greni, vinyet, renk tonu. Ayarlar `core/theme`'de adlandırılmış preset'lerdir; sahne JSON'u yalnızca preset
-  adı seçer (sayısal değer yazmaz). Katman sırası: **arka plan → overlay → noir filtre → hotspot → geçiş**.
-  Overlay filtrenin altında kalır ki yazı görsele kaynaşsın; hiçbir preset kritik yazıyı okunmaz hale getiremez.
+  adı seçer (sayısal değer yazmaz). Katman sırası: **arka plan → nesneler → overlay → noir filtre → hotspot → geçiş**
+  (nesne katmanı ADR 0012). Nesneler ve overlay filtrenin altında kalır ki görsele kaynaşsın; hiçbir preset kritik
+  yazıyı okunmaz hale getiremez. İnceleme görsellerinde nesne katmanı yoktur.
   Placeholder çizimler kendi gren/vinyetini çizmez, ortak filtreyi kullanır.
 - **Ekran yönü:** Mobilde yatay (landscape) kilitli, tam ekran (immersive). Windows'ta pencere veya tam ekran;
   sahne her durumda 16:9 viewport içinde çizilir.
@@ -292,7 +298,7 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
   - Tüm JSON'lar yüklenir; bilinmeyen koşul/etki anahtarı yoktur.
   - Referans verilen her sahne, eşya, not ve inceleme ID'si vardır.
   - Her metin anahtarı **desteklenen tüm dillerin** dosyalarında bulunur (şimdilik sadece `en`).
-  - Koordinatlar (hotspot ve overlay) 0–1 aralığındadır.
+  - Koordinatlar (hotspot, nesne ve overlay) 0–1 aralığındadır; nesne placeholder stilleri kodda tanımlıdır.
   - Bir kuralda en fazla bir `inspect` vardır ve `goToScene` ile birlikte kullanılmaz.
   - Okunan (`flag`, `notFlag`) her bayrak bir yerde `setFlag` ile set edilir (yazım hatası yakalanır).
   - Her sahne, bölümün giriş sahnesinden ulaşılabilirdir (graf taraması; kopuk sahne yakalanır).

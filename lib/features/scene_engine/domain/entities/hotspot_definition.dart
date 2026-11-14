@@ -1,5 +1,6 @@
 import 'package:detective_dark/features/scene_engine/domain/entities/condition.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/effect.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/hotspot_sprite.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/normalized_rect.dart';
 import 'package:equatable/equatable.dart';
 
@@ -27,6 +28,7 @@ class HotspotDefinition extends Equatable {
     this.interactions = const [],
     this.visibleWhen,
     this.glint = false,
+    this.sprite,
   });
 
   /// Unique inside its scene.
@@ -46,6 +48,10 @@ class HotspotDefinition extends Equatable {
   /// for the presentation only; it never affects the rules.
   final bool glint;
 
+  /// The picture of the object, drawn in the scene while this hotspot is
+  /// visible. Null for hotspots that are part of the background.
+  final HotspotSprite? sprite;
+
   @override
   List<Object?> get props => [
     id,
@@ -54,5 +60,6 @@ class HotspotDefinition extends Equatable {
     visibleWhen,
     interactions,
     glint,
+    sprite,
   ];
 }

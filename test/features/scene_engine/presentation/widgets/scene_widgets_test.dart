@@ -1,8 +1,10 @@
 import 'package:detective_dark/core/content/content_text_scope.dart';
 import 'package:detective_dark/core/content/content_texts.dart';
 import 'package:detective_dark/core/l10n/l10n.dart';
+import 'package:detective_dark/core/placeholders/placeholder_art.dart';
 import 'package:detective_dark/core/theme/app_theme.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/hotspot_definition.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/hotspot_sprite.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/inspection_definition.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/normalized_rect.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/scene_transition.dart';
@@ -13,6 +15,7 @@ import 'package:detective_dark/features/scene_engine/presentation/widgets/inspec
 import 'package:detective_dark/features/scene_engine/presentation/widgets/overlay_layer.dart';
 import 'package:detective_dark/features/scene_engine/presentation/widgets/scene_viewport.dart';
 import 'package:detective_dark/features/scene_engine/presentation/widgets/scene_visual_view.dart';
+import 'package:detective_dark/features/scene_engine/presentation/widgets/sprite_layer.dart';
 import 'package:detective_dark/features/scene_engine/presentation/widgets/transition_overlay.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -209,6 +212,91 @@ void main() {
 
       expect(large.width, small.width * 2);
       expect(large.height, small.height * 2);
+    });
+  });
+
+  group('SpriteLayer', () {
+    const key = HotspotSprite(
+      rect: NormalizedRect(x: 0.5, y: 0.2, width: 0.1, height: 0.2),
+      placeholderStyle: 'sprite_brass_key',
+    );
+
+    Finder art(String style) => find.byWidgetPredicate(
+      (widget) => widget is PlaceholderArt && widget.style == style,
+    );
+
+    testWidgets('draws a sprite inside its normalized rect', (tester) async {
+      await tester.pumpWidget(_host(const SpriteLayer(sprites: [key])));
+
+      final layer = tester.getTopLeft(find.byType(SpriteLayer));
+      final rect = tester.getRect(art('sprite_brass_key'));
+      expect(rect.left - layer.dx, moreOrLessEquals(400));
+      expect(rect.top - layer.dy, moreOrLessEquals(90));
+      expect(rect.size, const Size(80, 90));
+    });
+
+    testWidgets('draws nothing without sprites', (tester) async {
+      await tester.pumpWidget(_host(const SpriteLayer(sprites: [])));
+
+      expect(find.byType(PlaceholderArt), findsNothing);
+    });
+
+    testWidgets('an image that cannot be loaded falls back to the '
+        'placeholder', (tester) async {
+      await tester.pumpWidget(
+        _host(
+          const SpriteLayer(
+            sprites: [
+              HotspotSprite(
+                rect: NormalizedRect(x: 0.5, y: 0.2, width: 0.1, height: 0.2),
+                placeholderStyle: 'sprite_letter',
+                image: 'assets/art/missing.webp',
+              ),
+            ],
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(tester.takeException(), isNull);
+      expect(art('sprite_letter'), findsOneWidget);
+    });
+
+    testWidgets('SceneVisualView draws sprites above the background and '
+        'under overlays and filter', (tester) async {
+      await tester.pumpWidget(
+        _host(
+          const SceneVisualView(
+            visual: SceneVisual(
+              placeholderStyle: 'statue_closeup',
+              overlays: [
+                TextOverlay(
+                  rect: NormalizedRect(x: 0.5, y: 0.5, width: 0.1, height: 0.1),
+                  textKey: 'number',
+                  style: 'brass',
+                ),
+              ],
+            ),
+            sprites: [key],
+          ),
+        ),
+      );
+
+      // Children of a Stack paint in order: a later one lies on top.
+      final stack = tester.widget<Stack>(
+        find
+            .descendant(
+              of: find.byType(SceneVisualView),
+              matching: find.byType(Stack),
+            )
+            .first,
+      );
+      final order = [
+        for (final child in stack.children) child.runtimeType.toString(),
+      ];
+      expect(order.indexOf('SpriteLayer'), 1);
+      expect(order.indexOf('OverlayLayer'), 2);
+      expect(order.indexOf('NoirFilter'), 3);
     });
   });
 

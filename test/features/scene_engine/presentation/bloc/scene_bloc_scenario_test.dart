@@ -45,13 +45,19 @@ void main() {
     await bloc.tap('statue');
     expect(bloc.sceneId, 'statue_closeup');
     expect(bloc.hotspotIds, contains('statue_key'));
-    expect(bloc.state.visual!.placeholderStyle, 'statue_closeup_key');
+    expect(
+      bloc.state.visibleHotspots.map((hotspot) => hotspot.sprite),
+      contains(isNotNull),
+    );
 
     // 5. Take the key: it leaves the scene and enters the inventory.
     await bloc.tap('statue_key');
     expect(bloc.state.progress!.inventory, ['brass_key']);
     expect(bloc.hotspotIds, isNot(contains('statue_key')));
-    expect(bloc.state.visual!.placeholderStyle, 'statue_closeup');
+    expect(
+      bloc.state.visibleHotspots.map((hotspot) => hotspot.sprite),
+      everyElement(isNull),
+    );
     expect(chat().last, 'say_statue_key_found');
     expect(game.events, contains(isA<ItemObtained>()));
 

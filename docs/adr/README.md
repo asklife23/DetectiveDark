@@ -17,6 +17,7 @@ costs. A new decision gets a new file; an outdated one is not deleted — its st
 | [0009](0009-platform-targets-and-services.md) | Platform targets and platform services | Accepted |
 | [0010](0010-inspect-effect.md) | Inspect effect | Accepted |
 | [0011](0011-overlay-text-noir-filter-and-ai-art.md) | Overlay text, shared noir filter and AI-assisted art | Accepted |
+| [0012](0012-object-layer.md) | Object layer: hotspot sprites | Accepted |
 
 ## Template
 

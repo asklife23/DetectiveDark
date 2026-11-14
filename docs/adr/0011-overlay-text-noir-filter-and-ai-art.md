@@ -25,6 +25,7 @@ puzzle answer must be fairly findable. The game must also accept new languages l
    grain, vignette and color grading. The settings are named presets in `core/theme`; a scene may only
    pick a preset by name. Layer order: background → overlays → filter → hotspots → transition. Overlays
    sit under the filter so the text blends into the picture; no preset may make critical text unreadable.
+   ([ADR 0012](0012-object-layer.md) later added an object layer between background and overlays.)
 3. **AI-assisted art pipeline** (detailed in Phase 7.3): a written style guide, prompts that ask for no
    text, manual cleanup, close-ups cropped or inpainted from the main image for consistency, and a
    per-image usage log (tool, model, date, prompt, manual edits) in `docs/art/ai-usage.md`.

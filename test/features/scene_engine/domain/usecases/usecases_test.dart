@@ -164,7 +164,6 @@ void main() {
 
       expect(saves, 1);
       expect(outcome.progress.hasItem('brass_key'), isTrue);
-      expect(outcome.progress.hasFlag('statue_key_taken'), isTrue);
       expect(
         outcome.progress.isHotspotHidden('statue_closeup', 'statue_key'),
         isTrue,

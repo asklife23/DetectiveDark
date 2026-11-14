@@ -165,3 +165,28 @@
   açık mı, hangi sekme, hangi not seçili). Kural basit: uygulama kapanıp açılınca geri gelmesi gereken şey
   ilerlemeye, gerisi cubit durumuna yazılır. `BlocSelector` ile düğme yalnızca okunmamış sayısını dinliyor; defterin
   içinde sekme değiştirmek düğmeyi yeniden çizdirmiyor.
+
+### Adım 1.6b — Nesne katmanı (2026-11-14)
+- **Ne yaptık:** Hotspot'a opsiyonel bir `sprite` alanı ekledik: sahnede duran nesnenin görseli (konum + placeholder
+  stili + ileride gerçek görsel). Yeni `SpriteLayer` widget'ı bu nesneleri arka plan ile overlay yazılar arasına
+  çiziyor. Heykeldeki anahtar ve holdeki kağıt artık arka planın parçası değil, ayrı nesneler. "Anahtarlı heykel" /
+  "kağıtlı hol" placeholder varyantlarını ve `statue_key_taken` / `hall_letter_taken` bayraklarını sildik.
+- **Neden:** Eskiden bir nesne alınınca sahnenin ikinci bir tam görseli gerekiyordu (nesneli / nesnesiz). Bir sahnede
+  iki nesne varsa dört, üç nesne varsa sekiz görsel. Gerçek görsellere geçince bu hem bütçeyi katlar hem de AI her
+  üretimde resmin geri kalanını da değiştirdiği için tutarlılığı bozar. Artık tek arka plan + küçük, şeffaf arka planlı
+  nesne görselleri yetiyor. Nesne, hotspot'u görünür olduğu sürece çizilir; `hideHotspot` ikisini birden kaldırır.
+- **Önemli dosyalar:** `lib/features/scene_engine/domain/entities/hotspot_sprite.dart`,
+  `lib/features/scene_engine/presentation/widgets/sprite_layer.dart`, `scene_visual_view.dart`, `scene_view.dart`,
+  `lib/features/scene_engine/data/models/scene_dto.dart` (`SpriteDto`), `content_validator.dart`,
+  `lib/core/placeholders/` (`BrassKeySpritePainter`, `LetterSpritePainter`),
+  `assets/content/cases/case01/chapters/ch01/scenes.json`, `docs/adr/0012-object-layer.md`.
+- **Telefonda nasıl test edilir:** Oyunu aç, heykele git: anahtar eskisi gibi kulağın arkasında parlıyor olmalı.
+  Anahtara dokun: sahneden kaybolur, panele uçar. Geri dönüp tekrar gel: anahtar yok. Holde kağıt için aynısı.
+  Görünüşte hiçbir şey değişmemiş olmalı; değişen, resmin nasıl kurulduğu.
+- **Öğrenme notu:** Bu adım **katmanlı çizim** fikrini gösteriyor. Flutter'da `Stack` çocuklarını sırayla üst üste
+  çizer; sahnemiz de böyle bir yığın: arka plan → nesneler → overlay yazılar → noir filtre → hotspot'lar → geçiş.
+  Nesneleri filtrenin *altına* koymak bilinçli: gren ve vinyet nesnenin de üstünden geçtiği için nesne arka planla
+  aynı fotoğrafın parçası gibi görünür. İkinci kavram **veri odaklı tasarım**: nesnenin görünüp görünmeyeceğini
+  söyleyen ayrı bir kod yok; ilerlemedeki `hiddenHotspots` zaten "bu hotspot artık yok" diyor, katman da aynı
+  listeyi okuyor. Tek doğruluk kaynağı olduğu için "anahtar alındı ama resimde hâlâ duruyor" hatası oluşamaz.
+  `json_serializable` tarafında yeni alan = DTO'ya bir alan + `dart run build_runner build`.

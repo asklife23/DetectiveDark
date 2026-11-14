@@ -89,18 +89,9 @@
       "parentId": "villa_exterior",
       "titleKey": "scene_statue_closeup",
       "visual": {
-        "placeholderStyle": "statue_closeup_key",
+        "placeholderStyle": "statue_closeup",
         "filterPreset": "night"
       },
-      "visualVariants": [
-        {
-          "when": {"flag": "statue_key_taken"},
-          "visual": {
-            "placeholderStyle": "statue_closeup",
-            "filterPreset": "night"
-          }
-        }
-      ],
       "hotspots": [
         {
           "id": "statue_body",
@@ -115,12 +106,15 @@
           "rect": {"x": 0.575, "y": 0.27, "width": 0.07, "height": 0.15},
           "labelKey": "hotspot_statue_key",
           "glint": true,
+          "sprite": {
+            "rect": {"x": 0.575, "y": 0.27, "width": 0.07, "height": 0.15},
+            "placeholderStyle": "sprite_brass_key"
+          },
           "interactions": [
             {
               "do": [
                 {"giveItem": "brass_key"},
                 {"hideHotspot": true},
-                {"setFlag": "statue_key_taken"},
                 {"say": "say_statue_key_found"}
               ]
             }
@@ -141,30 +135,24 @@
       "parentId": "villa_door_closeup",
       "titleKey": "scene_villa_hall",
       "visual": {
-        "placeholderStyle": "villa_hall_letter",
+        "placeholderStyle": "villa_hall",
         "filterPreset": "interior"
       },
-      "visualVariants": [
-        {
-          "when": {"flag": "hall_letter_taken"},
-          "visual": {
-            "placeholderStyle": "villa_hall",
-            "filterPreset": "interior"
-          }
-        }
-      ],
       "hotspots": [
         {
           "id": "desk_paper",
           "rect": {"x": 0.43, "y": 0.60, "width": 0.14, "height": 0.11},
           "labelKey": "hotspot_desk_paper",
           "glint": true,
+          "sprite": {
+            "rect": {"x": 0.44, "y": 0.61, "width": 0.12, "height": 0.095},
+            "placeholderStyle": "sprite_letter"
+          },
           "interactions": [
             {
               "do": [
                 {"addNote": "hall_letter"},
                 {"hideHotspot": true},
-                {"setFlag": "hall_letter_taken"},
                 {"say": "say_hall_letter_taken"}
               ]
             }

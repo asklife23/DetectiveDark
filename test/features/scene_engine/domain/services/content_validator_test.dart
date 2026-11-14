@@ -4,6 +4,7 @@ import 'package:detective_dark/features/scene_engine/domain/entities/case_conten
 import 'package:detective_dark/features/scene_engine/domain/entities/condition.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/effect.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/hotspot_definition.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/hotspot_sprite.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/inspection_definition.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/normalized_rect.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/scene_definition.dart';
@@ -57,11 +58,13 @@ HotspotDefinition _hotspot(
   Condition? visibleWhen,
   NormalizedRect rect = _rect,
   String labelKey = 'label',
+  HotspotSprite? sprite,
 }) => HotspotDefinition(
   id: id,
   rect: rect,
   labelKey: labelKey,
   visibleWhen: visibleWhen,
+  sprite: sprite,
   interactions: [InteractionRule(when: when, effects: effects)],
 );
 
@@ -351,6 +354,38 @@ void main() {
       );
 
       expect(issues, _reports('rect is outside 0–1'));
+    });
+
+    test('a sprite with a valid rect and a known style is fine', () {
+      final issues = _validate(
+        yardHotspots: [
+          _hotspot(
+            'door',
+            const [GoToScene('shed')],
+            sprite: const HotspotSprite(rect: _rect, placeholderStyle: 'plain'),
+          ),
+        ],
+      );
+
+      expect(issues, isEmpty);
+    });
+
+    test('a sprite with a bad rect and an unknown style', () {
+      final issues = _validate(
+        yardHotspots: [
+          _hotspot(
+            'door',
+            const [GoToScene('shed')],
+            sprite: const HotspotSprite(
+              rect: NormalizedRect(x: 0.9, y: 0, width: 0.2, height: 0.5),
+              placeholderStyle: 'castle',
+            ),
+          ),
+        ],
+      );
+
+      expect(issues, _reports('sprite rect is outside 0–1'));
+      expect(issues, _reports('unknown sprite placeholder style "castle"'));
     });
 
     test('unknown placeholder style and filter preset', () {

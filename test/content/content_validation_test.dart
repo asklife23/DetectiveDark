@@ -120,6 +120,7 @@ void main() {
                 labelKey: hotspot.labelKey,
                 visibleWhen: hotspot.visibleWhen,
                 glint: hotspot.glint,
+                sprite: hotspot.sprite,
                 interactions: [
                   InteractionRule(
                     when: hotspot.interactions.first.when,

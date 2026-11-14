@@ -21,6 +21,23 @@ InteractionRuleDto _$InteractionRuleDtoFromJson(Map<String, dynamic> json) =>
       return val;
     }, fieldKeyMap: const {'effects': 'do'});
 
+SpriteDto _$SpriteDtoFromJson(Map<String, dynamic> json) => $checkedCreate(
+  'SpriteDto',
+  json,
+  ($checkedConvert) {
+    $checkKeys(json, allowedKeys: const ['rect', 'placeholderStyle', 'image']);
+    final val = SpriteDto(
+      rect: $checkedConvert(
+        'rect',
+        (v) => RectDto.fromJson(v as Map<String, dynamic>),
+      ),
+      placeholderStyle: $checkedConvert('placeholderStyle', (v) => v as String),
+      image: $checkedConvert('image', (v) => v as String?),
+    );
+    return val;
+  },
+);
+
 HotspotDto _$HotspotDtoFromJson(Map<String, dynamic> json) =>
     $checkedCreate('HotspotDto', json, ($checkedConvert) {
       $checkKeys(
@@ -32,6 +49,7 @@ HotspotDto _$HotspotDtoFromJson(Map<String, dynamic> json) =>
           'visibleWhen',
           'interactions',
           'glint',
+          'sprite',
         ],
       );
       final val = HotspotDto(
@@ -57,6 +75,11 @@ HotspotDto _$HotspotDtoFromJson(Map<String, dynamic> json) =>
               const [],
         ),
         glint: $checkedConvert('glint', (v) => v as bool? ?? false),
+        sprite: $checkedConvert(
+          'sprite',
+          (v) =>
+              v == null ? null : SpriteDto.fromJson(v as Map<String, dynamic>),
+        ),
       );
       return val;
     });

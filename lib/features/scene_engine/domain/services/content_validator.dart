@@ -155,6 +155,17 @@ class _Run {
       if (hotspot.visibleWhen case final visibleWhen?) {
         condition('$at / visibleWhen', visibleWhen);
       }
+      if (hotspot.sprite case final sprite?) {
+        if (!sprite.rect.isValid) {
+          add(at, 'sprite rect is outside 0–1 or empty');
+        }
+        if (!styles.placeholderStyles.contains(sprite.placeholderStyle)) {
+          add(
+            at,
+            'unknown sprite placeholder style "${sprite.placeholderStyle}"',
+          );
+        }
+      }
 
       for (final (index, rule) in hotspot.interactions.indexed) {
         final ruleAt = '$at / rule ${index + 1}';

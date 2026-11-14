@@ -1,4 +1,6 @@
 import 'package:detective_dark/core/l10n/l10n.dart';
+import 'package:detective_dark/core/placeholders/placeholder_art.dart';
+import 'package:detective_dark/core/placeholders/placeholder_styles.dart';
 import 'package:detective_dark/core/theme/app_spacing.dart';
 import 'package:detective_dark/features/inventory/presentation/widgets/item_sidebar.dart';
 import 'package:detective_dark/features/progress/domain/repositories/progress_repository.dart';
@@ -23,6 +25,13 @@ void main() {
   Finder keySlot() => find.descendant(
     of: find.byType(ItemSidebar),
     matching: find.bySemanticsLabel('Brass key'),
+  );
+
+  /// The key drawn in the scene (object layer), not the inventory icon.
+  Finder keySprite() => find.byWidgetPredicate(
+    (widget) =>
+        widget is PlaceholderArt &&
+        widget.style == PlaceholderStyles.spriteBrassKey,
   );
 
   Future<void> takeKey(WidgetTester tester) async {
@@ -55,9 +64,16 @@ void main() {
   testWidgets('a collected item leaves the scene and lands in the panel', (
     tester,
   ) async {
-    await takeKey(tester);
+    tester.useLandscapePhone();
+    await tester.pumpGame();
+    await tester.tapHotspot('Garden statue');
+    expect(keySprite(), findsOneWidget);
+
+    await tester.tapHotspot(keyLabel);
+    await tester.pumpFor(const Duration(seconds: 1));
 
     expect(find.bySemanticsLabel(keyLabel), findsNothing);
+    expect(keySprite(), findsNothing);
     expect(keySlot(), findsOneWidget);
     expect(find.text(l10n.inventoryEmpty), findsNothing);
 
