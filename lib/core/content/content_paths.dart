@@ -7,6 +7,7 @@
 ///     case.json
 ///     chapters/ch01/
 ///       scenes.json  items.json  notes.json  inspections.json
+///       triggers.json (optional)
 ///       text_en.json
 /// ```
 abstract final class ContentPaths {
@@ -19,6 +20,9 @@ abstract final class ContentPaths {
   static const itemsFile = 'items.json';
   static const notesFile = 'notes.json';
   static const inspectionsFile = 'inspections.json';
+
+  /// Optional: a chapter without triggers has no such file.
+  static const triggersFile = 'triggers.json';
 
   static String caseManifest(String caseId) => '$root/cases/$caseId/case.json';
 

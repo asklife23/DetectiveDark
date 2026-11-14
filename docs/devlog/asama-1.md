@@ -329,3 +329,33 @@
   girdiler verdim (izinsiz bir `save` çağrısı, iki yönlü import, üç feature'lı döngü) ve kuralın bunları yakaladığını
   doğruladım. Hiç kırılmayan bir test, hiçbir şeyi kontrol etmiyor olabilir. Döngü yasağının nedeni: A, B'yi; B de
   A'yı import ederse ikisi tek bir yumak olur; birini değiştirmek, test etmek veya çıkarmak diğerini de sürükler.
+
+### Adım 1.12 — Tetikleyiciler (2026-11-14)
+- **Ne yaptık:** "Şu koşul ilk kez tutunca **bir kez** çalış" diyen kuralları ekledik. Bölüm klasöründe opsiyonel bir
+  `triggers.json` dosyası var; her tetikleyici bir `id`, bir `when` koşulu ve bir `do` etki listesi taşır. Saf bir
+  servis olan `TriggerRunner`, ateşlenmemiş tetikleyicileri dosya sırasıyla dolaşır, koşulu tutanın etkilerini uygular
+  ve ID'sini kayıttaki `firedTriggers` kümesine yazar. `EffectPipeline`'daki boş kanca artık bu servisi çağırıyor:
+  tetikleyicinin değişiklikleri dokunuşla **aynı tek kayda**, olayları **aynı olay listesine** giriyor. Doğrulayıcı
+  tetikleyici ID'lerinin benzersiz olduğunu, yalnızca izinli etkilerin (`say`, `setFlag`, `addNote`, `giveItem`)
+  kullanıldığını ve koşulda `usingItem` olmadığını kontrol ediyor. Gerçek içerikte henüz tetikleyici yok (1.16'da
+  gelecek); testler sahte içerikle yazıldı.
+- **Neden:** "Eczacıya da kahveciye de villa soruldu → dedektif çelişkiyi fark eder" gibi bir durumu tetikleyicisiz
+  yazmak için aynı kontrolü iki konuşma konusuna da kopyalamak gerekir. Üçüncü bir yol eklenince (ör. bir not) kopyayı
+  oraya da koymayı unutmak çok kolaydır ve oyun sessizce bozulur: hata vermez, sadece o replik hiç gelmez. Tetikleyici
+  koşulu tek yerde tutar; koşulu hangi hareketin tamamladığı önemli değildir.
+- **Önemli dosyalar:** `scene_engine/domain/entities/trigger_definition.dart`,
+  `scene_engine/domain/services/trigger_runner.dart`, `scene_engine/domain/services/effect_pipeline.dart`,
+  `scene_engine/data/models/trigger_dto.dart`, `scene_engine/data/repositories/asset_scene_content_repository.dart`,
+  `progress/domain/entities/game_progress.dart` (`firedTriggers`), `core/content/content_asset_source.dart`
+  (`readOptionalObject`), testler: `trigger_runner_test.dart`, `trigger_flow_test.dart`.
+- **Telefonda nasıl test edilir:** Henüz görünür bir şey yok; dilimin tetikleyicisi 1.16'da eklenecek ve 1.17'deki
+  konuşma paneliyle telefonda denenecek.
+- **Öğrenme notu:** İki kavram. **Sabit nokta (fixed point):** Bir tetikleyici bayrak set edebilir ve bu bayrak başka
+  bir tetikleyicinin koşulunu sağlayabilir. Bu yüzden listeyi bir kez dolaşmak yetmez: bir geçişte en az bir tetikleyici
+  ateşlendiyse baştan dolaşırız; hiçbir şeyin ateşlenmediği ilk geçişte dururuz. "Bir daha çalıştırınca sonuç
+  değişmiyor" durumuna sabit nokta denir. Her tetikleyici en fazla bir kez ateşlendiği için bu döngü mutlaka biter;
+  yine de koda bir geçiş sınırı koyduk, çünkü "matematiksel olarak biter" ile "kodumda hata yok" aynı şey değil
+  (savunmacı programlama). **Saf fonksiyon + tek yan etki noktası:** `TriggerRunner` hiçbir şey kaydetmez ve
+  yayınlamaz; ilerlemeyi alır, yeni ilerlemeyi döner. Kaydı yalnızca hat yapar. Böylece "kayıt başarısız olursa
+  tetikleyici ateşlenmiş sayılmasın" kuralı kendiliğinden doğru çalışır: ateşlenme işareti de aynı ilerlemenin
+  içindedir, ilerleme kaydedilmediyse o da kaydedilmemiştir.

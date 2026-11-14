@@ -141,6 +141,7 @@ void main() {
         scenes: {...content.scenes, sceneId: changed},
         inspections: content.inspections,
         sceneChapters: content.sceneChapters,
+        triggers: content.triggers,
       );
     }
 

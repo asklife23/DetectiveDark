@@ -52,6 +52,9 @@ class ContentValidator {
   /// Effects allowed in `onFirstEnter`.
   static const _firstEnterEffects = 'say, setFlag, addNote, giveItem';
 
+  /// Effects allowed in a trigger.
+  static const _triggerEffects = 'say, setFlag, addNote, giveItem';
+
   /// [reservedBottomStrip] is the share of the scene height, along its
   /// bottom edge, that the interface keeps for itself (the detective
   /// message bar). No hotspot may reach into it.
@@ -94,6 +97,7 @@ class ContentValidator {
         ..text('note ${note.id}', note.bodyKey);
     }
     run
+      ..triggers()
       ..flags()
       ..reachability();
 
@@ -114,6 +118,8 @@ class _Run {
 
   /// Absorbs floating point noise such as `0.76 + 0.11 = 0.8700000000000001`.
   static const _tolerance = 1e-9;
+
+  static const _insideNotOrAtLeast = 'inside not / atLeast';
 
   final CaseContent content;
   final Map<String, ItemDefinition> items;
@@ -255,18 +261,12 @@ class _Run {
     }
   }
 
-  /// [itemRulesAllowed] turns false inside `not` and `atLeast`: a
-  /// `usingItem` there (at any depth) is an error.
-  void condition(
-    String where,
-    Condition condition, {
-    bool itemRulesAllowed = true,
-  }) {
-    void inner(Condition c, {bool allowed = true}) => this.condition(
-      where,
-      c,
-      itemRulesAllowed: itemRulesAllowed && allowed,
-    );
+  /// [noUsingItem] names a place where `usingItem` is forbidden ("in a
+  /// trigger"); null where it is allowed. Inside `not` and `atLeast` it is
+  /// always forbidden, at any depth.
+  void condition(String where, Condition condition, {String? noUsingItem}) {
+    void inner(Condition c, {String? ban}) =>
+        this.condition(where, c, noUsingItem: noUsingItem ?? ban);
 
     switch (condition) {
       case FlagSet(:final flag) || FlagNotSet(:final flag):
@@ -275,15 +275,15 @@ class _Run {
         if (!items.containsKey(itemId)) add(where, 'unknown item "$itemId"');
       case UsingItem(:final itemId):
         if (!items.containsKey(itemId)) add(where, 'unknown item "$itemId"');
-        if (!itemRulesAllowed) {
-          add(where, 'usingItem cannot be used inside not / atLeast');
+        if (noUsingItem != null) {
+          add(where, 'usingItem cannot be used $noUsingItem');
         }
       case HasNote(:final noteId):
         if (!notes.containsKey(noteId)) add(where, 'unknown note "$noteId"');
       case AllOf(:final conditions) || AnyOf(:final conditions):
         conditions.forEach(inner);
       case Not(condition: final negated):
-        inner(negated, allowed: false);
+        inner(negated, ban: _insideNotOrAtLeast);
       case AtLeast(:final count, :final conditions):
         if (count < 1 || count > conditions.length) {
           add(
@@ -293,7 +293,7 @@ class _Run {
           );
         }
         for (final c in conditions) {
-          inner(c, allowed: false);
+          inner(c, ban: _insideNotOrAtLeast);
         }
       case Visited(:final sceneId) || InScene(:final sceneId):
         if (!content.scenes.containsKey(sceneId)) {
@@ -326,6 +326,31 @@ class _Run {
         }
       case HideHotspot():
         break;
+    }
+  }
+
+  void triggers() {
+    final seen = <String>{};
+    for (final trigger in content.triggers) {
+      final where = 'trigger ${trigger.id}';
+      if (!seen.add(trigger.id)) add(where, 'duplicate trigger ID');
+      condition(where, trigger.when, noUsingItem: 'in a trigger');
+      if (trigger.effects.isEmpty) add(where, 'has no effects');
+      for (final effect in trigger.effects) {
+        final allowed =
+            effect is Say ||
+            effect is SetFlag ||
+            effect is AddNote ||
+            effect is GiveItem;
+        if (!allowed) {
+          add(
+            where,
+            '${effect.runtimeType} is not allowed here '
+            '(only ${ContentValidator._triggerEffects})',
+          );
+        }
+        this.effect(where, effect);
+      }
     }
   }
 

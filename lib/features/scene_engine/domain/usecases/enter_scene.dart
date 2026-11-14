@@ -39,6 +39,7 @@ class EnterScene {
       prepare: (progress) =>
           progress.withSceneStack(stack.valueOrNull!).withVisited(sceneId),
       effects: isFirstVisit ? scene.onFirstEnter : const [],
+      triggers: content.triggers,
       context: EffectContext(
         sceneId: sceneId,
         nowUtcMs: _clock.nowUtc().millisecondsSinceEpoch,

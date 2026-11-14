@@ -6,6 +6,7 @@ import 'package:detective_dark/features/scene_engine/data/repositories/asset_sce
 import 'package:detective_dark/features/scene_engine/domain/entities/condition.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/effect.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/scene_visual.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/trigger_definition.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../helpers/fake_asset_bundle.dart';
@@ -212,5 +213,142 @@ void main() {
 
     expect(message, contains('case.json'));
     expect(message, contains('case02'));
+  });
+
+  group('triggers.json', () {
+    String triggersJson(List<Map<String, Object?>> triggers) =>
+        jsonEncode({'formatVersion': 1, 'triggers': triggers});
+
+    test('is optional: without it the case has no triggers', () async {
+      final content = (await repository({}).loadCase('case01')).valueOrNull!;
+
+      expect(content.triggers, isEmpty);
+    });
+
+    test('is read in file order', () async {
+      final content = (await repository({
+        chapterAsset('triggers.json'): triggersJson([
+          {
+            'id': 'both_seen',
+            'when': {
+              'atLeast': {
+                'count': 2,
+                'of': [
+                  {'flag': 'a'},
+                  {'visited': 'yard'},
+                ],
+              },
+            },
+            'do': [
+              {'say': 'say_both'},
+              {'addNote': 'obs_both'},
+            ],
+          },
+          {
+            'id': 'arrived',
+            'when': {'inScene': 'yard'},
+            'do': [
+              {'setFlag': 'arrived'},
+            ],
+          },
+        ]),
+      }).loadCase('case01')).valueOrNull!;
+
+      expect(content.triggers, const [
+        TriggerDefinition(
+          id: 'both_seen',
+          when: AtLeast(2, [FlagSet('a'), Visited('yard')]),
+          effects: [Say('say_both'), AddNote('obs_both')],
+        ),
+        TriggerDefinition(
+          id: 'arrived',
+          when: InScene('yard'),
+          effects: [SetFlag('arrived')],
+        ),
+      ]);
+    });
+
+    test('a trigger needs id, when and do', () async {
+      final noWhen = await failureMessage({
+        chapterAsset('triggers.json'): triggersJson([
+          {
+            'id': 'broken',
+            'do': [
+              {'say': 'x'},
+            ],
+          },
+        ]),
+      });
+      final noDo = await failureMessage({
+        chapterAsset('triggers.json'): triggersJson([
+          {
+            'id': 'broken',
+            'when': {'flag': 'a'},
+          },
+        ]),
+      });
+
+      expect(noWhen, contains('triggers.json'));
+      expect(noWhen, contains('"when"'));
+      expect(noDo, contains('"do"'));
+    });
+
+    test('an unknown key is rejected', () async {
+      final message = await failureMessage({
+        chapterAsset('triggers.json'): triggersJson([
+          {
+            'id': 'broken',
+            'when': {'flag': 'a'},
+            'do': [
+              {'say': 'x'},
+            ],
+            'once': true,
+          },
+        ]),
+      });
+
+      expect(message, contains('once'));
+    });
+
+    test('a broken condition names the trigger', () async {
+      final message = await failureMessage({
+        chapterAsset('triggers.json'): triggersJson([
+          {
+            'id': 'broken',
+            'when': {'flagg': 'a'},
+            'do': [
+              {'say': 'x'},
+            ],
+          },
+        ]),
+      });
+
+      expect(message, contains('trigger "broken"'));
+      expect(message, contains('Unknown condition "flagg"'));
+    });
+
+    test('a duplicate trigger ID is rejected', () async {
+      final trigger = {
+        'id': 'twice',
+        'when': {'flag': 'a'},
+        'do': [
+          {'say': 'x'},
+        ],
+      };
+
+      final message = await failureMessage({
+        chapterAsset('triggers.json'): triggersJson([trigger, trigger]),
+      });
+
+      expect(message, contains('duplicate trigger ID "twice"'));
+    });
+
+    test('invalid JSON in the file is an error, not "no triggers"', () async {
+      final message = await failureMessage({
+        chapterAsset('triggers.json'): '{"formatVersion": 1, "triggers": [',
+      });
+
+      expect(message, contains('invalid JSON'));
+    });
   });
 }

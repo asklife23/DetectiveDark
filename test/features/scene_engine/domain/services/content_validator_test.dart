@@ -9,6 +9,7 @@ import 'package:detective_dark/features/scene_engine/domain/entities/inspection_
 import 'package:detective_dark/features/scene_engine/domain/entities/normalized_rect.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/scene_definition.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/scene_visual.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/trigger_definition.dart';
 import 'package:detective_dark/features/scene_engine/domain/services/content_validator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -76,6 +77,7 @@ List<ContentIssue> _validate({
   String? shedParent = 'yard',
   String entryScene = 'yard',
   List<SceneDefinition> extraScenes = const [],
+  List<TriggerDefinition> triggers = const [],
   Map<String, Set<String>> texts = const {'en': _texts},
   double reservedBottomStrip = 0,
 }) {
@@ -115,6 +117,7 @@ List<ContentIssue> _validate({
         ),
       },
       sceneChapters: {for (final scene in scenes) scene.id: 'ch01'},
+      triggers: triggers,
     ),
     items: _items,
     notes: _notes,
@@ -630,6 +633,157 @@ void main() {
           ],
         ),
         isEmpty,
+      );
+    });
+  });
+
+  group('triggers', () {
+    TriggerDefinition trigger(
+      String id, {
+      Condition when = const Visited('shed'),
+      List<Effect> effects = const [Say('say_locked')],
+    }) => TriggerDefinition(id: id, when: when, effects: effects);
+
+    test('a valid trigger has no issues', () {
+      expect(
+        _validate(
+          triggers: [
+            trigger(
+              'seen_both',
+              when: const AtLeast(2, [Visited('yard'), Visited('shed')]),
+              effects: const [
+                Say('say_locked'),
+                SetFlag('seen_both'),
+                AddNote('memo'),
+                GiveItem('key'),
+              ],
+            ),
+          ],
+        ),
+        isEmpty,
+      );
+    });
+
+    test('duplicate trigger ID', () {
+      expect(
+        _validate(triggers: [trigger('twice'), trigger('twice')]),
+        _reports('trigger twice: duplicate trigger ID'),
+      );
+    });
+
+    test('a trigger without effects', () {
+      expect(
+        _validate(triggers: [trigger('empty', effects: const [])]),
+        _reports('trigger empty: has no effects'),
+      );
+    });
+
+    test('only say, setFlag, addNote and giveItem are allowed', () {
+      final issues = _validate(
+        triggers: [
+          trigger(
+            'too_much',
+            effects: const [
+              GoToScene('shed'),
+              Inspect('sign'),
+              HideHotspot(),
+              ConsumeItem('key'),
+            ],
+          ),
+        ],
+      );
+
+      for (final kind in [
+        'GoToScene',
+        'Inspect',
+        'HideHotspot',
+        'ConsumeItem',
+      ]) {
+        expect(issues, _reports('trigger too_much: $kind is not allowed here'));
+      }
+    });
+
+    test('usingItem in the condition, at any depth', () {
+      expect(
+        _validate(
+          triggers: [
+            trigger(
+              'with_item',
+              when: const AllOf([
+                Visited('shed'),
+                AnyOf([UsingItem('key')]),
+              ]),
+            ),
+          ],
+        ),
+        _reports('usingItem cannot be used in a trigger'),
+      );
+    });
+
+    test('references and texts are checked', () {
+      final issues = _validate(
+        triggers: [
+          trigger(
+            'broken',
+            when: const AllOf([Visited('cellar'), HasNote('map')]),
+            effects: const [
+              Say('say_missing'),
+              AddNote('diary'),
+              GiveItem('rope'),
+            ],
+          ),
+        ],
+      );
+
+      expect(issues, _reports('unknown scene "cellar"'));
+      expect(issues, _reports('unknown note "map"'));
+      expect(issues, _reports('missing text "say_missing" (en)'));
+      expect(issues, _reports('unknown note "diary"'));
+      expect(issues, _reports('unknown item "rope"'));
+    });
+
+    test('a flag set by a trigger counts as set', () {
+      expect(
+        _validate(
+          yardHotspots: [
+            _hotspot('door', const [GoToScene('shed')]),
+            _hotspot(
+              'gate',
+              const [Say('say_locked')],
+              when: const FlagSet('been_inside'),
+            ),
+          ],
+          triggers: [
+            trigger('inside', effects: const [SetFlag('been_inside')]),
+          ],
+        ),
+        isEmpty,
+      );
+    });
+
+    test('a flag read only by a trigger must be set somewhere', () {
+      expect(
+        _validate(
+          triggers: [trigger('typo', when: const FlagSet('been_insde'))],
+        ),
+        _reports('flag "been_insde" is read but never set'),
+      );
+    });
+
+    test('a first line shared with a hotspot is reported', () {
+      const line = Say('say_locked', repeatKey: 'label');
+
+      expect(
+        _validate(
+          yardHotspots: [
+            _hotspot('door', const [GoToScene('shed')]),
+            _hotspot('gate', const [line]),
+          ],
+          triggers: [
+            trigger('again', effects: const [line]),
+          ],
+        ),
+        _reports('first line "say_locked" is already used'),
       );
     });
   });

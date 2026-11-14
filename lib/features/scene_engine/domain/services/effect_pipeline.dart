@@ -1,10 +1,13 @@
 import 'package:detective_dark/core/error/result.dart';
 import 'package:detective_dark/core/events/game_event.dart';
 import 'package:detective_dark/core/events/game_event_bus.dart';
+import 'package:detective_dark/core/logging/app_logger.dart';
 import 'package:detective_dark/features/progress/domain/entities/game_progress.dart';
 import 'package:detective_dark/features/progress/domain/repositories/progress_repository.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/effect.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/trigger_definition.dart';
 import 'package:detective_dark/features/scene_engine/domain/services/effect_applier.dart';
+import 'package:detective_dark/features/scene_engine/domain/services/trigger_runner.dart';
 
 /// The one path on which the game changes its progress (ADR 0014).
 ///
@@ -14,7 +17,9 @@ import 'package:detective_dark/features/scene_engine/domain/services/effect_appl
 ///
 /// 1. the optional `prepare` change and the effects become **one** new
 ///    progress ([EffectApplier], pure);
-/// 2. triggers run on that progress;
+/// 2. triggers run on that progress until none fires any more
+///    ([TriggerRunner], pure); their changes and events join the same
+///    progress and the same event list;
 /// 3. if anything changed, it is saved **once**; a failed save ends the run
 ///    with `Failed` and nothing is announced;
 /// 4. the events are published.
@@ -29,13 +34,21 @@ class EffectPipeline {
     required this._progressRepository,
     required this._eventBus,
     this._effectApplier = const EffectApplier(),
+    this._triggerRunner = const TriggerRunner(),
+    this._logger = const AppLogger('effect_pipeline'),
   });
 
   final ProgressRepository _progressRepository;
   final GameEventBus _eventBus;
   final EffectApplier _effectApplier;
+  final TriggerRunner _triggerRunner;
+  final AppLogger _logger;
 
   /// Applies [effects] to [progress] and stores the result.
+  ///
+  /// [triggers] are the triggers of the case (`CaseContent.triggers`). The
+  /// parameter is required on purpose: a caller that forgot them would
+  /// silently skip every trigger.
   ///
   /// [prepare] is a change that belongs to the same save but is not an
   /// effect (the new navigation stack and the "visited" mark of an
@@ -47,13 +60,25 @@ class EffectPipeline {
   Future<Result<EffectOutcome>> run({
     required GameProgress progress,
     required EffectContext context,
+    required List<TriggerDefinition> triggers,
     List<Effect> effects = const [],
     GameProgress Function(GameProgress progress)? prepare,
     List<GameEvent> leadingEvents = const [],
   }) async {
     final prepared = prepare == null ? progress : prepare(progress);
     final applied = _effectApplier.apply(prepared, effects, context);
-    final outcome = _runTriggers(applied, context);
+    final triggered = _triggerRunner.run(
+      applied,
+      triggers,
+      nowUtcMs: context.nowUtcMs,
+    );
+    if (triggered.hitPassLimit) {
+      _logger.error(
+        'Triggers did not settle after ${_triggerRunner.maxPasses} passes; '
+        'fired: ${triggered.firedTriggerIds.join(', ')}.',
+      );
+    }
+    final outcome = triggered.outcome;
 
     if (outcome.progress != progress) {
       final saved = await _progressRepository.save(outcome.progress);
@@ -74,9 +99,4 @@ class EffectPipeline {
       ),
     );
   }
-
-  /// The hook for triggers: rules that run once when their condition first
-  /// holds. Empty for now; step 1.12 fills it.
-  EffectOutcome _runTriggers(EffectOutcome applied, EffectContext context) =>
-      applied;
 }

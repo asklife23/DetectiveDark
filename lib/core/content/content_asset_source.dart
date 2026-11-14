@@ -38,11 +38,19 @@ class ContentAssetSource {
   /// Throws a [ContentException] when the file is missing, is not a JSON
   /// object or has a format version this build does not support.
   Future<Map<String, dynamic>> readObject(String path) async {
+    final object = await readOptionalObject(path);
+    if (object == null) throw ContentException(path, 'file is missing');
+    return object;
+  }
+
+  /// Like [readObject], but a missing file is `null` instead of an error.
+  /// For files a chapter may leave out (`triggers.json`).
+  Future<Map<String, dynamic>?> readOptionalObject(String path) async {
     final String raw;
     try {
       raw = await _bundle.loadString(path, cache: false);
-    } on Object catch (error) {
-      throw ContentException(path, 'file is missing', cause: error);
+    } on Object {
+      return null;
     }
 
     final Object? decoded;

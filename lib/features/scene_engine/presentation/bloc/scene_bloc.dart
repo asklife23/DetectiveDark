@@ -106,6 +106,7 @@ class SceneBloc extends Bloc<SceneEvent, SceneState> {
       progress: progress,
       hotspotId: event.hotspotId,
       usingItemId: event.usingItemId,
+      triggers: state.content?.triggers ?? const [],
     );
 
     switch (result) {

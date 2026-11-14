@@ -3,6 +3,7 @@ import 'package:detective_dark/core/time/clock.dart';
 import 'package:detective_dark/features/progress/domain/entities/game_progress.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/effect.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/scene_definition.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/trigger_definition.dart';
 import 'package:detective_dark/features/scene_engine/domain/services/effect_applier.dart';
 import 'package:detective_dark/features/scene_engine/domain/services/effect_pipeline.dart';
 import 'package:detective_dark/features/scene_engine/domain/services/interaction_resolver.dart';
@@ -46,11 +47,14 @@ class TapHotspot {
   final SceneViewResolver _viewResolver;
 
   /// [usingItemId] is the item selected in the inventory, if any.
+  /// [triggers] are the triggers of the case; they are evaluated in the
+  /// same save as the tap.
   Future<Result<TapOutcome>> call({
     required SceneDefinition scene,
     required GameProgress progress,
     required String hotspotId,
     String? usingItemId,
+    List<TriggerDefinition> triggers = const [],
   }) async {
     final hotspot = scene.hotspot(hotspotId);
     // A hotspot that is gone or hidden cannot be tapped (e.g. a tap that
@@ -71,6 +75,7 @@ class TapHotspot {
     final outcome = await _pipeline.run(
       progress: progress,
       effects: resolved.effects,
+      triggers: triggers,
       context: EffectContext(
         sceneId: scene.id,
         hotspotId: hotspot.id,

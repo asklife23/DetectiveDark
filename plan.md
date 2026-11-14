@@ -631,7 +631,7 @@ geliştirici menüsü ve Aşama 5'teki bulmacalar kendi kayıt kodunu yazmayacak
   kuralı (tek yazma yolu, döngüsüz feature grafı) zorluyor.
   **Commit:** `refactor(scene_engine): route progress changes through one effect pipeline`
 
-### [ ] 1.12 Tetikleyiciler
+### [x] 1.12 Tetikleyiciler
 **Amaç:** "Şu koşullar ilk kez bir araya gelince bir kez çalış" kuralını tek yerde yazabilmek (ADR 0014). Koşulu
 tamamlayabilecek her hotspot'a aynı kontrolü kopyalamak sessiz hata kaynağıdır.
 **Yapılacaklar:**

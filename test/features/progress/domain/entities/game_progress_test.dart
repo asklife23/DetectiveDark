@@ -164,4 +164,15 @@ void main() {
       expect(progress.chatLog.last.textKey, 'line_200');
     });
   });
+
+  group('fired triggers', () {
+    test('are remembered once', () {
+      final progress = newGame.withFiredTrigger('both_asked');
+
+      expect(progress.hasFired('both_asked'), isTrue);
+      expect(progress.hasFired('other'), isFalse);
+      expect(progress.withFiredTrigger('both_asked'), same(progress));
+      expect(progress, isNot(newGame));
+    });
+  });
 }

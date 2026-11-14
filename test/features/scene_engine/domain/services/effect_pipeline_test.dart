@@ -49,6 +49,7 @@ void main() {
 
     final result = await pipeline.run(
       progress: newGame,
+      triggers: const [],
       effects: const [GiveItem(brassKey), HideHotspot(), Say('found')],
       context: context,
     );
@@ -81,6 +82,7 @@ void main() {
 
     final result = await pipeline.run(
       progress: newGame,
+      triggers: const [],
       prepare: (progress) => progress.withVisited('statue_closeup'),
       effects: const [SetFlag('seen')],
       context: context,
@@ -100,6 +102,7 @@ void main() {
 
     await pipeline.run(
       progress: newGame,
+      triggers: const [],
       effects: const [Say('hello'), GiveItem(brassKey)],
       context: const EffectContext(sceneId: 'villa_hall', nowUtcMs: 1),
       leadingEvents: const [SceneEntered('villa_hall', isFirstVisit: true)],
@@ -122,6 +125,7 @@ void main() {
 
     final result = await pipeline.run(
       progress: newGame,
+      triggers: const [],
       effects: const [Inspect('statue_plaque')],
       context: context,
     );
@@ -141,6 +145,7 @@ void main() {
 
     final result = await pipeline.run(
       progress: newGame,
+      triggers: const [],
       effects: const [GoToScene('villa_hall')],
       context: context,
     );
@@ -157,6 +162,7 @@ void main() {
 
     final result = await pipeline.run(
       progress: newGame,
+      triggers: const [],
       effects: const [GiveItem(brassKey), Say('found')],
       context: context,
       leadingEvents: const [SceneEntered('villa_hall', isFirstVisit: true)],

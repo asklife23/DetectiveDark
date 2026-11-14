@@ -1,5 +1,6 @@
 import 'package:detective_dark/features/scene_engine/domain/entities/inspection_definition.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/scene_definition.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/trigger_definition.dart';
 import 'package:equatable/equatable.dart';
 
 /// One chapter of a case and the scene it starts in.
@@ -25,7 +26,7 @@ class CaseDefinition extends Equatable {
   List<Object?> get props => [id, chapters];
 }
 
-/// Every scene and inspection of a case, loaded as a whole.
+/// Every scene, inspection and trigger of a case, loaded as a whole.
 ///
 /// The case is loaded at once because items, notes and messages travel
 /// between chapters; IDs are unique inside the case.
@@ -35,6 +36,7 @@ class CaseContent extends Equatable {
     required this.scenes,
     required this.inspections,
     this.sceneChapters = const {},
+    this.triggers = const [],
   });
 
   final CaseDefinition definition;
@@ -48,6 +50,25 @@ class CaseContent extends Equatable {
   /// The chapter each scene belongs to: scene ID → chapter ID.
   final Map<String, String> sceneChapters;
 
+  /// The triggers of all chapters: chapter order, then file order. That is
+  /// the order they are evaluated in.
+  final List<TriggerDefinition> triggers;
+
+  /// The same content with other [triggers].
+  CaseContent copyWithTriggers(List<TriggerDefinition> triggers) => CaseContent(
+    definition: definition,
+    scenes: scenes,
+    inspections: inspections,
+    sceneChapters: sceneChapters,
+    triggers: triggers,
+  );
+
   @override
-  List<Object?> get props => [definition, scenes, inspections, sceneChapters];
+  List<Object?> get props => [
+    definition,
+    scenes,
+    inspections,
+    sceneChapters,
+    triggers,
+  ];
 }

@@ -22,6 +22,7 @@ class GameProgress extends Equatable {
     this.visitedSceneIds = const {},
     this.chatLog = const [],
     this.spokenLines = const {},
+    this.firedTriggers = const {},
     this.playTimeSeconds = 0,
   });
 
@@ -56,6 +57,9 @@ class GameProgress extends Equatable {
   /// have been spoken once. This, not [chatLog], decides which form plays.
   final Set<String> spokenLines;
 
+  /// IDs of the triggers that have run. A trigger runs once (ADR 0014).
+  final Set<String> firedTriggers;
+
   final int playTimeSeconds;
 
   /// Hotspot IDs are unique only inside their scene, so a hidden hotspot is
@@ -77,6 +81,8 @@ class GameProgress extends Equatable {
   bool hasVisited(String sceneId) => visitedSceneIds.contains(sceneId);
 
   bool hasSpoken(String lineKey) => spokenLines.contains(lineKey);
+
+  bool hasFired(String triggerId) => firedTriggers.contains(triggerId);
 
   bool isHotspotHidden(String sceneId, String hotspotId) =>
       hiddenHotspots.contains(hotspotKey(sceneId, hotspotId));
@@ -139,6 +145,11 @@ class GameProgress extends Equatable {
   GameProgress withSpokenLine(String lineKey) =>
       hasSpoken(lineKey) ? this : _copy(spokenLines: {...spokenLines, lineKey});
 
+  /// Remembers that the trigger has run. No change if it already has.
+  GameProgress withFiredTrigger(String triggerId) => hasFired(triggerId)
+      ? this
+      : _copy(firedTriggers: {...firedTriggers, triggerId});
+
   GameProgress _copy({
     List<String>? sceneStack,
     List<String>? inventory,
@@ -148,6 +159,7 @@ class GameProgress extends Equatable {
     Set<String>? visitedSceneIds,
     List<ChatLogEntry>? chatLog,
     Set<String>? spokenLines,
+    Set<String>? firedTriggers,
   }) {
     return GameProgress(
       caseId: caseId,
@@ -160,6 +172,7 @@ class GameProgress extends Equatable {
       visitedSceneIds: visitedSceneIds ?? this.visitedSceneIds,
       chatLog: chatLog ?? this.chatLog,
       spokenLines: spokenLines ?? this.spokenLines,
+      firedTriggers: firedTriggers ?? this.firedTriggers,
       playTimeSeconds: playTimeSeconds,
     );
   }
@@ -176,6 +189,7 @@ class GameProgress extends Equatable {
     visitedSceneIds,
     chatLog,
     spokenLines,
+    firedTriggers,
     playTimeSeconds,
   ];
 }
