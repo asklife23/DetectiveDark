@@ -5,6 +5,7 @@ import 'package:detective_dark/core/l10n/l10n.dart';
 import 'package:detective_dark/core/placeholders/placeholder_styles.dart';
 import 'package:detective_dark/core/theme/noir_filter_presets.dart';
 import 'package:detective_dark/core/theme/overlay_text_styles.dart';
+import 'package:detective_dark/core/theme/scene_layout.dart';
 import 'package:detective_dark/features/inventory/data/repositories/asset_item_catalog_repository.dart';
 import 'package:detective_dark/features/notebook/data/repositories/asset_note_catalog_repository.dart';
 import 'package:detective_dark/features/scene_engine/data/repositories/asset_scene_content_repository.dart';
@@ -36,6 +37,7 @@ void main() {
   /// first, to prove that the checks really fire on the real content.
   Future<List<ContentIssue>> validate({
     CaseContent Function(CaseContent content)? change,
+    double reservedBottomStrip = SceneLayout.chatStripHeight,
   }) async {
     final content = (await AssetSceneContentRepository(
       source,
@@ -61,6 +63,7 @@ void main() {
       notes: notes,
       textKeysByLanguage: textKeys,
       styles: styles,
+      reservedBottomStrip: reservedBottomStrip,
     );
   }
 
@@ -154,6 +157,22 @@ void main() {
       expect(
         issues.map((issue) => '$issue'),
         contains(contains('unknown scene "villa_dor_closeup"')),
+      );
+    });
+
+    test('a hotspot under the message bar is caught', () async {
+      // With a taller bar the front door (bottom edge at 0.84) would lie
+      // under it.
+      final issues = await validate(reservedBottomStrip: 0.2);
+
+      expect(
+        issues.map((issue) => '$issue'),
+        contains(
+          allOf(
+            contains('hotspot door'),
+            contains('reaches into the bottom strip'),
+          ),
+        ),
       );
     });
 

@@ -59,5 +59,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notebookSelectHint => 'Pick a note to read it.';
 
   @override
+  String get chatTooltip => 'Thoughts';
+
+  @override
+  String get chatHistoryEmpty => 'Nothing on my mind yet.';
+
+  @override
   String get debugHotspotsTooltip => 'Show hotspots';
 }

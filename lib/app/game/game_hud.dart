@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:detective_dark/app/game/item_inspection.dart';
+import 'package:detective_dark/app/game/scene_chat_strip.dart';
 import 'package:detective_dark/core/events/game_event.dart';
 import 'package:detective_dark/core/events/game_event_bus.dart';
 import 'package:detective_dark/core/l10n/l10n.dart';
@@ -10,6 +11,8 @@ import 'package:detective_dark/core/theme/app_spacing.dart';
 import 'package:detective_dark/core/widgets/flight_layer.dart';
 import 'package:detective_dark/core/widgets/fly_anchors.dart';
 import 'package:detective_dark/core/widgets/hud_icon_button.dart';
+import 'package:detective_dark/features/detective_chat/presentation/cubit/chat_cubit.dart';
+import 'package:detective_dark/features/detective_chat/presentation/widgets/chat_history_sheet.dart';
 import 'package:detective_dark/features/inventory/presentation/cubit/inventory_cubit.dart';
 import 'package:detective_dark/features/inventory/presentation/widgets/item_sidebar.dart';
 import 'package:detective_dark/features/notebook/presentation/cubit/notebook_cubit.dart';
@@ -30,7 +33,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// - a long press on an item opens the examine card of the scene engine;
 /// - a collected item flies from the scene into the item panel, a
 ///   collected note into the notebook button;
-/// - the notebook opens above the scene.
+/// - the notebook and the message history open above the scene;
+/// - the detective message bar lies on the bottom strip of the scene.
 ///
 /// It also owns Back from outside the scene: the Android system back
 /// button and the Esc key first close what is open, then leave the
@@ -136,6 +140,11 @@ class _GameHudState extends State<GameHud> {
       notebook.closeNotebook();
       return true;
     }
+    final chat = context.read<ChatCubit>();
+    if (chat.state.isHistoryOpen) {
+      chat.closeHistory();
+      return true;
+    }
 
     final bloc = context.read<SceneBloc>();
     final state = bloc.state;
@@ -196,6 +205,7 @@ class _GameHudState extends State<GameHud> {
                           showHotspotDebug: _showHotspots,
                           onHotspotTap: _onHotspotTap,
                         ),
+                        const SceneChatStrip(),
                         _SceneButtons(
                           showDebugTools: widget.showDebugTools,
                           showHotspots: _showHotspots,
@@ -238,6 +248,11 @@ class _GameHudState extends State<GameHud> {
                 selector: (state) => state.isOpen,
                 builder: (context, isOpen) =>
                     isOpen ? const NotebookScreen() : const SizedBox.shrink(),
+              ),
+              BlocSelector<ChatCubit, ChatState, bool>(
+                selector: (state) => state.isHistoryOpen,
+                builder: (context, isOpen) =>
+                    isOpen ? const ChatHistorySheet() : const SizedBox.shrink(),
               ),
               FlightLayer(key: _flightKey),
             ],
@@ -318,7 +333,9 @@ class _SceneButtons extends StatelessWidget {
             ),
             if (showDebugTools)
               Align(
-                alignment: Alignment.bottomLeft,
+                // Bottom left belongs to the message bar, top center to the
+                // flavor badge.
+                alignment: Alignment.topRight,
                 child: HudIconButton(
                   icon: showHotspots ? Icons.grid_off : Icons.grid_on,
                   tooltip: l10n.debugHotspotsTooltip,

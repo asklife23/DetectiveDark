@@ -232,6 +232,10 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
 ### HUD
 - Sol üst: Geri butonu. Sağ: dikey, yarı saydam **eşya paneli**; üstünde rozetli **not defteri** düğmesi.
   Alt: kompakt dedektif mesaj barı (dokununca mesaj geçmişi açılır).
+- **Mesaj barı sahnenin üstüne biner ama hiçbir hotspot'u kapatmaz:** bar (ve mesaj okununca küçüldüğü düğme) yalnızca
+  sahnenin alt şeridine yerleşir. Şeridin yüksekliği tek sabittir (`SceneLayout.chatStripHeight`, `core/theme`);
+  içerikte hiçbir hotspot bu şeride giremez (içerik doğrulama testi reddeder).
+- Klavye: `Esc` = Geri (açık pencereyi kapatır, yoksa üst sahneye döner; ana sahnede etkisizdir).
 - Sahne viewport'u panelin solunda kalan alana sığdırılır; hotspot'lar asla panelin altında kalmaz.
 - HUD güvenli alanlara (çentik, kamera deliği) uyar.
 
@@ -300,6 +304,7 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
   - Her metin anahtarı **desteklenen tüm dillerin** dosyalarında bulunur (şimdilik sadece `en`).
   - Koordinatlar (hotspot, nesne ve overlay) 0–1 aralığındadır; nesne placeholder stilleri kodda tanımlıdır.
   - Bir kuralda en fazla bir `inspect` vardır ve `goToScene` ile birlikte kullanılmaz.
+  - Hiçbir hotspot mesaj barının alt şeridine (`SceneLayout.chatStripHeight`) girmez.
   - Okunan (`flag`, `notFlag`) her bayrak bir yerde `setFlag` ile set edilir (yazım hatası yakalanır).
   - Her sahne, bölümün giriş sahnesinden ulaşılabilirdir (graf taraması; kopuk sahne yakalanır).
 

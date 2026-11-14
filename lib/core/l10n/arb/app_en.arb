@@ -64,6 +64,14 @@
   "@notebookSelectHint": {
     "description": "Shown on the right page of the notebook while no note is selected."
   },
+  "chatTooltip": "Thoughts",
+  "@chatTooltip": {
+    "description": "Label of the HUD button that opens the history of the detective's inner voice, and title of that history."
+  },
+  "chatHistoryEmpty": "Nothing on my mind yet.",
+  "@chatHistoryEmpty": {
+    "description": "Shown in the message history while the detective has not said anything. In the voice of the detective."
+  },
   "debugHotspotsTooltip": "Show hotspots",
   "@debugHotspotsTooltip": {
     "description": "Developer tool, visible only in dev builds: toggles the outlines of the tappable areas."

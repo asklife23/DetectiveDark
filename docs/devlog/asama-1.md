@@ -190,3 +190,31 @@
   söyleyen ayrı bir kod yok; ilerlemedeki `hiddenHotspots` zaten "bu hotspot artık yok" diyor, katman da aynı
   listeyi okuyor. Tek doğruluk kaynağı olduğu için "anahtar alındı ama resimde hâlâ duruyor" hatası oluşamaz.
   `json_serializable` tarafında yeni alan = DTO'ya bir alan + `dart run build_runner build`.
+
+### Adım 1.7 — Dedektifin iç sesi (2026-11-14)
+- **Ne yaptık:** Dedektifin konuştuğu katmanı kurduk. `ChatCubit` mesaj geçmişini ilerlemeden okuyor; "şu an yeni bir
+  mesaj geldi" bilgisini ise `DetectiveSaid` olayından alıyor. `ChatBar` sahnenin alt kenarında açılıyor, mesajı
+  daktilo gibi harf harf yazıyor (dokununca hemen tamamlanıyor), okunacak kadar bekleyip küçük bir düğmeye çekiliyor.
+  Düğmeye ya da bitmiş bara dokununca `ChatHistorySheet` açılıyor: söylenen her şey, en yenisi altta. Geri, sistem
+  geri tuşu ve artık `Esc` önce bu paneli kapatıyor. Ayrıca barın kaplayabileceği alt şeridi tek bir sabit yaptık ve
+  içerik doğrulama testine "hiçbir hotspot bu şeride giremez" kuralını ekledik.
+- **Neden:** Oyuncuya ne olduğunu anlatan tek ses bu ("Kilitli.", "Açıldı."); ileride ipuçları da buradan gelecek.
+  Barı sahnenin üstüne bindirdik çünkü 20:9 telefonda altta boş yer yok; sabit bir bar sahneyi küçültürdü. Üste binen
+  bir barın tek riski bir hotspot'u kapatmasıdır; bunu "dikkat ederiz" diye değil, testle garanti ettik.
+- **Önemli dosyalar:** `lib/features/detective_chat/presentation/cubit/chat_cubit.dart`,
+  `.../widgets/chat_bar.dart`, `.../widgets/chat_history_sheet.dart`, `lib/app/game/scene_chat_strip.dart`,
+  `lib/core/theme/scene_layout.dart`, `lib/core/di/register_detective_chat.dart`, `lib/app/game/game_hud.dart`,
+  `lib/features/scene_engine/domain/services/content_validator.dart`, `test/app/game/chat_flow_test.dart`.
+- **Telefonda nasıl test edilir:** Oyunu aç: altta bar açılır ve ilk cümle harf harf yazılır. Yazarken bara dokun:
+  cümle hemen tamamlanır. Birkaç saniye bekle: bar sol alttaki küçük düğmeye çekilir. Kapıya git, kilide dokun:
+  "Locked. Of course it is." Düğmeye dokun: geçmişte iki cümle sırayla durur; telefonun geri tuşu yalnızca geçmişi
+  kapatır. Bakılacak şey: bar açıkken altında kalan, dokunamadığın bir şey var mı? (Olmamalı.) Windows'ta aynısı
+  fareyle; `Esc` yakın plandan çıkarır, açık pencereyi kapatır.
+- **Öğrenme notu:** Bu adımın ana fikri **kalıcı durum ile anlık olayın ayrılması**. Mesajların kendisi kalıcıdır:
+  `say` etkisi onları ilerlemeye yazar, cubit oradan okur; uygulama kapanıp açılsa da geçmiş durur. "Şimdi yeni bir
+  şey söylendi, daktilo efektini oynat" ise kalıcı değildir; bir olaydır (`GameEventBus`). Bunu duruma koysaydık,
+  kayıttan dönünce son mesaj yeniden yazılmaya başlardı. İkinci fikir **kuralı teste çevirmek**: "bar hotspot'u
+  kapatmasın" bir niyet; `SceneLayout.chatStripHeight` sabiti + doğrulama testi ise 150 sahne sonra bile kendiliğinden
+  uygulanan bir kural. Üçüncü küçük ders: Flutter'da klavye olayları odaktaki widget'tan yukarı doğru akar; `Focus`
+  widget'ı bu yolun üstünde durup `Esc`'yi yakalar. `Focus` varsayılan olarak erişilebilirlik ağacına da bir düğüm
+  ekler; bunu kapatmayınca hotspot etiketleri o düğüme karıştı ve testler bunu hemen yakaladı.

@@ -29,6 +29,17 @@ abstract final class AppDurations {
   /// The frame of an inventory slot changing when it is selected.
   static const itemSelect = Duration(milliseconds: 150);
 
+  /// The detective message bar: time per typed character.
+  static const chatTypePerCharacter = Duration(milliseconds: 18);
+
+  /// How long a finished message stays before the bar shrinks: at least
+  /// [chatLingerMin], longer for long messages ([chatLingerPerCharacter]).
+  static const chatLingerMin = Duration(milliseconds: 2600);
+  static const chatLingerPerCharacter = Duration(milliseconds: 45);
+
+  /// The bar opening and shrinking to its button.
+  static const chatBarToggle = Duration(milliseconds: 200);
+
   /// How long "press back again to exit" stays armed.
   static const exitConfirmWindow = Duration(seconds: 2);
 }

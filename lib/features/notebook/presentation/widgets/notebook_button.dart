@@ -1,7 +1,7 @@
 import 'package:detective_dark/core/l10n/l10n.dart';
 import 'package:detective_dark/core/theme/app_colors.dart';
-import 'package:detective_dark/core/theme/app_spacing.dart';
 import 'package:detective_dark/core/widgets/fly_anchors.dart';
+import 'package:detective_dark/core/widgets/hud_badge.dart';
 import 'package:detective_dark/core/widgets/hud_icon_button.dart';
 import 'package:detective_dark/features/notebook/presentation/cubit/notebook_cubit.dart';
 import 'package:flutter/material.dart';
@@ -29,41 +29,12 @@ class NotebookButton extends StatelessWidget {
             right: 0,
             child: BlocSelector<NotebookCubit, NotebookState, int>(
               selector: (state) => state.unreadCount,
-              builder: (context, unread) =>
-                  unread == 0 ? const SizedBox.shrink() : _Badge(count: unread),
+              builder: (context, unread) => unread == 0
+                  ? const SizedBox.shrink()
+                  : HudBadge(count: unread),
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Badge extends StatelessWidget {
-  const _Badge({required this.count});
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        constraints: const BoxConstraints(
-          minWidth: AppSizes.badge,
-          minHeight: AppSizes.badge,
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
-        alignment: Alignment.center,
-        decoration: const BoxDecoration(
-          color: AppColors.accent,
-          borderRadius: BorderRadius.all(Radius.circular(AppSizes.badge)),
-        ),
-        child: Text(
-          '$count',
-          style: Theme.of(
-            context,
-          ).textTheme.labelSmall?.copyWith(color: AppColors.onAccent),
-        ),
       ),
     );
   }

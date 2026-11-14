@@ -190,6 +190,18 @@ abstract class AppLocalizations {
   /// **'Pick a note to read it.'**
   String get notebookSelectHint;
 
+  /// Label of the HUD button that opens the history of the detective's inner voice, and title of that history.
+  ///
+  /// In en, this message translates to:
+  /// **'Thoughts'**
+  String get chatTooltip;
+
+  /// Shown in the message history while the detective has not said anything. In the voice of the detective.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing on my mind yet.'**
+  String get chatHistoryEmpty;
+
   /// Developer tool, visible only in dev builds: toggles the outlines of the tappable areas.
   ///
   /// In en, this message translates to:

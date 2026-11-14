@@ -475,7 +475,7 @@ yerine tek arka plan + küçük bir nesne görseli (ADR 0012). Gerçek görselle
   kaybolur, geri dönünce yoktur; sahne başına tek arka plan stili kalır.
   **Commit:** `feat(scene_engine): add object layer with hotspot sprites`
 
-### [ ] 1.7 Dedektifin iç sesi
+### [x] 1.7 Dedektifin iç sesi
 **Amaç:** Dedektifin oyuncuya konuştuğu mesaj katmanı (ileride ipucu sistemi de bunu kullanacak).
 **Yapılacaklar:**
 - Mesajlar zaten ilerlemededir (`chatLog`; `Say` etkisi 1.1'deki `EffectApplier`'da yazar). `detective_chat` yalnızca
@@ -938,6 +938,19 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   arkasında kısmen kalamaz; gerekirse ileride ön plan katmanı. 1.6'nın Windows doğrulaması
   `integration_test/notebook_mouse_test.dart` ile yapıldı (gerçek Windows derlemesi, test tarafından üretilen fare
   olayları); `integration_test` paketi bu yüzden 1.8'den önce eklendi.
+- 2026-11-14 (1.7): Barın alt şeridi `SceneLayout.chatStripHeight = 0.13` (sahne yüksekliğinin %13'ü; 360 dp
+  yüksekliğindeki telefonda ≈ 47 dp: iki satır yazı). Bar ve küçüldüğü düğme yalnızca bu şeridin içine yerleşir
+  (`app/game/scene_chat_strip.dart`); `ContentValidator` şeride giren hotspot'u reddeder. Bu yüzden `doorway`
+  (alt kenar 0.92 → 0.86) ve `statue_plaque` (0.89 → 0.87) dokunma alanları kısaltıldı. Okunmamış sayısı: her yeni
+  mesajda +1; bar mesajı okunacak kadar gösterip küçülünce −1; geçmiş açılınca 0. Yani rozet yalnızca üstüne yeni
+  mesaj geldiği için okunamadan geçen mesajları sayar. Bar en fazla iki satır gösterir, uzun mesajın tamamı
+  geçmiştedir. `ChatCubit` `lazy: false` ile ekran açılırken kurulur ve olay dinlemeye constructor'da başlar: oyunun
+  ilk cümlesi sahne yüklenirken söylenir, tembel kurulan cubit onu kaçırırdı. Rozet widget'ı `core/widgets/hud_badge.dart`'a
+  taşındı (defter ve mesaj düğmesi ortak kullanır). Geliştirici hotspot düğmesi sol alttan sağ üste alındı (sol alt
+  artık mesaj barının). `Esc` = Geri ayrı commit: kısayol `CallbackShortcuts` yerine erişilebilirlik düğümü olmayan
+  tek bir `Focus` ile yazıldı (`CallbackShortcuts`'ın kendi düğümü hotspot etiketlerini yutuyordu). `Esc` ana sahnede
+  hiçbir şey yapmaz (çıkış uyarısı yalnızca sistem geri tuşunda). **Kullanıcı onayı bekliyor:** barın telefondaki
+  görünümü (karar 3).
 - 2026-11-13: **DEVAM NOTU** (kullanım limiti nedeniyle 1.6'dan sonra duruldu)
   - **Biten:** 1.1–1.6 commit'li ve push'lu. Kalite kapısı son durumda: format OK, analyze 0 sorun, test 302/302.
   - **Cihaz doğrulaması:** 1.4 ve 1.5 telefonda ve Windows'ta doğrulandı. 1.6 telefonda doğrulandı; Windows'ta

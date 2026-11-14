@@ -1,5 +1,6 @@
 import 'package:detective_dark/core/config/app_config.dart';
 import 'package:detective_dark/core/di/register_core.dart';
+import 'package:detective_dark/core/di/register_detective_chat.dart';
 import 'package:detective_dark/core/di/register_inventory.dart';
 import 'package:detective_dark/core/di/register_notebook.dart';
 import 'package:detective_dark/core/di/register_progress.dart';
@@ -26,4 +27,5 @@ Future<void> configureDependencies(
   registerSceneEngine(getIt);
   registerInventory(getIt);
   registerNotebook(getIt);
+  registerDetectiveChat(getIt);
 }

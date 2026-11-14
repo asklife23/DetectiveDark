@@ -77,6 +77,7 @@ List<ContentIssue> _validate({
   String entryScene = 'yard',
   List<SceneDefinition> extraScenes = const [],
   Map<String, Set<String>> texts = const {'en': _texts},
+  double reservedBottomStrip = 0,
 }) {
   final scenes = [
     SceneDefinition(
@@ -119,6 +120,7 @@ List<ContentIssue> _validate({
     notes: _notes,
     textKeysByLanguage: texts,
     styles: _styles,
+    reservedBottomStrip: reservedBottomStrip,
   );
 }
 
@@ -386,6 +388,47 @@ void main() {
 
       expect(issues, _reports('sprite rect is outside 0–1'));
       expect(issues, _reports('unknown sprite placeholder style "castle"'));
+    });
+
+    group('the bottom strip kept for the message bar', () {
+      List<ContentIssue> withDoorAt(double y, double height) => _validate(
+        reservedBottomStrip: 0.13,
+        yardHotspots: [
+          _hotspot(
+            'door',
+            const [GoToScene('shed')],
+            rect: NormalizedRect(x: 0.1, y: y, width: 0.2, height: height),
+          ),
+        ],
+      );
+
+      test('a hotspot that reaches into it is reported', () {
+        expect(withDoorAt(0.5, 0.4), _reports('reaches into the bottom strip'));
+      });
+
+      test('a hotspot that ends exactly at its edge is fine', () {
+        // 0.76 + 0.11 is 0.8700000000000001 in floating point.
+        expect(withDoorAt(0.76, 0.11), isEmpty);
+      });
+
+      test('without a reserved strip the whole scene is free', () {
+        final issues = _validate(
+          yardHotspots: [
+            _hotspot(
+              'door',
+              const [GoToScene('shed')],
+              rect: const NormalizedRect(
+                x: 0.1,
+                y: 0.5,
+                width: 0.2,
+                height: 0.5,
+              ),
+            ),
+          ],
+        );
+
+        expect(issues, isEmpty);
+      });
     });
 
     test('unknown placeholder style and filter preset', () {

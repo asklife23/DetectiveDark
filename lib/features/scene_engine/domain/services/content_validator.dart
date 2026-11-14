@@ -52,15 +52,25 @@ class ContentValidator {
   /// Effects allowed in `onFirstEnter`.
   static const _firstEnterEffects = 'say, setFlag, addNote, giveItem';
 
+  /// [reservedBottomStrip] is the share of the scene height, along its
+  /// bottom edge, that the interface keeps for itself (the detective
+  /// message bar). No hotspot may reach into it.
   List<ContentIssue> validate({
     required CaseContent content,
     required Map<String, ItemDefinition> items,
     required Map<String, NoteDefinition> notes,
     required Map<String, Set<String>> textKeysByLanguage,
     required KnownStyleNames styles,
+    double reservedBottomStrip = 0,
   }) {
-    final run = _Run(content, items, notes, textKeysByLanguage, styles)
-      ..text('common texts', InteractionResolver.genericItemNoEffectKey);
+    final run = _Run(
+      content,
+      items,
+      notes,
+      textKeysByLanguage,
+      styles,
+      reservedBottomStrip,
+    )..text('common texts', InteractionResolver.genericItemNoEffectKey);
     content.scenes.values.forEach(run.scene);
     for (final inspection in content.inspections.values) {
       final where = 'inspection ${inspection.id}';
@@ -93,13 +103,24 @@ class ContentValidator {
 
 /// The state of one validation run.
 class _Run {
-  _Run(this.content, this.items, this.notes, this.textKeys, this.styles);
+  _Run(
+    this.content,
+    this.items,
+    this.notes,
+    this.textKeys,
+    this.styles,
+    this.reservedBottomStrip,
+  );
+
+  /// Absorbs floating point noise such as `0.76 + 0.11 = 0.8700000000000001`.
+  static const _tolerance = 1e-9;
 
   final CaseContent content;
   final Map<String, ItemDefinition> items;
   final Map<String, NoteDefinition> notes;
   final Map<String, Set<String>> textKeys;
   final KnownStyleNames styles;
+  final double reservedBottomStrip;
 
   final issues = <ContentIssue>[];
   final _flagsRead = <String, String>{};
@@ -151,6 +172,14 @@ class _Run {
       final at = '$where / hotspot ${hotspot.id}';
       if (!seen.add(hotspot.id)) add(at, 'duplicate hotspot ID in this scene');
       if (!hotspot.rect.isValid) add(at, 'rect is outside 0–1 or empty');
+      if (hotspot.rect.bottom > 1 - reservedBottomStrip + _tolerance) {
+        add(
+          at,
+          'reaches into the bottom strip kept for the message bar '
+          '(bottom ${hotspot.rect.bottom.toStringAsFixed(3)}, limit '
+          '${(1 - reservedBottomStrip).toStringAsFixed(3)})',
+        );
+      }
       text(at, hotspot.labelKey);
       if (hotspot.visibleWhen case final visibleWhen?) {
         condition('$at / visibleWhen', visibleWhen);

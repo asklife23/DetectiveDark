@@ -5,6 +5,7 @@ import 'package:detective_dark/app/game/game_status_views.dart';
 import 'package:detective_dark/app/game/game_texts_cubit.dart';
 import 'package:detective_dark/core/content/content_text_scope.dart';
 import 'package:detective_dark/core/events/game_event_bus.dart';
+import 'package:detective_dark/features/detective_chat/presentation/cubit/chat_cubit.dart';
 import 'package:detective_dark/features/inventory/presentation/cubit/inventory_cubit.dart';
 import 'package:detective_dark/features/notebook/presentation/cubit/notebook_cubit.dart';
 import 'package:detective_dark/features/scene_engine/presentation/bloc/scene_bloc.dart';
@@ -51,6 +52,9 @@ class GameScreen extends StatelessWidget {
             return cubit;
           },
         ),
+        // Created at once, not on first use: it has to hear the first line
+        // of the detective, which is said while the scene is still loading.
+        BlocProvider(lazy: false, create: (_) => getIt<ChatCubit>()),
         BlocProvider(
           create: (_) {
             final cubit = getIt<GameTextsCubit>();
