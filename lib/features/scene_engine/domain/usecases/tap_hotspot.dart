@@ -1,11 +1,10 @@
 import 'package:detective_dark/core/error/result.dart';
-import 'package:detective_dark/core/events/game_event_bus.dart';
 import 'package:detective_dark/core/time/clock.dart';
 import 'package:detective_dark/features/progress/domain/entities/game_progress.dart';
-import 'package:detective_dark/features/progress/domain/repositories/progress_repository.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/effect.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/scene_definition.dart';
 import 'package:detective_dark/features/scene_engine/domain/services/effect_applier.dart';
+import 'package:detective_dark/features/scene_engine/domain/services/effect_pipeline.dart';
 import 'package:detective_dark/features/scene_engine/domain/services/interaction_resolver.dart';
 import 'package:detective_dark/features/scene_engine/domain/services/scene_view_resolver.dart';
 import 'package:equatable/equatable.dart';
@@ -31,23 +30,19 @@ class TapOutcome extends Equatable {
   List<Object?> get props => [progress, navigation, inspectionId];
 }
 
-/// Handles a tap on a hotspot: pick the rule, compute the new progress,
-/// save it once, then announce what happened.
+/// Handles a tap on a hotspot: pick the rule and hand its effects to the
+/// [EffectPipeline], which saves once and then announces what happened.
 class TapHotspot {
   const TapHotspot({
-    required this._progressRepository,
-    required this._eventBus,
+    required this._pipeline,
     required this._clock,
     this._resolver = const InteractionResolver(),
-    this._effectApplier = const EffectApplier(),
     this._viewResolver = const SceneViewResolver(),
   });
 
-  final ProgressRepository _progressRepository;
-  final GameEventBus _eventBus;
+  final EffectPipeline _pipeline;
   final Clock _clock;
   final InteractionResolver _resolver;
-  final EffectApplier _effectApplier;
   final SceneViewResolver _viewResolver;
 
   /// [usingItemId] is the item selected in the inventory, if any.
@@ -73,10 +68,10 @@ class TapHotspot {
       progress,
       usingItemId: selected,
     );
-    final outcome = _effectApplier.apply(
-      progress,
-      resolved.effects,
-      EffectContext(
+    final outcome = await _pipeline.run(
+      progress: progress,
+      effects: resolved.effects,
+      context: EffectContext(
         sceneId: scene.id,
         hotspotId: hotspot.id,
         usedItemId: resolved.usedItemId,
@@ -84,18 +79,15 @@ class TapHotspot {
       ),
     );
 
-    if (outcome.progress != progress) {
-      final saved = await _progressRepository.save(outcome.progress);
-      if (saved case Failed(:final failure)) return Failed(failure);
-    }
-
-    _eventBus.publishAll(outcome.events);
-    return Success(
-      TapOutcome(
-        progress: outcome.progress,
-        navigation: outcome.navigation,
-        inspectionId: outcome.inspectionId,
+    return switch (outcome) {
+      Success(:final value) => Success(
+        TapOutcome(
+          progress: value.progress,
+          navigation: value.navigation,
+          inspectionId: value.inspectionId,
+        ),
       ),
-    );
+      Failed(:final failure) => Failed(failure),
+    };
   }
 }

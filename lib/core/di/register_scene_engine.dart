@@ -7,6 +7,7 @@ import 'package:detective_dark/core/time/clock.dart';
 import 'package:detective_dark/features/progress/domain/repositories/progress_repository.dart';
 import 'package:detective_dark/features/scene_engine/data/repositories/asset_scene_content_repository.dart';
 import 'package:detective_dark/features/scene_engine/domain/repositories/scene_content_repository.dart';
+import 'package:detective_dark/features/scene_engine/domain/services/effect_pipeline.dart';
 import 'package:detective_dark/features/scene_engine/domain/usecases/enter_scene.dart';
 import 'package:detective_dark/features/scene_engine/domain/usecases/start_game.dart';
 import 'package:detective_dark/features/scene_engine/domain/usecases/tap_hotspot.dart';
@@ -22,10 +23,17 @@ void registerSceneEngine(GetIt getIt) {
     ..registerLazySingleton<SceneContentRepository>(
       () => AssetSceneContentRepository(getIt<ContentAssetSource>()),
     )
-    ..registerLazySingleton<EnterScene>(
-      () => EnterScene(
+    // The single path on which progress changes (ADR 0014): one instance,
+    // shared by every use case that writes.
+    ..registerLazySingleton<EffectPipeline>(
+      () => EffectPipeline(
         progressRepository: getIt<ProgressRepository>(),
         eventBus: getIt<GameEventBus>(),
+      ),
+    )
+    ..registerLazySingleton<EnterScene>(
+      () => EnterScene(
+        pipeline: getIt<EffectPipeline>(),
         clock: getIt<Clock>(),
       ),
     )
@@ -38,8 +46,7 @@ void registerSceneEngine(GetIt getIt) {
     )
     ..registerLazySingleton<TapHotspot>(
       () => TapHotspot(
-        progressRepository: getIt<ProgressRepository>(),
-        eventBus: getIt<GameEventBus>(),
+        pipeline: getIt<EffectPipeline>(),
         clock: getIt<Clock>(),
       ),
     )

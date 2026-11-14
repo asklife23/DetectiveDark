@@ -10,6 +10,7 @@ import 'package:detective_dark/features/progress/domain/entities/game_progress.d
 import 'package:detective_dark/features/progress/domain/repositories/progress_repository.dart';
 import 'package:detective_dark/features/scene_engine/data/repositories/asset_scene_content_repository.dart';
 import 'package:detective_dark/features/scene_engine/domain/repositories/scene_content_repository.dart';
+import 'package:detective_dark/features/scene_engine/domain/services/effect_pipeline.dart';
 import 'package:detective_dark/features/scene_engine/domain/usecases/enter_scene.dart';
 import 'package:detective_dark/features/scene_engine/domain/usecases/start_game.dart';
 import 'package:detective_dark/features/scene_engine/domain/usecases/tap_hotspot.dart';
@@ -72,21 +73,17 @@ class GameHarness {
   /// Every event published so far.
   final events = <GameEvent>[];
 
-  late final enterScene = EnterScene(
+  late final pipeline = EffectPipeline(
     progressRepository: progress,
     eventBus: bus,
-    clock: clock,
   );
+  late final enterScene = EnterScene(pipeline: pipeline, clock: clock);
   late final startGame = StartGame(
     contentRepository: content,
     progressRepository: progress,
     enterScene: enterScene,
   );
-  late final tapHotspot = TapHotspot(
-    progressRepository: progress,
-    eventBus: bus,
-    clock: clock,
-  );
+  late final tapHotspot = TapHotspot(pipeline: pipeline, clock: clock);
 
   SceneBloc createBloc() => SceneBloc(
     caseId: ContentPaths.defaultCaseId,

@@ -599,7 +599,7 @@ buradayım" diyebilecek hale getirmek (ADR 0013). Tetikleyiciler (1.12) ve konu�
   mantığı); mevcut kabul testi (1–11) geçiyor.
   **Commit:** `feat(scene_engine): add first/then lines and cap the chat log`
 
-### [ ] 1.11 Tek etki hattı
+### [x] 1.11 Tek etki hattı
 **Amaç:** "Etkileri uygula → kaydet → olayları yayınla" akışını tek yere toplamak (ADR 0014). Tetikleyiciler, konuşma,
 geliştirici menüsü ve Aşama 5'teki bulmacalar kendi kayıt kodunu yazmayacak. **Davranış değişmez.**
 **Yapılacaklar:**

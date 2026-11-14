@@ -303,3 +303,29 @@
   gösterilen **geçmiş** (kesilebilir), `spokenLines` oyunun **hafızası** (kesilmez, küçük bir kümedir). Bir veriyi iki
   farklı amaç için kullanmak, amaçlardan biri değişince diğerini bozar. `first` anahtarlarının benzersiz olma kuralı
   da buradan gelir: iki ayrı yer aynı `first`'ü kullansaydı biri diğerinin "ilk" hakkını tüketirdi.
+
+### Adım 1.11 — Tek etki hattı (2026-11-14)
+- **Ne yaptık:** "Etkileri uygula → kaydet → olayları yayınla" akışını tek bir sınıfa topladık: `EffectPipeline`.
+  `TapHotspot` (hotspot dokunuşu) ve `EnterScene` (sahneye giriş) artık kendi `save` ve `publish` çağrılarını
+  yapmıyor; etkilerini hatta veriyor. Hattın sırası sabit: (1) ön değişiklik + etkiler tek bir yeni ilerlemeye
+  dönüşür, (2) tetikleyiciler (şimdilik boş kanca; 1.12'de dolacak), (3) bir şey değiştiyse **tek** kayıt, (4) kayıt
+  başarılıysa olaylar. Oyunda görünen hiçbir şey değişmedi; mevcut testlerin beklentilerine dokunulmadı (yalnızca test
+  kurulumundaki iki satır). Mimari testine iki kural eklendi: `ProgressRepository.save` yalnızca hattan ve adıyla
+  izinli tek istisna olan `MarkNoteRead`'den çağrılabilir; feature'lar arasında import döngüsü olamaz.
+- **Neden:** Önümüzdeki adımlarda ilerlemeyi değiştiren dört yeni yer geliyor: tetikleyiciler, konuşma konuları, kanıt
+  gösterme, geliştirici menüsü (ve Aşama 5'te bulmacalar). Her biri kendi "kaydet ve duyur" kodunu yazsaydı biri
+  kaydı unutur, biri olayı kayıttan önce yayınlar, biri tetikleyicileri atlar. Tek hat olunca yeni özellik yalnızca
+  "şu etkileri uygula" der; gerisi garanti altındadır.
+- **Önemli dosyalar:** `lib/features/scene_engine/domain/services/effect_pipeline.dart`,
+  `domain/usecases/tap_hotspot.dart`, `domain/usecases/enter_scene.dart`, `lib/core/di/register_scene_engine.dart`,
+  `test/architecture/architecture_rules.dart`, `test/architecture/dependency_rules_test.dart`,
+  `test/features/scene_engine/domain/services/effect_pipeline_test.dart`.
+- **Telefonda nasıl test edilir:** Görünür fark olmamalı. Kabul senaryosunun 1–11. adımları eskisi gibi çalışır.
+- **Öğrenme notu:** Bu bir **refactor**: davranışı değiştirmeden yapıyı değiştirmek. Refactor'ın güvenli olmasının
+  tek yolu, önce davranışı sabitleyen testlerin var olmasıdır; bu adımda 390 mevcut testin hiçbirinin beklentisi
+  değişmeden geçmesi "davranış aynı" iddiasının kanıtı. İkinci kavram **mimari testi**: kural yalnızca belgede
+  yazarsa bir gün unutulur. `saveCallViolations` ve `featureCycle` fonksiyonları `lib/` altındaki dosyaları okuyup
+  kuralı her `flutter test`'te denetliyor. Bir kural testinin kendisi de test edilmeli: bilerek bozulmuş sahte
+  girdiler verdim (izinsiz bir `save` çağrısı, iki yönlü import, üç feature'lı döngü) ve kuralın bunları yakaladığını
+  doğruladım. Hiç kırılmayan bir test, hiçbir şeyi kontrol etmiyor olabilir. Döngü yasağının nedeni: A, B'yi; B de
+  A'yı import ederse ikisi tek bir yumak olur; birini değiştirmek, test etmek veya çıkarmak diğerini de sürükler.

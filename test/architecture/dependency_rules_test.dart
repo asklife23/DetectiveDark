@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
+import 'architecture_rules.dart';
+
 /// Guards the dependency rules of CLAUDE.md section 3 by reading the import
 /// lines of every file under `lib/features`.
 void main() {
@@ -30,8 +32,6 @@ void main() {
     final index = parts.indexOf('features');
     return (parts[index + 1], parts[index + 2]);
   }
-
-  const featurePrefix = 'package:detective_dark/features/';
 
   test('the feature folders exist', () {
     expect(importsByFile(), isNotEmpty);
@@ -117,5 +117,99 @@ void main() {
     }
 
     expect(violations, isEmpty);
+  });
+
+  group('one write path (ADR 0014)', () {
+    /// Every Dart file under `lib/` with its source.
+    Map<String, String> sources() => {
+      for (final entity in Directory('lib').listSync(recursive: true))
+        if (entity is File && entity.path.endsWith('.dart'))
+          entity.path.replaceAll(r'\', '/'): entity.readAsStringSync(),
+    };
+
+    test('only the effect pipeline and MarkNoteRead save the progress', () {
+      expect(saveCallViolations(sources()), isEmpty);
+    });
+
+    test('the allowed callers really save (the rule looks at the right '
+        'files)', () {
+      final all = sources();
+
+      for (final path in saveCallers) {
+        expect(all[path], contains('.save('), reason: path);
+      }
+    });
+
+    test('the rule fires on a save from anywhere else', () {
+      final violations = saveCallViolations({
+        ...sources(),
+        'lib/features/dialogue/domain/usecases/ask_topic.dart':
+            'class AskTopic {\n'
+            '  Future<void> call() async {\n'
+            '    await _progressRepository.save(next);\n'
+            '  }\n'
+            '}\n',
+        'lib/app/dev/dev_menu.dart':
+            '// repository.save(x) in a comment is fine\n'
+            'void reset() => repository\n'
+            '    .save(fresh);\n',
+      });
+
+      expect(violations, [
+        'lib/features/dialogue/domain/usecases/ask_topic.dart:3',
+        'lib/app/dev/dev_menu.dart:3',
+      ]);
+    });
+  });
+
+  group('no cycles between features', () {
+    test('the feature graph has no cycle', () {
+      expect(featureCycle(importsByFile()), isEmpty);
+    });
+
+    test('the graph is read from the imports', () {
+      final graph = featureGraph(importsByFile());
+
+      expect(graph['scene_engine'], containsAll(['progress', 'notebook']));
+      expect(graph['progress'], isEmpty);
+    });
+
+    test('the rule fires on a two-way import', () {
+      final cycle = featureCycle({
+        ...importsByFile(),
+        'lib/features/notebook/domain/usecases/mark_note_read.dart': [
+          '${featurePrefix}scene_engine/domain/services/effect_pipeline.dart',
+        ],
+      });
+
+      expect(cycle, isNotEmpty);
+      expect(cycle.first, cycle.last);
+      expect(cycle, containsAll(['notebook', 'scene_engine']));
+    });
+
+    test('the rule fires on a longer cycle', () {
+      final cycle = featureCycle({
+        'lib/features/a/domain/a.dart': ['${featurePrefix}b/domain/b.dart'],
+        'lib/features/b/domain/b.dart': ['${featurePrefix}c/domain/c.dart'],
+        'lib/features/c/domain/c.dart': ['${featurePrefix}a/domain/a.dart'],
+        'lib/features/d/domain/d.dart': ['${featurePrefix}a/domain/a.dart'],
+      });
+
+      expect(cycle, ['a', 'b', 'c', 'a']);
+    });
+
+    test('a diamond is not a cycle', () {
+      final cycle = featureCycle({
+        'lib/features/a/domain/a.dart': [
+          '${featurePrefix}b/domain/b.dart',
+          '${featurePrefix}c/domain/c.dart',
+        ],
+        'lib/features/b/domain/b.dart': ['${featurePrefix}d/domain/d.dart'],
+        'lib/features/c/domain/c.dart': ['${featurePrefix}d/domain/d.dart'],
+        'lib/features/d/domain/d.dart': <String>[],
+      });
+
+      expect(cycle, isEmpty);
+    });
   });
 }
