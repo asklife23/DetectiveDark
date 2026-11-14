@@ -19,7 +19,13 @@ abstract final class ConditionCodec {
     'hasNote',
     'all',
     'any',
+    'not',
+    'atLeast',
+    'visited',
+    'inScene',
   ];
+
+  static const _atLeastKeys = {'count', 'of'};
 
   /// Throws a [FormatException] for anything that is not a valid condition.
   static Condition parse(Object? json) {
@@ -38,6 +44,10 @@ abstract final class ConditionCodec {
       'hasNote' => HasNote(_id(key, value)),
       'all' => AllOf(_list(key, value)),
       'any' => AnyOf(_list(key, value)),
+      'not' => Not(parse(value)),
+      'atLeast' => _atLeast(value),
+      'visited' => Visited(_id(key, value)),
+      'inScene' => InScene(_id(key, value)),
       _ => throw FormatException(
         'Unknown condition "$key". Known: ${knownKeys.join(', ')}.',
       ),
@@ -54,5 +64,25 @@ abstract final class ConditionCodec {
       return List.unmodifiable(value.map(parse));
     }
     throw FormatException('Condition "$key" needs a non-empty list.');
+  }
+
+  static AtLeast _atLeast(Object? value) {
+    if (value is! Map<String, dynamic>) {
+      throw const FormatException(
+        'Condition "atLeast" needs an object with "count" and "of".',
+      );
+    }
+    final unknown = value.keys.where((key) => !_atLeastKeys.contains(key));
+    if (unknown.isNotEmpty) {
+      throw FormatException(
+        'Unknown "atLeast" keys: ${unknown.join(', ')}. '
+        'Known: ${_atLeastKeys.join(', ')}.',
+      );
+    }
+    final count = value['count'];
+    if (count is! int) {
+      throw const FormatException('"atLeast.count" must be a whole number.');
+    }
+    return AtLeast(count, _list('atLeast.of', value['of']));
   }
 }

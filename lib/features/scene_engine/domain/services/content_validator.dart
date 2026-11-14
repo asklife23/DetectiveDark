@@ -254,17 +254,49 @@ class _Run {
     }
   }
 
-  void condition(String where, Condition condition) {
+  /// [itemRulesAllowed] turns false inside `not` and `atLeast`: a
+  /// `usingItem` there (at any depth) is an error.
+  void condition(
+    String where,
+    Condition condition, {
+    bool itemRulesAllowed = true,
+  }) {
+    void inner(Condition c, {bool allowed = true}) => this.condition(
+      where,
+      c,
+      itemRulesAllowed: itemRulesAllowed && allowed,
+    );
+
     switch (condition) {
       case FlagSet(:final flag) || FlagNotSet(:final flag):
         _flagsRead.putIfAbsent(flag, () => where);
-      case HasItem(:final itemId) || UsingItem(:final itemId):
+      case HasItem(:final itemId):
         if (!items.containsKey(itemId)) add(where, 'unknown item "$itemId"');
+      case UsingItem(:final itemId):
+        if (!items.containsKey(itemId)) add(where, 'unknown item "$itemId"');
+        if (!itemRulesAllowed) {
+          add(where, 'usingItem cannot be used inside not / atLeast');
+        }
       case HasNote(:final noteId):
         if (!notes.containsKey(noteId)) add(where, 'unknown note "$noteId"');
       case AllOf(:final conditions) || AnyOf(:final conditions):
-        for (final inner in conditions) {
-          this.condition(where, inner);
+        conditions.forEach(inner);
+      case Not(condition: final negated):
+        inner(negated, allowed: false);
+      case AtLeast(:final count, :final conditions):
+        if (count < 1 || count > conditions.length) {
+          add(
+            where,
+            'atLeast count $count must be between 1 and '
+            '${conditions.length}',
+          );
+        }
+        for (final c in conditions) {
+          inner(c, allowed: false);
+        }
+      case Visited(:final sceneId) || InScene(:final sceneId):
+        if (!content.scenes.containsKey(sceneId)) {
+          add(where, 'unknown scene "$sceneId"');
         }
     }
   }

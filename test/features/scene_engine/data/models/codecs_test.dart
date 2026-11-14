@@ -73,6 +73,113 @@ void main() {
     });
   });
 
+  group('ConditionCodec: not, atLeast, visited, inScene', () {
+    test('parses the four kinds', () {
+      expect(
+        ConditionCodec.parse({
+          'not': {'hasItem': 'pill_bottle'},
+        }),
+        const Not(HasItem('pill_bottle')),
+      );
+      expect(
+        ConditionCodec.parse({
+          'atLeast': {
+            'count': 2,
+            'of': [
+              {'flag': 'a'},
+              {'flag': 'b'},
+              {'visited': 'market_square'},
+            ],
+          },
+        }),
+        const AtLeast(2, [
+          FlagSet('a'),
+          FlagSet('b'),
+          Visited('market_square'),
+        ]),
+      );
+      expect(
+        ConditionCodec.parse({'visited': 'villa_hall'}),
+        const Visited('villa_hall'),
+      );
+      expect(
+        ConditionCodec.parse({'inScene': 'market_square'}),
+        const InScene('market_square'),
+      );
+    });
+
+    test('not needs a single condition', () {
+      expect(
+        () => ConditionCodec.parse({'not': 'flag'}),
+        _formatError('exactly one key'),
+      );
+      expect(
+        () => ConditionCodec.parse({
+          'not': [
+            {'flag': 'a'},
+          ],
+        }),
+        _formatError('exactly one key'),
+      );
+    });
+
+    test('atLeast rejects malformed objects', () {
+      expect(
+        () => ConditionCodec.parse({'atLeast': 2}),
+        _formatError('"count" and "of"'),
+      );
+      expect(
+        () => ConditionCodec.parse({
+          'atLeast': {
+            'count': 1,
+            'from': [
+              {'flag': 'a'},
+            ],
+          },
+        }),
+        _formatError('Unknown "atLeast" keys: from'),
+      );
+      expect(
+        () => ConditionCodec.parse({
+          'atLeast': {
+            'count': '2',
+            'of': [
+              {'flag': 'a'},
+            ],
+          },
+        }),
+        _formatError('whole number'),
+      );
+      expect(
+        () => ConditionCodec.parse({
+          'atLeast': {
+            'of': [
+              {'flag': 'a'},
+            ],
+          },
+        }),
+        _formatError('whole number'),
+      );
+      expect(
+        () => ConditionCodec.parse({
+          'atLeast': {'count': 1, 'of': <Object>[]},
+        }),
+        _formatError('"atLeast.of"'),
+      );
+    });
+
+    test('visited and inScene need a scene ID', () {
+      expect(
+        () => ConditionCodec.parse({'visited': ''}),
+        _formatError('"visited"'),
+      );
+      expect(
+        () => ConditionCodec.parse({'inScene': 1}),
+        _formatError('"inScene"'),
+      );
+    });
+  });
+
   group('EffectCodec', () {
     test('parses every kind of effect', () {
       expect(EffectCodec.parse({'giveItem': 'key'}), const GiveItem('key'));

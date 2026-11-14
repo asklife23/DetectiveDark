@@ -149,4 +149,63 @@ void main() {
       expect(result.effects, genericReaction);
     });
   });
+
+  group('not, atLeast, visited and inScene', () {
+    const hotspot = HotspotDefinition(
+      id: 'cabinet',
+      rect: anyRect,
+      labelKey: 'hotspot_cabinet',
+      interactions: [
+        InteractionRule(
+          when: Not(HasItem(crowbar)),
+          effects: [Say('needs_a_tool')],
+        ),
+        InteractionRule(
+          when: AtLeast(1, [Visited('villa_hall'), InScene('villa_exterior')]),
+          effects: [Say('cabinet_forced')],
+        ),
+      ],
+    );
+
+    test('they guard ordinary rules', () {
+      expect(resolver.resolve(hotspot, newGame).effects, const [
+        Say('needs_a_tool'),
+      ]);
+      expect(
+        resolver.resolve(hotspot, newGame.withItem(crowbar)).effects,
+        const [Say('cabinet_forced')],
+      );
+    });
+
+    test('they are never item rules: a selected item gets the generic '
+        'reaction', () {
+      final result = resolver.resolve(
+        hotspot,
+        newGame.withItem(brassKey),
+        usingItemId: brassKey,
+      );
+
+      expect(result.effects, genericReaction);
+      expect(result.usedItemId, isNull);
+    });
+
+    test('a usingItem hidden inside not is not looked at', () {
+      const odd = HotspotDefinition(
+        id: 'odd',
+        rect: anyRect,
+        labelKey: 'hotspot_odd',
+        interactions: [
+          InteractionRule(when: Not(UsingItem(crowbar)), effects: [Say('x')]),
+        ],
+      );
+
+      final result = resolver.resolve(
+        odd,
+        newGame.withItem(brassKey),
+        usingItemId: brassKey,
+      );
+
+      expect(result.effects, genericReaction);
+    });
+  });
 }

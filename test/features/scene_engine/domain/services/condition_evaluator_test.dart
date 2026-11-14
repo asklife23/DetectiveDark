@@ -100,4 +100,67 @@ void main() {
     expect(evaluator.holds(null, progress), isTrue);
     expect(evaluator.holds(const FlagSet('other'), progress), isFalse);
   });
+
+  group('not', () {
+    test('is the opposite of its condition', () {
+      expect(evaluator.evaluate(const Not(HasItem(crowbar)), progress), isTrue);
+      expect(
+        evaluator.evaluate(const Not(HasItem(brassKey)), progress),
+        isFalse,
+      );
+    });
+
+    test('nests: not(not(x)) is x', () {
+      expect(
+        evaluator.evaluate(const Not(Not(FlagSet('door_open'))), progress),
+        isTrue,
+      );
+    });
+  });
+
+  group('atLeast', () {
+    const clues = [FlagSet('door_open'), HasItem(brassKey), HasNote('photo')];
+
+    test('counts the conditions that hold', () {
+      expect(evaluator.evaluate(const AtLeast(1, clues), progress), isTrue);
+      expect(evaluator.evaluate(const AtLeast(2, clues), progress), isTrue);
+      expect(evaluator.evaluate(const AtLeast(3, clues), progress), isFalse);
+    });
+
+    test('nests inside all', () {
+      const condition = AllOf([
+        Not(FlagSet('other')),
+        AtLeast(2, clues),
+      ]);
+
+      expect(evaluator.evaluate(condition, progress), isTrue);
+    });
+  });
+
+  test('visited: true once the scene has been entered', () {
+    final visited = progress.withVisited('villa_hall');
+
+    expect(evaluator.evaluate(const Visited('villa_hall'), visited), isTrue);
+    expect(evaluator.evaluate(const Visited('villa_hall'), progress), isFalse);
+  });
+
+  test('inScene: only the top of the stack counts', () {
+    final inCloseup = progress.withSceneStack(const [
+      'villa_exterior',
+      'statue_closeup',
+    ]);
+
+    expect(
+      evaluator.evaluate(const InScene('statue_closeup'), inCloseup),
+      isTrue,
+    );
+    expect(
+      evaluator.evaluate(const InScene('villa_exterior'), inCloseup),
+      isFalse,
+    );
+    expect(
+      evaluator.evaluate(const InScene('villa_exterior'), progress),
+      isTrue,
+    );
+  });
 }

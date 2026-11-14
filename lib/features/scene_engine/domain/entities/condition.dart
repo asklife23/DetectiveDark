@@ -79,3 +79,49 @@ final class AnyOf extends Condition {
   @override
   List<Object?> get props => [conditions];
 }
+
+/// True when [condition] is false.
+///
+/// `usingItem` is not allowed inside (the content validator rejects it):
+/// "tapped with anything but the key" is not a rule the game has.
+final class Not extends Condition {
+  const Not(this.condition);
+
+  final Condition condition;
+
+  @override
+  List<Object?> get props => [condition];
+}
+
+/// True when at least [count] of [conditions] are true ("two of these
+/// three clues").
+final class AtLeast extends Condition {
+  const AtLeast(this.count, this.conditions);
+
+  final int count;
+  final List<Condition> conditions;
+
+  @override
+  List<Object?> get props => [count, conditions];
+}
+
+/// True once the player has been in the scene.
+final class Visited extends Condition {
+  const Visited(this.sceneId);
+
+  final String sceneId;
+
+  @override
+  List<Object?> get props => [sceneId];
+}
+
+/// True while the scene is the one on screen: the top of the navigation
+/// stack. Scenes further down the stack do not count.
+final class InScene extends Condition {
+  const InScene(this.sceneId);
+
+  final String sceneId;
+
+  @override
+  List<Object?> get props => [sceneId];
+}

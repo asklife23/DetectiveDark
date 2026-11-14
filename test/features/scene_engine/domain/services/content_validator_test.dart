@@ -492,4 +492,86 @@ void main() {
       expect(issues, isEmpty);
     });
   });
+
+  group('not, atLeast, visited and inScene', () {
+    List<ContentIssue> withCondition(Condition when) => _validate(
+      yardHotspots: [
+        _hotspot('door', const [GoToScene('shed')]),
+        _hotspot('gate', const [Say('say_locked')], when: when),
+      ],
+    );
+
+    test('valid uses have no issues', () {
+      expect(
+        withCondition(
+          const AllOf([
+            Not(HasItem('key')),
+            AtLeast(1, [Visited('shed'), InScene('yard')]),
+          ]),
+        ),
+        isEmpty,
+      );
+    });
+
+    test('usingItem inside not', () {
+      expect(
+        withCondition(const Not(UsingItem('key'))),
+        _reports('usingItem cannot be used inside not / atLeast'),
+      );
+    });
+
+    test('usingItem deep inside atLeast', () {
+      expect(
+        withCondition(
+          const AtLeast(1, [
+            AllOf([
+              AnyOf([UsingItem('key')]),
+            ]),
+          ]),
+        ),
+        _reports('usingItem cannot be used inside not / atLeast'),
+      );
+    });
+
+    test('usingItem next to not is still fine', () {
+      expect(
+        withCondition(const AllOf([UsingItem('key'), Not(HasNote('memo'))])),
+        isEmpty,
+      );
+    });
+
+    test('atLeast count below 1 or above the number of conditions', () {
+      expect(
+        withCondition(const AtLeast(0, [HasItem('key')])),
+        _reports('atLeast count 0 must be between 1 and 1'),
+      );
+      expect(
+        withCondition(const AtLeast(3, [HasItem('key'), HasNote('memo')])),
+        _reports('atLeast count 3 must be between 1 and 2'),
+      );
+    });
+
+    test('visited and inScene with an unknown scene', () {
+      expect(
+        withCondition(const Visited('cellar')),
+        _reports('unknown scene "cellar"'),
+      );
+      expect(
+        withCondition(const InScene('attic')),
+        _reports('unknown scene "attic"'),
+      );
+    });
+
+    test('references and flags inside not and atLeast are checked', () {
+      final issues = withCondition(
+        const Not(
+          AtLeast(1, [FlagSet('never_set'), HasItem('rope'), HasNote('map')]),
+        ),
+      );
+
+      expect(issues, _reports('flag "never_set" is read but never set'));
+      expect(issues, _reports('unknown item "rope"'));
+      expect(issues, _reports('unknown note "map"'));
+    });
+  });
 }

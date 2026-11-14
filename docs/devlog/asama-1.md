@@ -255,3 +255,26 @@
   koşturmak bu yüzden değerli. Profil modu da ayrı bir kavram: debug derleme yavaştır (JIT, kontroller açık), release
   ölçüm araçlarını kapatır; **profile** release hızında çalışır ama kare sürelerini raporlar. Performans yalnızca
   profil modunda ölçülür.
+
+## Aşama 1b — motor eksikleri (adım 1.9–1.20)
+
+### Adım 1.9 — Koşul eklemeleri: `not`, `atLeast`, `visited`, `inScene` (2026-11-14)
+- **Ne yaptık:** Kural diline dört yeni koşul ekledik. `not` bir koşulu tersine çevirir, `atLeast` "şunlardan en az
+  N tanesi" der, `visited` "o sahneye girdim mi", `inScene` "şu an o sahnede miyim" (yığının tepesi) diye sorar.
+  JSON'dan okuyan codec, cevabı hesaplayan `ConditionEvaluator`, eşya kuralını seçen `InteractionResolver` ve içerik
+  doğrulayıcısı yeni türleri tanıyor. İçerik değişmedi; bu koşulları 1.12 (tetikleyiciler) ve 1.15 (çarşı) kullanacak.
+- **Neden:** Bunlar olmadan yazar her "değilse" ve "ikisi de oldu" durumu için yardımcı bayrak yazmak zorunda
+  kalırdı (`has_not_bottle`, `asked_both`...). 50 sahnede bu bayraklar unutulur ve sessiz hata üretir. Koşul doğrudan
+  kayıttaki gerçeğe (eşya var mı, sahne ziyaret edildi mi) bakınca tutarsızlık oluşamaz.
+- **Önemli dosyalar:** `lib/features/scene_engine/domain/entities/condition.dart`,
+  `domain/services/condition_evaluator.dart`, `domain/services/interaction_resolver.dart`,
+  `data/models/condition_codec.dart`, `domain/services/content_validator.dart` ve bunların testleri.
+- **Telefonda nasıl test edilir:** Görünür bir değişiklik yok (içerik aynı). Mevcut kabul senaryosu (1–11) eskisi gibi
+  çalışmalı.
+- **Öğrenme notu:** `Condition` bir `sealed class`. Dart'ta `sealed`, "bu sınıfın alt türleri yalnızca bu dosyada
+  tanımlanır" demektir; derleyici böylece bütün türlerin listesini bilir. Bir `switch` bu türlerden birini atlarsa
+  kod **derlenmez**. Dört yeni türü ekleyince derleyici bana evaluator'ı, resolver'ı ve doğrulayıcıyı tek tek
+  gösterdi: "burada `Not`'ı ele almadın". Yani "yeni koşulu bir yerde unutmak" hatası testten bile önce, derleme
+  anında yakalanıyor. İkinci ders: `usingItem` koşulunu `not` ve `atLeast` içinde yasakladık. "Anahtar dışında bir
+  şeyle dokunulduysa" gibi bir kural oyunda yok; izin verseydik resolver'ın "bu kural hangi eşyayı istiyor" sorusu
+  belirsizleşirdi. Kuralı dar tutmak, motoru basit tutmanın yoludur.

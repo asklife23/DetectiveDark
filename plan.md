@@ -548,7 +548,7 @@ yerine tek arka plan + küçük bir nesne görseli (ADR 0012). Gerçek görselle
 
 <!-- Aşama 1b: Neden ve kabul senaryosunun devamı (adım 12–20) Aşama 1 başlığının altındadır. -->
 
-### [ ] 1.9 Koşul eklemeleri: `not`, `atLeast`, `visited`, `inScene`
+### [x] 1.9 Koşul eklemeleri: `not`, `atLeast`, `visited`, `inScene`
 **Amaç:** Kural dilini, yardımcı bayraklara başvurmadan "değilse", "şunlardan en az ikisi", "oradaydım", "şu an
 buradayım" diyebilecek hale getirmek (ADR 0013). Tetikleyiciler (1.12) ve konuşma (1.16) bunların üzerine kurulur.
 **Yapılacaklar:**

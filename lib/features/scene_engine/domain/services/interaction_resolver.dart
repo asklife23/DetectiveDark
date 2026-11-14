@@ -70,6 +70,15 @@ class InteractionResolver {
     UsingItem(itemId: final asked) => asked == itemId,
     AllOf(:final conditions) ||
     AnyOf(:final conditions) => conditions.any((c) => _asksFor(c, itemId)),
-    FlagSet() || FlagNotSet() || HasItem() || HasNote() => false,
+    // `usingItem` is forbidden inside `not` and `atLeast` (the validator
+    // rejects it), so those are never item rules.
+    FlagSet() ||
+    FlagNotSet() ||
+    HasItem() ||
+    HasNote() ||
+    Not() ||
+    AtLeast() ||
+    Visited() ||
+    InScene() => false,
   };
 }

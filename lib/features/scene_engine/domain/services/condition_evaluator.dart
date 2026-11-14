@@ -24,6 +24,11 @@ class ConditionEvaluator {
       HasNote(:final noteId) => progress.hasNote(noteId),
       AllOf(:final conditions) => conditions.every(check),
       AnyOf(:final conditions) => conditions.any(check),
+      Not(condition: final inner) => !check(inner),
+      AtLeast(:final count, :final conditions) =>
+        conditions.where(check).length >= count,
+      Visited(:final sceneId) => progress.hasVisited(sceneId),
+      InScene(:final sceneId) => progress.currentSceneId == sceneId,
     };
   }
 
