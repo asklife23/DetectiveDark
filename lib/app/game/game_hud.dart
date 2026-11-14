@@ -1,22 +1,19 @@
 import 'dart:async';
 
-import 'package:detective_dark/app/game/item_inspection.dart';
+import 'package:detective_dark/app/game/back_shortcut.dart';
+import 'package:detective_dark/app/game/hud_side_panel.dart';
+import 'package:detective_dark/app/game/pickup_flights.dart';
+import 'package:detective_dark/app/game/scene_buttons.dart';
 import 'package:detective_dark/app/game/scene_chat_strip.dart';
-import 'package:detective_dark/core/events/game_event.dart';
 import 'package:detective_dark/core/events/game_event_bus.dart';
 import 'package:detective_dark/core/l10n/l10n.dart';
-import 'package:detective_dark/core/theme/app_colors.dart';
 import 'package:detective_dark/core/theme/app_durations.dart';
-import 'package:detective_dark/core/theme/app_spacing.dart';
 import 'package:detective_dark/core/widgets/flight_layer.dart';
 import 'package:detective_dark/core/widgets/fly_anchors.dart';
-import 'package:detective_dark/core/widgets/hud_icon_button.dart';
 import 'package:detective_dark/features/detective_chat/presentation/cubit/chat_cubit.dart';
 import 'package:detective_dark/features/detective_chat/presentation/widgets/chat_history_sheet.dart';
 import 'package:detective_dark/features/inventory/presentation/cubit/inventory_cubit.dart';
-import 'package:detective_dark/features/inventory/presentation/widgets/item_sidebar.dart';
 import 'package:detective_dark/features/notebook/presentation/cubit/notebook_cubit.dart';
-import 'package:detective_dark/features/notebook/presentation/widgets/notebook_button.dart';
 import 'package:detective_dark/features/notebook/presentation/widgets/notebook_screen.dart';
 import 'package:detective_dark/features/scene_engine/presentation/bloc/scene_bloc.dart';
 import 'package:detective_dark/features/scene_engine/presentation/widgets/scene_view.dart';
@@ -32,7 +29,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 ///   selected in the inventory, then the selection is cleared;
 /// - a long press on an item opens the examine card of the scene engine;
 /// - a collected item flies from the scene into the item panel, a
-///   collected note into the notebook button;
+///   collected note into the notebook button ([PickupFlights]);
 /// - the notebook and the message history open above the scene;
 /// - the detective message bar lies on the bottom strip of the scene.
 ///
@@ -50,86 +47,38 @@ class GameHud extends StatefulWidget {
 }
 
 class _GameHudState extends State<GameHud> {
-  final _anchors = FlyAnchors();
-  final _flightKey = GlobalKey<FlightLayerState>();
-
-  /// Where each hotspot was on screen when it was last tapped. A pickup
-  /// hides its hotspot at once, so the start of the flight is kept here.
-  final _tapRects = <String, Rect>{};
-
-  /// Items whose flying copy has not landed yet.
-  final _arrivingItems = <String>{};
-
+  late final PickupFlights _flights;
   bool _showHotspots = false;
   Timer? _exitTimer;
-  StreamSubscription<ItemObtained>? _itemObtained;
-  StreamSubscription<NoteAdded>? _noteAdded;
 
   @override
   void initState() {
     super.initState();
-    final bus = context.read<GameEventBus>();
-    _itemObtained = bus.on<ItemObtained>().listen(_onItemObtained);
-    _noteAdded = bus.on<NoteAdded>().listen(_onNoteAdded);
+    _flights = PickupFlights(
+      eventBus: context.read<GameEventBus>(),
+      findItem: (itemId) => context
+          .read<InventoryCubit>()
+          .state
+          .items
+          .where((item) => item.id == itemId)
+          .firstOrNull,
+    );
   }
 
   @override
   void dispose() {
     _exitTimer?.cancel();
-    unawaited(_itemObtained?.cancel());
-    unawaited(_noteAdded?.cancel());
+    _flights.dispose();
     super.dispose();
-  }
-
-  /// A square in the middle of [rect]: where a flying icon starts.
-  Rect _iconRect(Rect rect) => Rect.fromCenter(
-    center: rect.center,
-    width: rect.shortestSide,
-    height: rect.shortestSide,
-  );
-
-  /// The collected paper flies into the notebook button.
-  Future<void> _onNoteAdded(NoteAdded event) async {
-    final from = _tapRects[event.hotspotId];
-    if (from == null || !mounted) return;
-    await _flightKey.currentState?.fly(
-      from: _iconRect(from),
-      to: () => _anchors.rectOf(FlyAnchors.notebookButton),
-      child: const NotePaperIcon(),
-    );
   }
 
   void _onHotspotTap(String hotspotId) {
     final inventory = context.read<InventoryCubit>();
-    if (_anchors.rectOf(FlyAnchors.hotspot(hotspotId)) case final rect?) {
-      _tapRects[hotspotId] = rect;
-    }
+    _flights.rememberTap(hotspotId);
     context.read<SceneBloc>().add(
       HotspotTapped(hotspotId, usingItemId: inventory.state.selectedItemId),
     );
     inventory.clearSelection();
-  }
-
-  Future<void> _onItemObtained(ItemObtained event) async {
-    final from = _tapRects[event.hotspotId];
-    if (from == null || !mounted) return;
-    setState(() => _arrivingItems.add(event.itemId));
-
-    // One frame later the item panel has built the new slot.
-    await WidgetsBinding.instance.endOfFrame;
-    if (!mounted) return;
-    final items = context.read<InventoryCubit>().state.items;
-    final item = items.where((item) => item.id == event.itemId).firstOrNull;
-    if (item != null) {
-      await _flightKey.currentState?.fly(
-        from: _iconRect(from),
-        to: () =>
-            _anchors.rectOf(FlyAnchors.item(item.id)) ??
-            _anchors.rectOf(FlyAnchors.itemPanel),
-        child: ItemIcon(item: item),
-      );
-    }
-    if (mounted) setState(() => _arrivingItems.remove(event.itemId));
   }
 
   /// Closes the topmost open thing or leaves the close-up. Returns false
@@ -178,8 +127,6 @@ class _GameHudState extends State<GameHud> {
 
   @override
   Widget build(BuildContext context) {
-    final bloc = context.read<SceneBloc>();
-
     return PopScope<void>(
       // The app never pops this screen by itself; Back is game navigation.
       canPop: false,
@@ -187,15 +134,15 @@ class _GameHudState extends State<GameHud> {
         if (!didPop) _onSystemBack();
       },
       child: FlyAnchorScope(
-        anchors: _anchors,
-        child: _BackShortcut(
+        anchors: _flights.anchors,
+        child: BackShortcut(
           onBack: _goBack,
           child: Stack(
             fit: StackFit.expand,
             children: [
               Row(
                 children: [
-                  // The scene gets what is left of the item panel, so no
+                  // The scene gets what is left of the side panel, so no
                   // hotspot can ever lie under the panel.
                   Expanded(
                     child: Stack(
@@ -206,7 +153,7 @@ class _GameHudState extends State<GameHud> {
                           onHotspotTap: _onHotspotTap,
                         ),
                         const SceneChatStrip(),
-                        _SceneButtons(
+                        SceneButtons(
                           showDebugTools: widget.showDebugTools,
                           showHotspots: _showHotspots,
                           onToggleHotspots: () =>
@@ -215,33 +162,7 @@ class _GameHudState extends State<GameHud> {
                       ],
                     ),
                   ),
-                  ColoredBox(
-                    color: AppColors.surface,
-                    child: SafeArea(
-                      left: false,
-                      child: SizedBox(
-                        width: AppSizes.sidebarWidth,
-                        child: Column(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.symmetric(
-                                vertical: AppSpacing.sm,
-                              ),
-                              child: NotebookButton(),
-                            ),
-                            Expanded(
-                              child: ItemSidebar(
-                                arrivingItemIds: _arrivingItems,
-                                onExamine: (item) => bloc.add(
-                                  InspectionRequested(inspectionForItem(item)),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                  HudSidePanel(arrivingItemIds: _flights.arrivingItemIds),
                 ],
               ),
               BlocSelector<NotebookCubit, NotebookState, bool>(
@@ -254,95 +175,9 @@ class _GameHudState extends State<GameHud> {
                 builder: (context, isOpen) =>
                     isOpen ? const ChatHistorySheet() : const SizedBox.shrink(),
               ),
-              FlightLayer(key: _flightKey),
+              FlightLayer(key: _flights.layerKey),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Esc works like the Back button, wherever the keyboard focus is inside
-/// the game. Plain keyboard input, not tied to a platform.
-class _BackShortcut extends StatelessWidget {
-  const _BackShortcut({required this.onBack, required this.child});
-
-  final VoidCallback onBack;
-  final Widget child;
-
-  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
-    if (event is! KeyDownEvent ||
-        event.logicalKey != LogicalKeyboardKey.escape) {
-      return KeyEventResult.ignored;
-    }
-    onBack();
-    return KeyEventResult.handled;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Key events travel from the focused widget up to this node, which
-    // takes the focus as soon as the game is on screen. It is not a control
-    // of its own, so it stays out of the accessibility tree (a semantics
-    // node here would swallow the labels of the hotspots below it).
-    return Focus(
-      autofocus: true,
-      includeSemantics: false,
-      onKeyEvent: _onKey,
-      child: child,
-    );
-  }
-}
-
-/// The buttons that sit on the scene: Back and the developer tools.
-class _SceneButtons extends StatelessWidget {
-  const _SceneButtons({
-    required this.showDebugTools,
-    required this.showHotspots,
-    required this.onToggleHotspots,
-  });
-
-  final bool showDebugTools;
-  final bool showHotspots;
-  final VoidCallback onToggleHotspots;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-
-    return SafeArea(
-      right: false,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.sm),
-        child: Stack(
-          children: [
-            Align(
-              alignment: Alignment.topLeft,
-              child: BlocSelector<SceneBloc, SceneState, bool>(
-                selector: (state) => state.canGoBack,
-                builder: (context, canGoBack) => canGoBack
-                    ? HudIconButton(
-                        icon: Icons.arrow_back,
-                        tooltip: l10n.backTooltip,
-                        onPressed: () =>
-                            context.read<SceneBloc>().add(const BackPressed()),
-                      )
-                    : const SizedBox.shrink(),
-              ),
-            ),
-            if (showDebugTools)
-              Align(
-                // Bottom left belongs to the message bar, top center to the
-                // flavor badge.
-                alignment: Alignment.topRight,
-                child: HudIconButton(
-                  icon: showHotspots ? Icons.grid_off : Icons.grid_on,
-                  tooltip: l10n.debugHotspotsTooltip,
-                  onPressed: onToggleHotspots,
-                ),
-              ),
-          ],
         ),
       ),
     );
