@@ -32,8 +32,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 ///   collected note into the notebook button;
 /// - the notebook opens above the scene.
 ///
-/// It also owns the system back button: Back first closes what is open,
-/// then leaves the close-up; in a main scene a second press exits the app.
+/// It also owns Back from outside the scene: the Android system back
+/// button and the Esc key first close what is open, then leave the
+/// close-up. In a main scene a second press of the system button exits the
+/// app; Esc does nothing there.
 class GameHud extends StatefulWidget {
   const GameHud({this.showDebugTools = false, super.key});
 
@@ -126,12 +128,13 @@ class _GameHudState extends State<GameHud> {
     if (mounted) setState(() => _arrivingItems.remove(event.itemId));
   }
 
-  /// Android system back (button or gesture).
-  void _onSystemBack() {
+  /// Closes the topmost open thing or leaves the close-up. Returns false
+  /// when there was nothing to go back from (a main scene, nothing open).
+  bool _goBack() {
     final notebook = context.read<NotebookCubit>();
     if (notebook.state.isOpen) {
       notebook.closeNotebook();
-      return;
+      return true;
     }
 
     final bloc = context.read<SceneBloc>();
@@ -140,10 +143,13 @@ class _GameHudState extends State<GameHud> {
         state.canGoBack ||
         state.activeInspection != null ||
         state.transitionPhase != TransitionPhase.idle;
-    if (hasSomethingToClose) {
-      bloc.add(const BackPressed());
-      return;
-    }
+    if (hasSomethingToClose) bloc.add(const BackPressed());
+    return hasSomethingToClose;
+  }
+
+  /// Android system back (button or gesture).
+  void _onSystemBack() {
+    if (_goBack()) return;
 
     // Main scene: leave the app only on a second press.
     if (_exitTimer?.isActive ?? false) {
@@ -173,68 +179,103 @@ class _GameHudState extends State<GameHud> {
       },
       child: FlyAnchorScope(
         anchors: _anchors,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Row(
-              children: [
-                // The scene gets what is left of the item panel, so no
-                // hotspot can ever lie under the panel.
-                Expanded(
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      SceneView(
-                        showHotspotDebug: _showHotspots,
-                        onHotspotTap: _onHotspotTap,
-                      ),
-                      _SceneButtons(
-                        showDebugTools: widget.showDebugTools,
-                        showHotspots: _showHotspots,
-                        onToggleHotspots: () =>
-                            setState(() => _showHotspots = !_showHotspots),
-                      ),
-                    ],
+        child: _BackShortcut(
+          onBack: _goBack,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Row(
+                children: [
+                  // The scene gets what is left of the item panel, so no
+                  // hotspot can ever lie under the panel.
+                  Expanded(
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        SceneView(
+                          showHotspotDebug: _showHotspots,
+                          onHotspotTap: _onHotspotTap,
+                        ),
+                        _SceneButtons(
+                          showDebugTools: widget.showDebugTools,
+                          showHotspots: _showHotspots,
+                          onToggleHotspots: () =>
+                              setState(() => _showHotspots = !_showHotspots),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                ColoredBox(
-                  color: AppColors.surface,
-                  child: SafeArea(
-                    left: false,
-                    child: SizedBox(
-                      width: AppSizes.sidebarWidth,
-                      child: Column(
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: AppSpacing.sm,
+                  ColoredBox(
+                    color: AppColors.surface,
+                    child: SafeArea(
+                      left: false,
+                      child: SizedBox(
+                        width: AppSizes.sidebarWidth,
+                        child: Column(
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.symmetric(
+                                vertical: AppSpacing.sm,
+                              ),
+                              child: NotebookButton(),
                             ),
-                            child: NotebookButton(),
-                          ),
-                          Expanded(
-                            child: ItemSidebar(
-                              arrivingItemIds: _arrivingItems,
-                              onExamine: (item) => bloc.add(
-                                InspectionRequested(inspectionForItem(item)),
+                            Expanded(
+                              child: ItemSidebar(
+                                arrivingItemIds: _arrivingItems,
+                                onExamine: (item) => bloc.add(
+                                  InspectionRequested(inspectionForItem(item)),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            BlocSelector<NotebookCubit, NotebookState, bool>(
-              selector: (state) => state.isOpen,
-              builder: (context, isOpen) =>
-                  isOpen ? const NotebookScreen() : const SizedBox.shrink(),
-            ),
-            FlightLayer(key: _flightKey),
-          ],
+                ],
+              ),
+              BlocSelector<NotebookCubit, NotebookState, bool>(
+                selector: (state) => state.isOpen,
+                builder: (context, isOpen) =>
+                    isOpen ? const NotebookScreen() : const SizedBox.shrink(),
+              ),
+              FlightLayer(key: _flightKey),
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+/// Esc works like the Back button, wherever the keyboard focus is inside
+/// the game. Plain keyboard input, not tied to a platform.
+class _BackShortcut extends StatelessWidget {
+  const _BackShortcut({required this.onBack, required this.child});
+
+  final VoidCallback onBack;
+  final Widget child;
+
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent ||
+        event.logicalKey != LogicalKeyboardKey.escape) {
+      return KeyEventResult.ignored;
+    }
+    onBack();
+    return KeyEventResult.handled;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Key events travel from the focused widget up to this node, which
+    // takes the focus as soon as the game is on screen. It is not a control
+    // of its own, so it stays out of the accessibility tree (a semantics
+    // node here would swallow the labels of the hotspots below it).
+    return Focus(
+      autofocus: true,
+      includeSemantics: false,
+      onKeyEvent: _onKey,
+      child: child,
     );
   }
 }

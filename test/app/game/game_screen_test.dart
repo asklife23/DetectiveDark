@@ -1,8 +1,10 @@
 import 'package:detective_dark/app/game/game_status_views.dart';
 import 'package:detective_dark/core/l10n/l10n.dart';
+import 'package:detective_dark/features/notebook/presentation/widgets/notebook_screen.dart';
 import 'package:detective_dark/features/scene_engine/presentation/widgets/inspect_panel.dart';
 import 'package:detective_dark/features/scene_engine/presentation/widgets/scene_view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 
@@ -50,6 +52,69 @@ void main() {
     expect(backButton(), findsNothing);
 
     await tester.closeGame();
+  });
+
+  group('Esc', () {
+    Future<void> pressEsc(WidgetTester tester) async {
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpFor();
+    }
+
+    testWidgets('returns from a close-up', (tester) async {
+      tester.useLandscapePhone();
+      await tester.pumpGame();
+      await tester.tapHotspot('Front door');
+      expect(find.bySemanticsLabel('Door lock'), findsOneWidget);
+
+      await pressEsc(tester);
+
+      expect(find.bySemanticsLabel('Front door'), findsOneWidget);
+      await tester.closeGame();
+    });
+
+    testWidgets('closes the inspection panel first', (tester) async {
+      tester.useLandscapePhone();
+      await tester.pumpGame();
+      await tester.tapHotspot('Garden statue');
+      await tester.tapHotspot('Plaque on the pedestal');
+      expect(find.byType(InspectPanel), findsOneWidget);
+
+      await pressEsc(tester);
+      expect(find.byType(InspectPanel), findsNothing);
+      expect(find.bySemanticsLabel('Plaque on the pedestal'), findsOneWidget);
+
+      await pressEsc(tester);
+      expect(find.bySemanticsLabel('Garden statue'), findsOneWidget);
+      await tester.closeGame();
+    });
+
+    testWidgets('still works after a button took the focus', (tester) async {
+      tester.useLandscapePhone();
+      await tester.pumpGame();
+      await tester.tapHotspot('Front door');
+      await tester.tap(find.byTooltip(l10n.notebookTooltip));
+      await tester.pumpFor();
+      expect(find.byType(NotebookScreen), findsOneWidget);
+
+      await pressEsc(tester);
+      expect(find.byType(NotebookScreen), findsNothing);
+      expect(find.bySemanticsLabel('Door lock'), findsOneWidget);
+
+      await pressEsc(tester);
+      expect(find.bySemanticsLabel('Front door'), findsOneWidget);
+      await tester.closeGame();
+    });
+
+    testWidgets('does nothing in a main scene', (tester) async {
+      tester.useLandscapePhone();
+      await tester.pumpGame();
+
+      await pressEsc(tester);
+
+      expect(find.bySemanticsLabel('Front door'), findsOneWidget);
+      expect(find.text(l10n.exitHint), findsNothing);
+      await tester.closeGame();
+    });
   });
 
   testWidgets('the system back button returns from a close-up', (tester) async {
