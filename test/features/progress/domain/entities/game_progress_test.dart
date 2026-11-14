@@ -229,4 +229,23 @@ void main() {
       expect(progress.notes.last, diary.markedRead());
     });
   });
+
+  group('asked topics', () {
+    test('are remembered per dialogue', () {
+      final progress = newGame.withAskedTopic('pharmacist', 'about_villa');
+
+      expect(progress.hasAsked('pharmacist', 'about_villa'), isTrue);
+      expect(progress.hasAsked('cafe_owner', 'about_villa'), isFalse);
+      expect(progress.hasAsked('pharmacist', 'ask_pills'), isFalse);
+      expect(progress.askedTopics, {'pharmacist/about_villa'});
+      expect(GameProgress.topicKey('a', 'b'), 'a/b');
+    });
+
+    test('asking twice changes nothing', () {
+      final once = newGame.withAskedTopic('pharmacist', 'about_villa');
+
+      expect(once.withAskedTopic('pharmacist', 'about_villa'), same(once));
+      expect(once, isNot(newGame));
+    });
+  });
 }

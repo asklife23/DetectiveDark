@@ -311,4 +311,16 @@ void main() {
       );
     });
   });
+
+  test('talk is returned as the conversation to open, nothing is changed', () {
+    final outcome = applier.apply(newGame, const [
+      Talk('pharmacist'),
+    ], atStatueKey);
+
+    expect(outcome.dialogueId, 'pharmacist');
+    expect(outcome.progress, same(newGame));
+    expect(outcome.events, isEmpty);
+    expect(outcome.navigation, isNull);
+    expect(outcome.inspectionId, isNull);
+  });
 }

@@ -125,3 +125,19 @@ final class InScene extends Condition {
   @override
   List<Object?> get props => [sceneId];
 }
+
+/// True once the player has asked the topic of a conversation (ADR 0016).
+/// Written `{"topicAsked": "dialogueId/topicId"}` in content.
+///
+/// It carries plain IDs: the scene engine knows nothing else about
+/// conversations (the dialogue feature depends on it, not the other way
+/// round).
+final class HasAsked extends Condition {
+  const HasAsked({required this.dialogueId, required this.topicId});
+
+  final String dialogueId;
+  final String topicId;
+
+  @override
+  List<Object?> get props => [dialogueId, topicId];
+}

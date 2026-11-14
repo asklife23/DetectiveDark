@@ -21,6 +21,11 @@ abstract final class PlaceholderStyles {
   static const spritePillBottle = 'sprite_pill_bottle';
   static const spriteMarketSign = 'sprite_market_sign';
 
+  /// Characters: the figure standing in a scene and, with the same
+  /// drawing, the portrait in the dialogue panel.
+  static const silhouettePharmacist = 'silhouette_pharmacist';
+  static const silhouetteCafeOwner = 'silhouette_cafe_owner';
+
   /// Every style name content may use.
   static const Set<String> names = {
     villaExterior,
@@ -36,5 +41,7 @@ abstract final class PlaceholderStyles {
     spriteLetter,
     spritePillBottle,
     spriteMarketSign,
+    silhouettePharmacist,
+    silhouetteCafeOwner,
   };
 }

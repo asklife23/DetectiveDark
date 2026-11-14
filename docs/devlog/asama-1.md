@@ -462,3 +462,42 @@
   oynanış kaydı) üstlenecek. Ucuz ve kesin olan kontrolü otomatik yap, pahalı olanı başka bir araca bırak. İkinci
   ders **hata ile uyarı** ayrımı: tuzak mekan her zaman yanlıştır (hata, test kırılır); çapraz bağlantı bazen
   bilinçli bir kısayoldur (uyarı, yazara gösterilir ama engellemez).
+
+### Adım 1.16 — Konuşma: domain ve içerik (arayüz yok) (2026-11-14)
+- **Ne yaptık:** Konuşma sisteminin kurallarını saf Dart ile kurduk (ADR 0016); panel bir sonraki adımda.
+  - **Yeni feature `features/dialogue/`:** `DialogueDefinition` (ad, portre, karşılama, tepkisizlik repliği, konular),
+    `DialogueTopic` (soru, cevap satırları, `visibleWhen`, `trigger`, `do`), `TopicTrigger` (`showItem` | `showNote`).
+  - **`DialogueViewResolver`:** hangi sorular listede? **Görünürlük = sorulmuş VEYA (`trigger` yok ve `visibleWhen`
+    tutuyor).** Bir kez sorulan konu, koşulu sonradan bozulsa bile listede kalır.
+  - **Use case'ler (ikisi de etki hattından):** `StartConversation` karşılamayı seçer (`first` → sonra `then`) ve
+    ilkinin duyulduğunu `spokenLines`'a yazar. `AskTopic` konu ilk kez sorulduğunda `do` etkilerini uygular,
+    `askedTopics`'e yazar, `TopicAsked` olayını üretir; tekrar sorulunca yalnızca cevabı döner, hiçbir şey değişmez.
+  - **`scene_engine` eklemeleri:** `talk` etkisi (yalnızca "şu konuşmayı aç" bilgisini döner, kayda dokunmaz),
+    `topicAsked` koşulu, `GameProgress.askedTopics`, `RuleParser` arayüzü.
+  - **İçerik:** `dialogues.json` (opsiyonel; klasör de olabilir), `dialogueExtensions`. Dilimde çarşıya iki silüet
+    geldi: **eczacı** ve **kahveci**; kişi dosyaları (satırlarıyla), bir gözlem notu ve `triggers.json`'da
+    "ikisine de villa soruldu" tetikleyicisi.
+  - **Doğrulama iki parça:** sahne tarafı `ContentValidator`, konuşmalar `DialogueValidator`; ikisi ortak bir
+    `ContentChecks` nesnesine yazar (bayraklar, `first` satırları ve kullanılan metinler iki tarafı da kapsar).
+- **Neden:** Dedektif kimseyi sorgulamadan her şeyi kağıttan öğrenemez. Ama oyun dallanan bir diyalog oyununa da
+  dönüşmemeli: oyuncu yalnızca önceden yazılmış soruları seçer, sorular bilgi ortaya çıkarır, hikaye tek yoldur.
+  Arayüzü ayırmamızın nedeni: kurallar (ne görünür, ne zaman etki çalışır, tetikleyici kaç kez ateşlenir) widget
+  olmadan milisaniyeler içinde test edilebiliyor; panel geldiğinde yalnızca "göster" işi kalacak.
+- **Önemli dosyalar:** `lib/features/dialogue/domain/` (entities, `dialogue_view_resolver.dart`,
+  `dialogue_validator.dart`, `usecases/start_conversation.dart`, `usecases/ask_topic.dart`),
+  `lib/features/dialogue/data/` (`dialogue_dto.dart`, `asset_dialogue_catalog_repository.dart`),
+  `scene_engine/domain/services/rule_parser.dart`, `scene_engine/data/models/codec_rule_parser.dart`,
+  `scene_engine/domain/services/content_checks.dart`, `core/di/register_dialogue.dart`,
+  `core/placeholders/silhouette_painters.dart`, içerik: `ch01/dialogues.json`, `triggers.json`, `notes.json`.
+- **Telefonda nasıl test edilir:** Çarşıya git (mektubu al → tabela): eczanenin vitrininde ve kafenin önünde iki
+  **silüet** durmalı. Bu adımda silüete dokunmak henüz bir şey açmaz (panel 1.17'de); mantığın tamamı testlerle
+  doğrulandı (kabul senaryosunun 14–16. ve 19. adımları `dialogue_usecases_test.dart`'ta).
+- **Öğrenme notu:** Bu adımın asıl dersi **bağımlılık yönü**. Konuşmanın koşul ve etkileri sahne motorunun kural
+  diliyle yazılıyor; yani `dialogue`, `scene_engine`'e bağımlı. Tersi de gerekiyor gibi görünüyordu: sahne
+  doğrulayıcısı "bu `talk` var olan bir konuşmayı mı gösteriyor" diye bakmalı. İki feature birbirini import etseydi
+  bir **döngü** oluşurdu (1.11'deki mimari testi kırılırdı). Çözüm üç küçük teknik: (1) `Talk` ve `topicAsked`
+  entity değil, yalnızca **ID (string)** taşır; (2) sahne doğrulayıcısı konuşmaları entity olarak değil **düz veri**
+  olarak alır (`Map<konuşma ID, konu ID'leri>`); (3) `dialogue/data`, kural ayrıştırıcıya `scene_engine/data`'yı
+  import ederek değil, `scene_engine/domain`'deki **`RuleParser` arayüzü** üzerinden ulaşır; gerçek uygulamayı DI
+  verir. Üçüncüsüne **bağımlılığın tersine çevrilmesi** (dependency inversion) denir: üst seviye kod somut sınıfa
+  değil arayüze bağlanır, somut sınıf dışarıdan takılır. Böylece ok hep tek yöne bakar: `dialogue` → `scene_engine`.

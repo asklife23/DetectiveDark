@@ -5,9 +5,11 @@ import 'package:detective_dark/core/content/content_texts.dart';
 import 'package:detective_dark/core/events/game_event_bus.dart';
 import 'package:detective_dark/core/time/clock.dart';
 import 'package:detective_dark/features/progress/domain/repositories/progress_repository.dart';
+import 'package:detective_dark/features/scene_engine/data/models/codec_rule_parser.dart';
 import 'package:detective_dark/features/scene_engine/data/repositories/asset_scene_content_repository.dart';
 import 'package:detective_dark/features/scene_engine/domain/repositories/scene_content_repository.dart';
 import 'package:detective_dark/features/scene_engine/domain/services/effect_pipeline.dart';
+import 'package:detective_dark/features/scene_engine/domain/services/rule_parser.dart';
 import 'package:detective_dark/features/scene_engine/domain/usecases/enter_scene.dart';
 import 'package:detective_dark/features/scene_engine/domain/usecases/start_game.dart';
 import 'package:detective_dark/features/scene_engine/domain/usecases/tap_hotspot.dart';
@@ -23,6 +25,9 @@ void registerSceneEngine(GetIt getIt) {
     ..registerLazySingleton<SceneContentRepository>(
       () => AssetSceneContentRepository(getIt<ContentAssetSource>()),
     )
+    // The rule language (`when` / `do`), for features that keep their own
+    // content files (dialogue).
+    ..registerLazySingleton<RuleParser>(CodecRuleParser.new)
     // The single path on which progress changes (ADR 0014): one instance,
     // shared by every use case that writes.
     ..registerLazySingleton<EffectPipeline>(

@@ -92,6 +92,7 @@ class TriggerRunner {
         events: List.unmodifiable(events),
         navigation: applied.navigation,
         inspectionId: applied.inspectionId,
+        dialogueId: applied.dialogueId,
       ),
       firedTriggerIds: List.unmodifiable(fired),
       hitPassLimit: firedInPass,

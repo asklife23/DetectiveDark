@@ -23,6 +23,7 @@ abstract final class ConditionCodec {
     'atLeast',
     'visited',
     'inScene',
+    'topicAsked',
   ];
 
   static const _atLeastKeys = {'count', 'of'};
@@ -48,6 +49,7 @@ abstract final class ConditionCodec {
       'atLeast' => _atLeast(value),
       'visited' => Visited(_id(key, value)),
       'inScene' => InScene(_id(key, value)),
+      'topicAsked' => _topicAsked(value),
       _ => throw FormatException(
         'Unknown condition "$key". Known: ${knownKeys.join(', ')}.',
       ),
@@ -64,6 +66,17 @@ abstract final class ConditionCodec {
       return List.unmodifiable(value.map(parse));
     }
     throw FormatException('Condition "$key" needs a non-empty list.');
+  }
+
+  /// `"dialogueId/topicId"`.
+  static HasAsked _topicAsked(Object? value) {
+    final parts = _id('topicAsked', value).split('/');
+    if (parts.length != 2 || parts.any((part) => part.isEmpty)) {
+      throw FormatException(
+        'Condition "topicAsked" needs "dialogueId/topicId", got "$value".',
+      );
+    }
+    return HasAsked(dialogueId: parts.first, topicId: parts.last);
   }
 
   static AtLeast _atLeast(Object? value) {

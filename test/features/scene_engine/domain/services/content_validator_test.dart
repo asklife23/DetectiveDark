@@ -10,6 +10,7 @@ import 'package:detective_dark/features/scene_engine/domain/entities/normalized_
 import 'package:detective_dark/features/scene_engine/domain/entities/scene_definition.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/scene_visual.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/trigger_definition.dart';
+import 'package:detective_dark/features/scene_engine/domain/services/content_checks.dart';
 import 'package:detective_dark/features/scene_engine/domain/services/content_validator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -80,6 +81,7 @@ List<ContentIssue> _validate({
   List<TriggerDefinition> triggers = const [],
   Map<String, Set<String>> texts = const {'en': _texts},
   Map<String, NoteDefinition> notes = _notes,
+  Map<String, Set<String>> dialogueTopics = const {},
   double reservedBottomStrip = 0,
 }) {
   final scenes = [
@@ -124,6 +126,7 @@ List<ContentIssue> _validate({
     notes: notes,
     textKeysByLanguage: texts,
     styles: _styles,
+    dialogueTopics: dialogueTopics,
     reservedBottomStrip: reservedBottomStrip,
   );
 }
@@ -1090,6 +1093,168 @@ void main() {
       );
       expect(issues, _reports('unknown overlay style "neon"'));
       expect(issues, _reports('missing text "no_such_text" (en)'));
+    });
+  });
+
+  group('talk and topicAsked', () {
+    const dialogues = {
+      'pharmacist': {'about_villa', 'ask_pills'},
+    };
+
+    List<ContentIssue> withRule(
+      List<Effect> effects, {
+      Condition? when,
+      List<TriggerDefinition> triggers = const [],
+      List<Effect> onFirstEnter = const [],
+    }) => _validate(
+      dialogueTopics: dialogues,
+      triggers: triggers,
+      yardOnFirstEnter: onFirstEnter,
+      yardHotspots: [
+        _hotspot('door', const [GoToScene('shed')]),
+        _hotspot('figure', effects, when: when),
+      ],
+    );
+
+    test('talk to a known dialogue and topicAsked of a known topic are '
+        'fine', () {
+      expect(
+        withRule(
+          const [Talk('pharmacist')],
+          when: const HasAsked(dialogueId: 'pharmacist', topicId: 'ask_pills'),
+        ),
+        isEmpty,
+      );
+    });
+
+    test('talk to an unknown dialogue', () {
+      expect(
+        withRule(const [Talk('butcher')]),
+        _reports('hotspot figure / rule 1: unknown dialogue "butcher"'),
+      );
+    });
+
+    test('topicAsked with an unknown dialogue or topic', () {
+      expect(
+        withRule(
+          const [Say('say_locked')],
+          when: const HasAsked(dialogueId: 'butcher', topicId: 'about_meat'),
+        ),
+        _reports('unknown dialogue "butcher"'),
+      );
+      expect(
+        withRule(
+          const [Say('say_locked')],
+          when: const HasAsked(dialogueId: 'pharmacist', topicId: 'about_tea'),
+        ),
+        _reports('dialogue "pharmacist" has no topic "about_tea"'),
+      );
+    });
+
+    test('two talk effects in one rule', () {
+      expect(
+        withRule(const [Talk('pharmacist'), Talk('pharmacist')]),
+        _reports('more than one talk effect'),
+      );
+    });
+
+    test('talk together with goToScene or inspect', () {
+      expect(
+        withRule(const [Talk('pharmacist'), GoToScene('shed')]),
+        _reports('talk cannot be combined with goToScene or inspect'),
+      );
+      expect(
+        withRule(const [Inspect('sign'), Talk('pharmacist')]),
+        _reports('talk cannot be combined with goToScene or inspect'),
+      );
+    });
+
+    test('talk together with other effects is fine', () {
+      expect(
+        withRule(const [SetFlag('met'), Say('say_locked'), Talk('pharmacist')]),
+        isEmpty,
+      );
+    });
+
+    test('talk is not allowed in onFirstEnter or in a trigger', () {
+      expect(
+        withRule(
+          const [Talk('pharmacist')],
+          onFirstEnter: const [Talk('pharmacist')],
+        ),
+        _reports('scene yard / onFirstEnter: Talk is not allowed here'),
+      );
+      expect(
+        withRule(
+          const [Talk('pharmacist')],
+          triggers: const [
+            TriggerDefinition(
+              id: 'chatty',
+              when: Visited('shed'),
+              effects: [Talk('pharmacist')],
+            ),
+          ],
+        ),
+        _reports('trigger chatty: Talk is not allowed here'),
+      );
+    });
+
+    test('a trigger may wait for a topic', () {
+      expect(
+        withRule(
+          const [Talk('pharmacist')],
+          triggers: const [
+            TriggerDefinition(
+              id: 'asked',
+              when: HasAsked(dialogueId: 'pharmacist', topicId: 'about_villa'),
+              effects: [Say('say_locked')],
+            ),
+          ],
+        ),
+        isEmpty,
+      );
+    });
+
+    test('validateWith leaves the flags to the caller', () {
+      final checks = ContentChecks(
+        content: CaseContent(
+          definition: const CaseDefinition(
+            id: 'case01',
+            chapters: [ChapterDefinition(id: 'ch01', entrySceneId: 'yard')],
+          ),
+          scenes: {
+            'yard': SceneDefinition(
+              id: 'yard',
+              titleKey: 'scene_yard',
+              visual: _visual,
+              hotspots: [
+                _hotspot(
+                  'gate',
+                  const [Say('say_locked')],
+                  when: const FlagSet('set_by_a_dialogue'),
+                ),
+              ],
+            ),
+          },
+          inspections: const {},
+          sceneChapters: const {'yard': 'ch01'},
+        ),
+        items: _items,
+        notes: _notes,
+        textKeysByLanguage: const {'en': _texts},
+      );
+
+      final sceneIssues = const ContentValidator().validateWith(
+        checks,
+        styles: _styles,
+      );
+      // Another validator sees the flag being set.
+      checks.effect('dialogue x / topic y', const SetFlag('set_by_a_dialogue'));
+      final flagIssues = checks.flagIssues();
+
+      expect(sceneIssues, isEmpty);
+      expect(flagIssues, isEmpty);
+      expect(checks.issues, isEmpty);
     });
   });
 }

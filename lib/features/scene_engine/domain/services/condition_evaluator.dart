@@ -29,6 +29,10 @@ class ConditionEvaluator {
         conditions.where(check).length >= count,
       Visited(:final sceneId) => progress.hasVisited(sceneId),
       InScene(:final sceneId) => progress.currentSceneId == sceneId,
+      HasAsked(:final dialogueId, :final topicId) => progress.hasAsked(
+        dialogueId,
+        topicId,
+      ),
     };
   }
 

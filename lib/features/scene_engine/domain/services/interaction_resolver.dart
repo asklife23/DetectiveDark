@@ -79,6 +79,7 @@ class InteractionResolver {
     Not() ||
     AtLeast() ||
     Visited() ||
-    InScene() => false,
+    InScene() ||
+    HasAsked() => false,
   };
 }

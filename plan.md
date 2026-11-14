@@ -782,7 +782,7 @@ bölünebilsin, sonraki bölüm öncekini kendi dosyasından genişletebilsin, d
   Windows'ta çalışıyor; mevcut 1–11 kabul testi geçiyor.
   **Commit:** `feat(scene_engine): add sprite overlays, travel checks and the market square`
 
-### [ ] 1.16 Konuşma: domain ve içerik (arayüz yok)
+### [x] 1.16 Konuşma: domain ve içerik (arayüz yok)
 **Amaç:** Konuşma sisteminin kurallarını saf Dart ile ve testlerle kurmak (ADR 0016). Bu adımın sonunda silüetler
 sahnede durur, mantık testlerle kanıtlanmıştır; panel 1.17'de gelir.
 **Yapılacaklar:**
@@ -1568,3 +1568,21 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   `['pill_bottle']` oldu. Çapraz bağlantı uyarısı gerçek içerikte tetiklenmiyor. **Telefonda doğrulanacak (kullanıcı):**
   kabul senaryosunun 12–13. adımları (silüetler hariç) ve dönüş; CI widget testleri ve bloc testleri geçti, Windows
   ve telefon doğrulaması 1.20'deki toplu kontrolde.
+- 2026-11-14 (1.16): Plandan küçük sapmalar ve yorumlar. (a) **Adlar:** `topicAsked` koşulunun sınıfı `HasAsked`
+  (JSON anahtarı aynı): `TopicAsked` adı `core/events`'teki olayla çakışıyordu. (b) **Use case imzaları:** plan
+  `StartConversation(dialogueId)` / `AskTopic(dialogueId, topicId)` diyordu; `TapHotspot` gibi entity alıyorlar
+  (`dialogue`, `progress`, `triggers`): saf ve test etmesi kolay, katalog ve içerik yüklemesi çağırana (1.17'de
+  `DialogueCubit`) kalır. `AskTopic.play` (görünürlük sormadan oynat) 1.18'deki `ShowToCharacter` için açıldı.
+  (c) **Doğrulayıcının paylaşılan parçası:** "ContentValidator'ın açtığı yardımcılar" = yeni `ContentChecks` sınıfı
+  (`scene_engine/domain`): metin, koşul, etki, izinli-etki, `first` satırı ve bayrak kontrolleri + sorun listesi.
+  `ContentValidator.validateWith(checks)` ve `DialogueValidator.validate(checks: ...)` aynı nesneye yazar; bayrak
+  kontrolü (`checks.flagIssues()`) en sonda çağrılır, çünkü bir konunun set ettiği bayrağı bir hotspot okuyabilir.
+  Eski `ContentValidator.validate(...)` imzası aynen duruyor (mevcut testler değişmedi). `ContentIssue` ayrı dosyaya
+  alındı (`content_issue.dart`, `content_validator.dart` dışa aktarır). (d) Karşılama (`greeting`) ayrıştırması
+  `dialogue/data`'da (15 satır); `RuleParser` yalnızca koşul ve etki ayrıştırır. (e) `trigger`'ın "tam olarak bir
+  `showItem` / `showNote`" kuralı yükleme anında uygulanır (bozuk dosya `ContentFailure`); doğrulayıcı gösterilen eşya
+  / notun var olduğuna bakar. (f) Dilimde eczacının ikinci sabit konusu `about_last_night`, kahvecininki
+  `about_pharmacist`; kahvecinin `show_letter` konusu dosyasına `recognised_paper` satırını ekler. (g) Silüetler
+  portre olarak da aynı çizimi kullanır (`silhouette_pharmacist`, `silhouette_cafe_owner`); cilası 1.20'de.
+  (h) Mimari testine iki açık kural eklendi: `scene_engine` → `dialogue` import'u yok; bir feature'ın `data` katmanı
+  başka feature'ın `data` katmanını import etmez.

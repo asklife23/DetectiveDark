@@ -5,58 +5,12 @@ import 'package:detective_dark/features/scene_engine/domain/entities/condition.d
 import 'package:detective_dark/features/scene_engine/domain/entities/effect.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/scene_definition.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/scene_visual.dart';
+import 'package:detective_dark/features/scene_engine/domain/services/content_checks.dart';
+import 'package:detective_dark/features/scene_engine/domain/services/content_issue.dart';
 import 'package:detective_dark/features/scene_engine/domain/services/interaction_resolver.dart';
 import 'package:equatable/equatable.dart';
 
-/// How serious a [ContentIssue] is.
-enum ContentSeverity {
-  /// The content is wrong: the content validation test fails.
-  error,
-
-  /// Probably a leftover or an oversight: reported, the test still passes.
-  warning,
-}
-
-/// One problem found in the game content.
-class ContentIssue extends Equatable {
-  const ContentIssue(
-    this.location,
-    this.message, {
-    this.severity = ContentSeverity.error,
-  });
-
-  /// Where it is, e.g. `scene villa_hall / hotspot desk_paper`.
-  final String location;
-
-  final String message;
-
-  final ContentSeverity severity;
-
-  bool get isError => severity == ContentSeverity.error;
-
-  bool get isWarning => severity == ContentSeverity.warning;
-
-  @override
-  List<Object?> get props => [location, message, severity];
-
-  @override
-  String toString() =>
-      isWarning ? 'warning: $location: $message' : '$location: $message';
-}
-
-extension ContentIssues on Iterable<ContentIssue> {
-  /// The issues that make the content wrong.
-  List<ContentIssue> get errors => [
-    for (final issue in this)
-      if (issue.isError) issue,
-  ];
-
-  /// The issues that are only reported.
-  List<ContentIssue> get warnings => [
-    for (final issue in this)
-      if (issue.isWarning) issue,
-  ];
-}
+export 'package:detective_dark/features/scene_engine/domain/services/content_issue.dart';
 
 /// Names that exist in code and are only referenced by content.
 class KnownStyleNames extends Equatable {
@@ -90,9 +44,15 @@ class ContentValidator {
   static const _triggerEffects =
       'say, setFlag, addNote, addNoteEntry, giveItem';
 
+  /// Validates a case on its own: everything [validateWith] checks, plus
+  /// the flags.
+  ///
   /// [reservedBottomStrip] is the share of the scene height, along its
   /// bottom edge, that the interface keeps for itself (the detective
   /// message bar). No hotspot may reach into it.
+  ///
+  /// [dialogueTopics] are the conversations that exist (dialogue ID → topic
+  /// IDs), for the references of `talk` and `topicAsked`.
   ///
   /// [usedTextKeys], when given, is filled with every text key the content
   /// refers to. Hand the set to [unusedTextWarnings] once every validator
@@ -104,17 +64,41 @@ class ContentValidator {
     required Map<String, Set<String>> textKeysByLanguage,
     required KnownStyleNames styles,
     double reservedBottomStrip = 0,
+    Map<String, Set<String>> dialogueTopics = const {},
     Set<String>? usedTextKeys,
   }) {
-    final run = _Run(
-      content,
-      items,
-      notes,
-      textKeysByLanguage,
-      styles,
-      reservedBottomStrip,
-      usedTextKeys ?? {},
-    )..text('common texts', InteractionResolver.genericItemNoEffectKey);
+    final checks = ContentChecks(
+      content: content,
+      items: items,
+      notes: notes,
+      textKeysByLanguage: textKeysByLanguage,
+      dialogueTopics: dialogueTopics,
+      usedTextKeys: usedTextKeys,
+    );
+    validateWith(
+      checks,
+      styles: styles,
+      reservedBottomStrip: reservedBottomStrip,
+    );
+    checks.flagIssues();
+    return checks.issues;
+  }
+
+  /// Checks scenes, inspections, items, notes and triggers, and writes what
+  /// it finds into [checks]. Returns the issues of this call.
+  ///
+  /// It does **not** check the flags: when the dialogue validator runs on
+  /// the same [checks] afterwards, a flag set by a dialogue topic counts
+  /// too. Call `checks.flagIssues()` after the last validator.
+  List<ContentIssue> validateWith(
+    ContentChecks checks, {
+    required KnownStyleNames styles,
+    double reservedBottomStrip = 0,
+  }) {
+    final before = checks.issues.length;
+    final content = checks.content;
+    final run = _Run(checks, styles, reservedBottomStrip)
+      ..text('common texts', InteractionResolver.genericItemNoEffectKey);
     content.scenes.values.forEach(run.scene);
     for (final inspection in content.inspections.values) {
       final where = 'inspection ${inspection.id}';
@@ -123,7 +107,7 @@ class ContentValidator {
         ..optionalText(where, inspection.titleKey)
         ..visual(where, inspection.visual);
     }
-    for (final item in items.values) {
+    for (final item in checks.items.values) {
       final where = 'item ${item.id}';
       run
         ..text(where, item.nameKey)
@@ -132,7 +116,7 @@ class ContentValidator {
         run.add(where, 'unknown icon style "${item.iconStyle}"');
       }
     }
-    for (final note in notes.values) {
+    for (final note in checks.notes.values) {
       final where = 'note ${note.id}';
       run
         ..text(where, note.titleKey)
@@ -147,11 +131,10 @@ class ContentValidator {
     }
     run
       ..triggers()
-      ..flags()
       ..reachability()
       ..trapLocations();
 
-    return List.unmodifiable(run.issues);
+    return checks.issues.sublist(before);
   }
 
   /// A warning for every text key that nothing refers to: most likely the
@@ -178,54 +161,33 @@ class ContentValidator {
   }
 }
 
-/// The state of one validation run.
+/// The scene side of one validation run. The checks shared with other
+/// validators live in [ContentChecks].
 class _Run {
-  _Run(
-    this.content,
-    this.items,
-    this.notes,
-    this.textKeys,
-    this.styles,
-    this.reservedBottomStrip,
-    this.usedTextKeys,
-  );
+  _Run(this.checks, this.styles, this.reservedBottomStrip);
 
   /// Absorbs floating point noise such as `0.76 + 0.11 = 0.8700000000000001`.
   static const _tolerance = 1e-9;
 
-  static const _insideNotOrAtLeast = 'inside not / atLeast';
-
-  final CaseContent content;
-  final Map<String, ItemDefinition> items;
-  final Map<String, NoteDefinition> notes;
-  final Map<String, Set<String>> textKeys;
+  final ContentChecks checks;
   final KnownStyleNames styles;
   final double reservedBottomStrip;
-  final Set<String> usedTextKeys;
 
-  final issues = <ContentIssue>[];
-  final _flagsRead = <String, String>{};
-  final _flagsSet = <String>{};
-  final _firstLines = <String, String>{};
+  CaseContent get content => checks.content;
 
-  void add(String where, String message) =>
-      issues.add(ContentIssue(where, message));
+  void add(String where, String message) => checks.add(where, message);
 
-  void warn(String where, String message) => issues.add(
-    ContentIssue(where, message, severity: ContentSeverity.warning),
-  );
+  void warn(String where, String message) => checks.warn(where, message);
 
-  /// [key] must exist in every supported language.
-  void text(String where, String key) {
-    usedTextKeys.add(key);
-    textKeys.forEach((language, keys) {
-      if (!keys.contains(key)) add(where, 'missing text "$key" ($language)');
-    });
-  }
+  void text(String where, String key) => checks.text(where, key);
 
-  void optionalText(String where, String? key) {
-    if (key != null) text(where, key);
-  }
+  void optionalText(String where, String? key) =>
+      checks.optionalText(where, key);
+
+  void condition(String where, Condition condition, {String? noUsingItem}) =>
+      checks.condition(where, condition, noUsingItem: noUsingItem);
+
+  void effect(String where, Effect effect) => checks.effect(where, effect);
 
   void scene(SceneDefinition scene) {
     final where = 'scene ${scene.id}';
@@ -238,21 +200,16 @@ class _Run {
       visual('$where / visual variant', variant.visual);
     }
 
-    for (final effect in scene.onFirstEnter) {
-      final allowed =
+    checks.restrictedEffects(
+      '$where / onFirstEnter',
+      scene.onFirstEnter,
+      allowed: (effect) =>
           effect is Say ||
           effect is SetFlag ||
           effect is AddNote ||
-          effect is GiveItem;
-      if (!allowed) {
-        add(
-          '$where / onFirstEnter',
-          '${effect.runtimeType} is not allowed here '
-              '(only ${ContentValidator._firstEnterEffects})',
-        );
-      }
-      this.effect('$where / onFirstEnter', effect);
-    }
+          effect is GiveItem,
+      allowedNames: ContentValidator._firstEnterEffects,
+    );
 
     final seen = <String>{};
     for (final hotspot in scene.hotspots) {
@@ -295,10 +252,18 @@ class _Run {
           if (ruleEffect is GoToScene) crossLink(ruleAt, scene, ruleEffect);
         }
 
+        final goesAway = rule.effects.any((e) => e is GoToScene);
         final inspects = rule.effects.whereType<Inspect>().length;
         if (inspects > 1) add(ruleAt, 'more than one inspect effect');
-        if (inspects > 0 && rule.effects.any((e) => e is GoToScene)) {
+        if (inspects > 0 && goesAway) {
           add(ruleAt, 'inspect cannot be combined with goToScene');
+        }
+        // `talk` opens a panel like `inspect` does: one per rule, and never
+        // together with another panel or a scene change.
+        final talks = rule.effects.whereType<Talk>().length;
+        if (talks > 1) add(ruleAt, 'more than one talk effect');
+        if (talks > 0 && (goesAway || inspects > 0)) {
+          add(ruleAt, 'talk cannot be combined with goToScene or inspect');
         }
       }
     }
@@ -348,81 +313,6 @@ class _Run {
     }
   }
 
-  /// [noUsingItem] names a place where `usingItem` is forbidden ("in a
-  /// trigger"); null where it is allowed. Inside `not` and `atLeast` it is
-  /// always forbidden, at any depth.
-  void condition(String where, Condition condition, {String? noUsingItem}) {
-    void inner(Condition c, {String? ban}) =>
-        this.condition(where, c, noUsingItem: noUsingItem ?? ban);
-
-    switch (condition) {
-      case FlagSet(:final flag) || FlagNotSet(:final flag):
-        _flagsRead.putIfAbsent(flag, () => where);
-      case HasItem(:final itemId):
-        if (!items.containsKey(itemId)) add(where, 'unknown item "$itemId"');
-      case UsingItem(:final itemId):
-        if (!items.containsKey(itemId)) add(where, 'unknown item "$itemId"');
-        if (noUsingItem != null) {
-          add(where, 'usingItem cannot be used $noUsingItem');
-        }
-      case HasNote(:final noteId):
-        if (!notes.containsKey(noteId)) add(where, 'unknown note "$noteId"');
-      case AllOf(:final conditions) || AnyOf(:final conditions):
-        conditions.forEach(inner);
-      case Not(condition: final negated):
-        inner(negated, ban: _insideNotOrAtLeast);
-      case AtLeast(:final count, :final conditions):
-        if (count < 1 || count > conditions.length) {
-          add(
-            where,
-            'atLeast count $count must be between 1 and '
-            '${conditions.length}',
-          );
-        }
-        for (final c in conditions) {
-          inner(c, ban: _insideNotOrAtLeast);
-        }
-      case Visited(:final sceneId) || InScene(:final sceneId):
-        if (!content.scenes.containsKey(sceneId)) {
-          add(where, 'unknown scene "$sceneId"');
-        }
-    }
-  }
-
-  void effect(String where, Effect effect) {
-    switch (effect) {
-      case GoToScene(:final sceneId):
-        if (!content.scenes.containsKey(sceneId)) {
-          add(where, 'unknown scene "$sceneId"');
-        }
-      case GiveItem(:final itemId) || ConsumeItem(:final itemId):
-        if (!items.containsKey(itemId)) add(where, 'unknown item "$itemId"');
-      case AddNote(:final noteId):
-        if (!notes.containsKey(noteId)) add(where, 'unknown note "$noteId"');
-      case AddNoteEntry(:final noteId, :final entryId):
-        final note = notes[noteId];
-        if (note == null) {
-          add(where, 'unknown note "$noteId"');
-        } else if (note.entry(entryId) == null) {
-          add(where, 'note "$noteId" has no entry "$entryId"');
-        }
-      case SetFlag(:final flag):
-        _flagsSet.add(flag);
-      case Say(:final messageKey, :final repeatKey):
-        text(where, messageKey);
-        if (repeatKey != null) {
-          text(where, repeatKey);
-          firstLine(where, messageKey);
-        }
-      case Inspect(:final inspectionId):
-        if (!content.inspections.containsKey(inspectionId)) {
-          add(where, 'unknown inspection "$inspectionId"');
-        }
-      case HideHotspot():
-        break;
-    }
-  }
-
   void triggers() {
     final seen = <String>{};
     for (final trigger in content.triggers) {
@@ -430,44 +320,18 @@ class _Run {
       if (!seen.add(trigger.id)) add(where, 'duplicate trigger ID');
       condition(where, trigger.when, noUsingItem: 'in a trigger');
       if (trigger.effects.isEmpty) add(where, 'has no effects');
-      for (final effect in trigger.effects) {
-        final allowed =
+      checks.restrictedEffects(
+        where,
+        trigger.effects,
+        allowed: (effect) =>
             effect is Say ||
             effect is SetFlag ||
             effect is AddNote ||
             effect is AddNoteEntry ||
-            effect is GiveItem;
-        if (!allowed) {
-          add(
-            where,
-            '${effect.runtimeType} is not allowed here '
-            '(only ${ContentValidator._triggerEffects})',
-          );
-        }
-        this.effect(where, effect);
-      }
+            effect is GiveItem,
+        allowedNames: ContentValidator._triggerEffects,
+      );
     }
-  }
-
-  /// The `first` key of a two-form line must be unique in the case: it is
-  /// the key under which "already said" is saved, so a second use would
-  /// start out as already spoken.
-  void firstLine(String where, String key) {
-    final earlier = _firstLines[key];
-    if (earlier == null) {
-      _firstLines[key] = where;
-    } else {
-      add(where, 'first line "$key" is already used at $earlier');
-    }
-  }
-
-  /// A flag that is read but never set is almost always a typo.
-  void flags() {
-    _flagsRead.forEach((flag, where) {
-      if (!_flagsSet.contains(flag)) {
-        add(where, 'flag "$flag" is read but never set');
-      }
-    });
   }
 
   /// Travel without a map (ADR 0017) keeps the game readable when every

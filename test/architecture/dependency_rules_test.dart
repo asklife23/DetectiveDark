@@ -212,4 +212,32 @@ void main() {
       expect(cycle, isEmpty);
     });
   });
+
+  test('the dependency between dialogue and scene engine runs one way '
+      '(ADR 0016)', () {
+    final graph = featureGraph(importsByFile());
+
+    expect(graph['dialogue'], contains('scene_engine'));
+    expect(graph['scene_engine'], isNot(contains('dialogue')));
+    expect(graph['notebook'], isNot(contains('dialogue')));
+    expect(graph['inventory'], isNot(contains('dialogue')));
+  });
+
+  test('a feature data layer never imports the data layer of another '
+      'feature (the rule parser comes through the domain)', () {
+    final violations = <String>[];
+
+    importsByFile().forEach((path, imports) {
+      final (feature, layer) = locate(path);
+      if (layer != 'data') return;
+      for (final uri in imports.where((u) => u.startsWith(featurePrefix))) {
+        final target = uri.substring(featurePrefix.length).split('/');
+        if (target[0] != feature && target[1] == 'data') {
+          violations.add('$path imports $uri');
+        }
+      }
+    });
+
+    expect(violations, isEmpty);
+  });
 }

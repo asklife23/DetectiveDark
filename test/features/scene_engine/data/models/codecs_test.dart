@@ -1,3 +1,4 @@
+import 'package:detective_dark/features/scene_engine/data/models/codec_rule_parser.dart';
 import 'package:detective_dark/features/scene_engine/data/models/condition_codec.dart';
 import 'package:detective_dark/features/scene_engine/data/models/effect_codec.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/condition.dart';
@@ -180,6 +181,63 @@ void main() {
     });
   });
 
+  group('ConditionCodec: topicAsked', () {
+    test('parses "dialogueId/topicId"', () {
+      expect(
+        ConditionCodec.parse({'topicAsked': 'pharmacist/about_villa'}),
+        const HasAsked(dialogueId: 'pharmacist', topicId: 'about_villa'),
+      );
+    });
+
+    test('rejects anything but exactly two IDs', () {
+      for (final value in <Object?>[
+        'pharmacist',
+        'pharmacist/',
+        '/about_villa',
+        'a/b/c',
+        '',
+        7,
+      ]) {
+        expect(
+          () => ConditionCodec.parse({'topicAsked': value}),
+          _formatError('"topicAsked"'),
+          reason: '$value',
+        );
+      }
+    });
+  });
+
+  group('CodecRuleParser', () {
+    const parser = CodecRuleParser();
+
+    test('parses conditions and effects like the codecs', () {
+      expect(
+        parser.parseCondition({'hasItem': 'pill_bottle'}),
+        const HasItem('pill_bottle'),
+      );
+      expect(
+        parser.parseEffects([
+          {'consumeItem': 'pill_bottle'},
+          {'say': 'thanks'},
+        ]),
+        const [ConsumeItem('pill_bottle'), Say('thanks')],
+      );
+    });
+
+    test('rejects what the codecs reject', () {
+      expect(
+        () => parser.parseCondition({'hasItm': 'x'}),
+        _formatError('Unknown condition "hasItm"'),
+      );
+      expect(
+        () => parser.parseEffects([
+          {'sayy': 'x'},
+        ]),
+        _formatError('Unknown effect "sayy"'),
+      );
+    });
+  });
+
   group('EffectCodec', () {
     test('parses every kind of effect', () {
       expect(EffectCodec.parse({'giveItem': 'key'}), const GiveItem('key'));
@@ -337,6 +395,20 @@ void main() {
           'addNoteEntry': {'note': 'a', 'entry': 'b', 'line': 'c'},
         }),
         _formatError('Unknown "addNoteEntry" keys: line'),
+      );
+    });
+
+    test('talk', () {
+      expect(
+        EffectCodec.parse({'talk': 'pharmacist'}),
+        const Talk('pharmacist'),
+      );
+      expect(() => EffectCodec.parse({'talk': ''}), _formatError('"talk"'));
+      expect(
+        () => EffectCodec.parse({
+          'talk': {'dialogue': 'pharmacist'},
+        }),
+        _formatError('"talk"'),
       );
     });
 

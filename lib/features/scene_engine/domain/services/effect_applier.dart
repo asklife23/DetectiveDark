@@ -38,6 +38,7 @@ class EffectOutcome extends Equatable {
     this.events = const [],
     this.navigation,
     this.inspectionId,
+    this.dialogueId,
   });
 
   /// The progress after all effects. Save it in one step.
@@ -52,8 +53,17 @@ class EffectOutcome extends Equatable {
   /// An inspection to open, if any.
   final String? inspectionId;
 
+  /// A conversation to open, if any (`talk`).
+  final String? dialogueId;
+
   @override
-  List<Object?> get props => [progress, events, navigation, inspectionId];
+  List<Object?> get props => [
+    progress,
+    events,
+    navigation,
+    inspectionId,
+    dialogueId,
+  ];
 }
 
 /// Turns a list of effects into one new [GameProgress].
@@ -74,6 +84,7 @@ class EffectApplier {
     final events = <GameEvent>[];
     GoToScene? navigation;
     String? inspectionId;
+    String? dialogueId;
 
     final hotspotId = context.hotspotId;
     final usedItemId = context.usedItemId;
@@ -155,6 +166,10 @@ class EffectApplier {
           navigation = effect;
         case Inspect(inspectionId: final id):
           inspectionId = id;
+        case Talk(dialogueId: final id):
+          // Opening a conversation saves nothing; the panel is interface
+          // state. The caller opens it.
+          dialogueId = id;
       }
     }
 
@@ -163,6 +178,7 @@ class EffectApplier {
       events: List.unmodifiable(events),
       navigation: navigation,
       inspectionId: inspectionId,
+      dialogueId: dialogueId,
     );
   }
 }

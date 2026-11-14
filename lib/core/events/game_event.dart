@@ -78,3 +78,15 @@ final class DetectiveSaid extends GameEvent {
   @override
   List<Object?> get props => [messageKey];
 }
+
+/// The player asked a dialogue topic for the first time (or showed the
+/// evidence that opens it). Asking again does not announce it again.
+final class TopicAsked extends GameEvent {
+  const TopicAsked(this.dialogueId, this.topicId);
+
+  final String dialogueId;
+  final String topicId;
+
+  @override
+  List<Object?> get props => [dialogueId, topicId];
+}

@@ -10,7 +10,10 @@ enum ContentType {
   inspections,
 
   /// Optional: a chapter without triggers has neither file nor folder.
-  triggers(isOptional: true);
+  triggers(isOptional: true),
+
+  /// Optional: a chapter without conversations.
+  dialogues(isOptional: true);
 
   const ContentType({this.isOptional = false});
 
@@ -37,6 +40,7 @@ enum ContentType {
 ///       notes.json         or  notes/*.json
 ///       inspections.json   or  inspections/*.json
 ///       triggers.json      or  triggers/*.json   (optional)
+///       dialogues.json     or  dialogues/*.json  (optional)
 ///       text_en.json
 /// ```
 abstract final class ContentPaths {

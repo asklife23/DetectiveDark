@@ -6,6 +6,32 @@
       "category": "document",
       "titleKey": "note_hall_letter_title",
       "bodyKey": "note_hall_letter_body"
+    },
+    {
+      "id": "person_pharmacist",
+      "category": "person",
+      "titleKey": "note_person_pharmacist_title",
+      "bodyKey": "note_person_pharmacist_body",
+      "entries": [
+        {"id": "knows_villa", "textKey": "note_person_pharmacist_knows_villa"},
+        {"id": "pills_prescribed", "textKey": "note_person_pharmacist_pills_prescribed"}
+      ]
+    },
+    {
+      "id": "person_cafe_owner",
+      "category": "person",
+      "titleKey": "note_person_cafe_owner_title",
+      "bodyKey": "note_person_cafe_owner_body",
+      "entries": [
+        {"id": "knows_villa", "textKey": "note_person_cafe_owner_knows_villa"},
+        {"id": "recognised_paper", "textKey": "note_person_cafe_owner_recognised_paper"}
+      ]
+    },
+    {
+      "id": "obs_stories_do_not_match",
+      "category": "observation",
+      "titleKey": "note_obs_stories_do_not_match_title",
+      "bodyKey": "note_obs_stories_do_not_match_body"
     }
   ]
 }

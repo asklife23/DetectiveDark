@@ -1,0 +1,21 @@
+{
+  "formatVersion": 1,
+  "triggers": [
+    {
+      "id": "both_asked_about_villa",
+      "when": {
+        "atLeast": {
+          "count": 2,
+          "of": [
+            {"topicAsked": "pharmacist/about_villa"},
+            {"topicAsked": "cafe_owner/about_villa"}
+          ]
+        }
+      },
+      "do": [
+        {"say": "say_stories_do_not_match"},
+        {"addNote": "obs_stories_do_not_match"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "formatVersion": 1,
+  "dialogues": [
+    {
+      "id": "pharmacist",
+      "nameKey": "char_pharmacist_name",
+      "portrait": {"placeholderStyle": "silhouette_pharmacist"},
+      "greeting": {"first": "dlg_pharmacist_hello", "then": "dlg_pharmacist_again"},
+      "noReactionKey": "dlg_pharmacist_no_reaction",
+      "topics": [
+        {
+          "id": "about_villa",
+          "promptKey": "dlg_pharmacist_q_villa",
+          "answer": ["dlg_pharmacist_villa_1", "dlg_pharmacist_villa_2"],
+          "do": [
+            {"addNoteEntry": {"note": "person_pharmacist", "entry": "knows_villa"}}
+          ]
+        },
+        {
+          "id": "about_last_night",
+          "promptKey": "dlg_pharmacist_q_night",
+          "answer": ["dlg_pharmacist_night_1"]
+        },
+        {
+          "id": "ask_pills",
+          "visibleWhen": {"hasItem": "pill_bottle"},
+          "promptKey": "dlg_pharmacist_q_pills",
+          "answer": ["dlg_pharmacist_pills_1", "dlg_pharmacist_pills_2"],
+          "do": [
+            {"say": "say_pills_owner_known"}
+          ]
+        },
+        {
+          "id": "give_pills",
+          "trigger": {"showItem": "pill_bottle"},
+          "promptKey": "dlg_pharmacist_q_give_pills",
+          "answer": ["dlg_pharmacist_give_pills_1", "dlg_pharmacist_give_pills_2"],
+          "do": [
+            {"consumeItem": "pill_bottle"},
+            {"addNoteEntry": {"note": "person_pharmacist", "entry": "pills_prescribed"}}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cafe_owner",
+      "nameKey": "char_cafe_owner_name",
+      "portrait": {"placeholderStyle": "silhouette_cafe_owner"},
+      "greeting": {"first": "dlg_cafe_owner_hello", "then": "dlg_cafe_owner_again"},
+      "noReactionKey": "dlg_cafe_owner_no_reaction",
+      "topics": [
+        {
+          "id": "about_villa",
+          "promptKey": "dlg_cafe_owner_q_villa",
+          "answer": ["dlg_cafe_owner_villa_1", "dlg_cafe_owner_villa_2"],
+          "do": [
+            {"addNoteEntry": {"note": "person_cafe_owner", "entry": "knows_villa"}}
+          ]
+        },
+        {
+          "id": "about_pharmacist",
+          "promptKey": "dlg_cafe_owner_q_pharmacist",
+          "answer": ["dlg_cafe_owner_pharmacist_1"]
+        },
+        {
+          "id": "show_letter",
+          "trigger": {"showNote": "hall_letter"},
+          "promptKey": "dlg_cafe_owner_q_letter",
+          "answer": ["dlg_cafe_owner_letter_1", "dlg_cafe_owner_letter_2"],
+          "do": [
+            {"addNoteEntry": {"note": "person_cafe_owner", "entry": "recognised_paper"}}
+          ]
+        }
+      ]
+    }
+  ]
+}

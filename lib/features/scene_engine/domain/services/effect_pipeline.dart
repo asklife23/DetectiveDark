@@ -66,6 +66,9 @@ class EffectPipeline {
     List<GameEvent> leadingEvents = const [],
   }) async {
     final prepared = prepare == null ? progress : prepare(progress);
+    // A use case without effects of its own (opening a conversation) still
+    // goes through here: its `prepare` change is saved and may fire
+    // triggers like any other change.
     final applied = _effectApplier.apply(prepared, effects, context);
     final triggered = _triggerRunner.run(
       applied,
@@ -96,6 +99,7 @@ class EffectPipeline {
         events: events,
         navigation: outcome.navigation,
         inspectionId: outcome.inspectionId,
+        dialogueId: outcome.dialogueId,
       ),
     );
   }

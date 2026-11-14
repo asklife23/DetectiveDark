@@ -163,4 +163,23 @@ void main() {
       isTrue,
     );
   });
+
+  test('topicAsked: true once that topic of that dialogue was asked', () {
+    const condition = HasAsked(
+      dialogueId: 'pharmacist',
+      topicId: 'about_villa',
+    );
+    final asked = progress.withAskedTopic('pharmacist', 'about_villa');
+
+    expect(evaluator.evaluate(condition, asked), isTrue);
+    expect(evaluator.evaluate(condition, progress), isFalse);
+    // The same topic ID of another dialogue does not count.
+    expect(
+      evaluator.evaluate(
+        condition,
+        progress.withAskedTopic('cafe_owner', 'about_villa'),
+      ),
+      isFalse,
+    );
+  });
 }

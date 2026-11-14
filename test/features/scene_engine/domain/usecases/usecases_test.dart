@@ -232,4 +232,34 @@ void main() {
       expect(failing.events, isEmpty);
     });
   });
+
+  group('talk (ADR 0016)', () {
+    test('a tap on a character asks for the conversation and saves '
+        'nothing', () async {
+      final inMarket = at(['market_square']);
+
+      final outcome = (await game.tapHotspot(
+        scene: content.scenes['market_square']!,
+        progress: inMarket,
+        hotspotId: 'pharmacist',
+      )).valueOrNull!;
+      await pumpEventQueue();
+
+      expect(outcome.dialogueId, 'pharmacist');
+      expect(outcome.progress, same(inMarket));
+      expect(outcome.navigation, isNull);
+      expect(game.progress.current, isNull);
+      expect(game.events, isEmpty);
+    });
+
+    test('the two characters open their own conversations', () async {
+      final outcome = (await game.tapHotspot(
+        scene: content.scenes['market_square']!,
+        progress: at(['market_square']),
+        hotspotId: 'cafe_owner',
+      )).valueOrNull!;
+
+      expect(outcome.dialogueId, 'cafe_owner');
+    });
+  });
 }

@@ -23,6 +23,7 @@ class GameProgress extends Equatable {
     this.chatLog = const [],
     this.spokenLines = const {},
     this.firedTriggers = const {},
+    this.askedTopics = const {},
     this.playTimeSeconds = 0,
   });
 
@@ -60,12 +61,21 @@ class GameProgress extends Equatable {
   /// IDs of the triggers that have run. A trigger runs once (ADR 0014).
   final Set<String> firedTriggers;
 
+  /// The dialogue topics the player has asked, as [topicKey]s (ADR 0016).
+  /// The effects of a topic run only the first time it is asked.
+  final Set<String> askedTopics;
+
   final int playTimeSeconds;
 
   /// Hotspot IDs are unique only inside their scene, so a hidden hotspot is
   /// stored together with its scene.
   static String hotspotKey(String sceneId, String hotspotId) =>
       '$sceneId/$hotspotId';
+
+  /// Topic IDs are unique only inside their dialogue, so an asked topic is
+  /// stored together with its dialogue: `pharmacist/about_villa`.
+  static String topicKey(String dialogueId, String topicId) =>
+      '$dialogueId/$topicId';
 
   /// The scene the player is in. Null only for an empty stack.
   String? get currentSceneId => sceneStack.isEmpty ? null : sceneStack.last;
@@ -86,6 +96,9 @@ class GameProgress extends Equatable {
   bool hasSpoken(String lineKey) => spokenLines.contains(lineKey);
 
   bool hasFired(String triggerId) => firedTriggers.contains(triggerId);
+
+  bool hasAsked(String dialogueId, String topicId) =>
+      askedTopics.contains(topicKey(dialogueId, topicId));
 
   bool isHotspotHidden(String sceneId, String hotspotId) =>
       hiddenHotspots.contains(hotspotKey(sceneId, hotspotId));
@@ -169,6 +182,12 @@ class GameProgress extends Equatable {
       ? this
       : _copy(firedTriggers: {...firedTriggers, triggerId});
 
+  /// Remembers that the topic was asked. No change if it already was.
+  GameProgress withAskedTopic(String dialogueId, String topicId) =>
+      hasAsked(dialogueId, topicId)
+      ? this
+      : _copy(askedTopics: {...askedTopics, topicKey(dialogueId, topicId)});
+
   GameProgress _copy({
     List<String>? sceneStack,
     List<String>? inventory,
@@ -179,6 +198,7 @@ class GameProgress extends Equatable {
     List<ChatLogEntry>? chatLog,
     Set<String>? spokenLines,
     Set<String>? firedTriggers,
+    Set<String>? askedTopics,
   }) {
     return GameProgress(
       caseId: caseId,
@@ -192,6 +212,7 @@ class GameProgress extends Equatable {
       chatLog: chatLog ?? this.chatLog,
       spokenLines: spokenLines ?? this.spokenLines,
       firedTriggers: firedTriggers ?? this.firedTriggers,
+      askedTopics: askedTopics ?? this.askedTopics,
       playTimeSeconds: playTimeSeconds,
     );
   }
@@ -209,6 +230,7 @@ class GameProgress extends Equatable {
     chatLog,
     spokenLines,
     firedTriggers,
+    askedTopics,
     playTimeSeconds,
   ];
 }

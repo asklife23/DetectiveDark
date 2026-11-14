@@ -18,6 +18,8 @@
     "hotspot_pill_bottle": "Small bottle on the desk",
     "hotspot_market_sign": "Signpost to the market",
     "hotspot_villa_road": "Road back to the villa",
+    "hotspot_pharmacist": "Figure at the pharmacy window",
+    "hotspot_cafe_owner": "Figure outside the café",
 
     "villa_house_number": "17",
     "statue_plaque_inscription": "FIDES ET SILENTIUM",
@@ -35,6 +37,8 @@
     "say_hall_letter_taken": "A letter, left out in the open. Careless. Or meant to be found.",
     "say_pill_bottle_taken": "A pill bottle, half empty, the label torn off. Somebody in town will know whose it was.",
     "say_market_first_look": "The market square. Two lit windows in the whole town, and both of them are watching me.",
+    "say_pills_owner_known": "He looked at that bottle a second too long. He knows exactly whose it is.",
+    "say_stories_do_not_match": "Empty since spring, says one. Coffee every Friday, says the other. One of them is lying to me.",
 
     "item_brass_key_name": "Brass key",
     "item_brass_key_description": "Old and heavy, worn smooth by years of use. It was hidden on the garden statue.",
@@ -44,6 +48,48 @@
 
     "note_hall_letter_title": "Unsigned letter",
     "note_hall_letter_body": "You were told what would happen if you kept the ledger.\n\nMidnight. Come alone, and leave the door on the latch.\n\nThere is no signature. The ink is still sharp.",
+
+    "note_person_pharmacist_title": "The pharmacist",
+    "note_person_pharmacist_body": "Runs the pharmacy on the market square. Chooses every word before he lets it go.",
+    "note_person_pharmacist_knows_villa": "Says Ashgrove Villa has stood empty since spring.",
+    "note_person_pharmacist_pills_prescribed": "Made up the sleeping powder himself, three weeks ago, for the housekeeper at Ashgrove.",
+
+    "note_person_cafe_owner_title": "The café owner",
+    "note_person_cafe_owner_body": "Keeps the café on the market square. Sees who comes and who goes.",
+    "note_person_cafe_owner_knows_villa": "Carried coffee up to the villa every Friday, until last week.",
+    "note_person_cafe_owner_recognised_paper": "Says the unsigned letter is written on the pharmacy's wrapping paper.",
+
+    "note_obs_stories_do_not_match_title": "Two stories about the villa",
+    "note_obs_stories_do_not_match_body": "The pharmacist says Ashgrove Villa has stood empty since spring. The café owner carried coffee up there every Friday until last week.\n\nBoth cannot be true.",
+
+    "char_pharmacist_name": "The pharmacist",
+    "dlg_pharmacist_hello": "We're closed. ...But you are not here for aspirin, are you.",
+    "dlg_pharmacist_again": "You again. Ask, then.",
+    "dlg_pharmacist_no_reaction": "I couldn't tell you anything about that.",
+    "dlg_pharmacist_q_villa": "Ask about Ashgrove Villa",
+    "dlg_pharmacist_villa_1": "The Ashgrove place? Nobody has lived up there since spring.",
+    "dlg_pharmacist_villa_2": "The lights have been out for months. Ask anyone in town.",
+    "dlg_pharmacist_q_night": "Ask about last night",
+    "dlg_pharmacist_night_1": "I closed at six and went home. Like every night.",
+    "dlg_pharmacist_q_pills": "Ask about the pills",
+    "dlg_pharmacist_pills_1": "Brown glass, no label... Half the town takes something like that.",
+    "dlg_pharmacist_pills_2": "Leave it with me, if you like. I could look in my book.",
+    "dlg_pharmacist_q_give_pills": "Hand over the pill bottle",
+    "dlg_pharmacist_give_pills_1": "...This is my hand on the label. What is left of it.",
+    "dlg_pharmacist_give_pills_2": "Sleeping powder. I made it up three weeks ago, for the housekeeper at Ashgrove.",
+
+    "char_cafe_owner_name": "The café owner",
+    "dlg_cafe_owner_hello": "Kitchen's closed and the coffee's cold. Sit, if you like.",
+    "dlg_cafe_owner_again": "Still here? The coffee is still cold.",
+    "dlg_cafe_owner_no_reaction": "Means nothing to me. Sorry.",
+    "dlg_cafe_owner_q_villa": "Ask about Ashgrove Villa",
+    "dlg_cafe_owner_villa_1": "Empty? I carried a tray up there every Friday. Until last week.",
+    "dlg_cafe_owner_villa_2": "Somebody up there likes the coffee strong. And likes it kept quiet.",
+    "dlg_cafe_owner_q_pharmacist": "Ask about the pharmacist",
+    "dlg_cafe_owner_pharmacist_1": "He shuts early these days. Keeps the blinds down, too.",
+    "dlg_cafe_owner_q_letter": "Show the unsigned letter",
+    "dlg_cafe_owner_letter_1": "Let me see. ...That is shop paper. The pharmacy wraps its powders in it.",
+    "dlg_cafe_owner_letter_2": "I would know that blue edge anywhere.",
 
     "inspection_statue_plaque_title": "Plaque",
     "inspection_statue_plaque_text": "\"Faith and silence.\" A family motto, cut deep into the brass. Somebody here valued the second word more."

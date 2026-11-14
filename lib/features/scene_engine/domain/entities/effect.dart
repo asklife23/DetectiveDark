@@ -109,3 +109,16 @@ final class Inspect extends Effect {
   @override
   List<Object?> get props => [inspectionId];
 }
+
+/// Opens the conversation with a character above the scene (ADR 0016).
+///
+/// Interface state like [Inspect]: it does not change the navigation stack
+/// and is not saved. It carries only the ID of the dialogue.
+final class Talk extends Effect {
+  const Talk(this.dialogueId);
+
+  final String dialogueId;
+
+  @override
+  List<Object?> get props => [dialogueId];
+}

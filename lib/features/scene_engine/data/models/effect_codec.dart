@@ -23,6 +23,7 @@ abstract final class EffectCodec {
     'hideHotspot',
     'say',
     'inspect',
+    'talk',
   ];
 
   static const _noteEntryKeys = {'note', 'entry'};
@@ -55,6 +56,7 @@ abstract final class EffectCodec {
       'hideHotspot' => _hideHotspot(value),
       'say' => _say(value),
       'inspect' => Inspect(_id(key, value)),
+      'talk' => Talk(_id(key, value)),
       _ => throw FormatException(
         'Unknown effect "$key". Known: ${knownKeys.join(', ')}.',
       ),

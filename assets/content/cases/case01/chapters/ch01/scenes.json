@@ -238,6 +238,30 @@
           "interactions": [
             {"do": [{"goToScene": "villa_exterior"}]}
           ]
+        },
+        {
+          "id": "pharmacist",
+          "rect": {"x": 0.315, "y": 0.46, "width": 0.095, "height": 0.405},
+          "labelKey": "hotspot_pharmacist",
+          "sprite": {
+            "rect": {"x": 0.325, "y": 0.475, "width": 0.075, "height": 0.385},
+            "placeholderStyle": "silhouette_pharmacist"
+          },
+          "interactions": [
+            {"do": [{"talk": "pharmacist"}]}
+          ]
+        },
+        {
+          "id": "cafe_owner",
+          "rect": {"x": 0.665, "y": 0.46, "width": 0.095, "height": 0.405},
+          "labelKey": "hotspot_cafe_owner",
+          "sprite": {
+            "rect": {"x": 0.675, "y": 0.475, "width": 0.075, "height": 0.385},
+            "placeholderStyle": "silhouette_cafe_owner"
+          },
+          "interactions": [
+            {"do": [{"talk": "cafe_owner"}]}
+          ]
         }
       ]
     }
