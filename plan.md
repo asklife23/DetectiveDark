@@ -19,7 +19,7 @@ Aşamalar numara sırasıyla değil, bu sırayla yapılır. Numaralar değişmez
 Önce oyunun eğlenceli olduğu doğrulanır, sonra hesap ve bulut eklenir.
 
 1. Aşama 0 — Proje temeli ✔
-2. Aşama 1 — Oyun motoru
+2. Aşama 1 — Oyun motoru ✔
 3. Aşama 2 — Kalıcı kayıt
 4. Aşama 5 — Bulmacalar ve vaka akışı
 5. Aşama 7, **yalnızca Bölüm 1** (7.0–7.4): repoyu private yapma, hikaye, görseller, Bölüm 1 içeriği ve 10–15 kişiyle oyun testi.
@@ -493,7 +493,7 @@ yerine tek arka plan + küçük bir nesne görseli (ADR 0012). Gerçek görselle
   **Kabul kriterleri:** Kabul senaryosunun tamamı (1–11) telefonda ve Windows'ta çalışıyor.
   **Commit:** `feat(detective_chat): add detective inner voice bar and history`
 
-### [ ] 1.8 Uçtan uca test ve cila
+### [x] 1.8 Uçtan uca test ve cila
 **Amaç:** Aşamayı sağlam kapatmak.
 **Yapılacaklar:**
 - Kabul senaryosunun tamamı tek bir paylaşılan senaryo fonksiyonu olarak yazılır ve iki yerden çalıştırılır:
@@ -951,12 +951,16 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   tek bir `Focus` ile yazıldı (`CallbackShortcuts`'ın kendi düğümü hotspot etiketlerini yutuyordu). `Esc` ana sahnede
   hiçbir şey yapmaz (çıkış uyarısı yalnızca sistem geri tuşunda). **Kullanıcı onayı bekliyor:** barın telefondaki
   görünümü (karar 3).
-- 2026-11-13: **DEVAM NOTU** (kullanım limiti nedeniyle 1.6'dan sonra duruldu)
-  - **Biten:** 1.1–1.6 commit'li ve push'lu. Kalite kapısı son durumda: format OK, analyze 0 sorun, test 302/302.
-  - **Cihaz doğrulaması:** 1.4 ve 1.5 telefonda ve Windows'ta doğrulandı. 1.6 telefonda doğrulandı; Windows'ta
-    fareyle doğrulaması 2026-11-14'te yapıldı (yukarıdaki 1.6b notu).
-  - **Sırada:** 1.7 (dedektifin iç sesi: `ChatCubit`, `ChatBar`, `ChatHistorySheet`; mesajlar zaten ilerlemedeki
-    `chatLog`'da), sonra 1.8 (paylaşılan senaryo fonksiyonu + `integration_test`, profil modunda performans, README,
-    `GameHud` sadeleştirme), ardından `phase-1` etiketi.
-  - **Araçlar:** sahne önizlemeleri için `flutter test tool/render_scenes_test.dart`. Telefonda sahne viewport'u
-    panel yüzünden sola kayık: ekran pikselinde sol kenar ≈ 187, genişlik 1920 (2400×1080 ekran).
+- 2026-11-14 (1.8): Kabul senaryosu tek fonksiyon: `test/helpers/acceptance_scenario.dart`. İki yerden çalışır:
+  `test/app/game/acceptance_scenario_test.dart` (CI; telefon boyutu dokunma + fare, 1280×720 pencere, 4:3 tablet) ve
+  `integration_test/acceptance_test.dart` (gerçek uygulama; Windows'ta dokunma + fare ile geçti). 1.6 için yazılan
+  `notebook_mouse_test.dart` bu senaryoya katıldığı için silindi. Manuel kontrol listesinin test edilebilen maddeleri
+  `test/app/game/edge_cases_test.dart`'ta (hızlı çift dokunma, geçiş sırasında dokunma, eşya seçiliyken Geri, sistem
+  geri tuşu, arka plana alıp dönme). `GameHud` bölündü: `pickup_flights.dart` (uçuşlar), `back_shortcut.dart`,
+  `scene_buttons.dart`, `hud_side_panel.dart`. Performans: `integration_test/performance_test.dart` +
+  `test_driver/performance_driver.dart` (`flutter drive --profile`). **Windows, profil modu, 350 kare:** build ortalama
+  0,44 ms (en kötü 5,4 ms), raster ortalama 1,9 ms (%99: 13,0 ms, en kötü 44,6 ms); 16,6 ms bütçesini aşan 3 raster
+  karesi, hiç build karesi yok. README'ye oyundan üretilen ekran görüntüleri eklendi
+  (`tool/render_screenshots_test.dart` → `docs/screenshots/*.jpg`; gren yüzünden PNG'ler 1 MB'ı geçtiği için JPEG).
+  **Yapılamayan (cihaz bağlı değildi), kullanıcıda:** telefonda kabul senaryosu ve manuel kontrol listesi, telefonda
+  profil modu ölçümü, mesaj barının telefondaki görünümünün onayı (karar 3). Komutlar `docs/devlog/asama-1.md`'de.

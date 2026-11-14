@@ -218,3 +218,40 @@
   uygulanan bir kural. Üçüncü küçük ders: Flutter'da klavye olayları odaktaki widget'tan yukarı doğru akar; `Focus`
   widget'ı bu yolun üstünde durup `Esc`'yi yakalar. `Focus` varsayılan olarak erişilebilirlik ağacına da bir düğüm
   ekler; bunu kapatmayınca hotspot etiketleri o düğüme karıştı ve testler bunu hemen yakaladı.
+
+### Adım 1.8 — Uçtan uca test ve cila (2026-11-14)
+- **Ne yaptık:** Aşama 1'in kabul senaryosunu (11 adım) tek bir fonksiyon olarak yazdık: `playAcceptanceScenario`.
+  Aynı fonksiyon iki yerden çalışıyor: `flutter test` içinde (her push'ta CI'da; telefon boyutunda dokunma ve fare,
+  masaüstü penceresi, 4:3 tablet) ve `integration_test` ile gerçek uygulamanın içinde. Windows'ta gerçek derlemede
+  hem dokunma hem fare ile geçti. `GameHud`'ı dört küçük dosyaya böldük, kenar durumlar için testler ekledik (hızlı
+  çift dokunma, geçiş sırasında dokunma, arka plana alıp dönme), profil modunda kare sürelerini ölçtük ve README'yi
+  doldurduk (özellikler, mimari diyagramları, etkileşim sisteminin örnek JSON'u, ekran görüntüleri).
+- **Neden:** Tek tek parçaların testi "parça çalışıyor" der; uçtan uca senaryo "oyun oynanıyor" der. Senaryoyu tek
+  yerde tutmak önemli: CI'daki hızlı sürüm ile cihazdaki gerçek sürüm aynı adımları attığı için biri geçip diğeri
+  kalırsa fark uygulamada değil ortamdadır (gerçek motor, gerçek asset paketi, gerçek pencere).
+- **Önemli dosyalar:** `test/helpers/acceptance_scenario.dart`, `test/app/game/acceptance_scenario_test.dart`,
+  `integration_test/acceptance_test.dart`, `integration_test/performance_test.dart`,
+  `test_driver/performance_driver.dart`, `test/app/game/edge_cases_test.dart`, `lib/app/game/pickup_flights.dart`,
+  `lib/app/game/game_hud.dart`, `README.md`, `tool/render_screenshots_test.dart`.
+- **Performans (Windows, profil modu, senaryo boyunca 350 kare):** build ortalama 0,44 ms, en kötü 5,4 ms; raster
+  ortalama 1,9 ms, %99'luk dilim 13,0 ms, en kötü 44,6 ms. 16,6 ms'lik (60 fps) bütçeyi 3 raster karesi aştı, build
+  karesi hiç aşmadı. Yani akış takılmasız; birkaç uzun kare büyük olasılıkla bir katmanın ilk kez çizildiği anlar
+  (bunu ayrıca ölçmedim). **Telefon ölçümü yapılmadı** (bağlı cihaz yoktu).
+- **Telefonda nasıl test edilir:**
+  1. Elle: `flutter run --flavor dev -t lib/main_dev.dart --dart-define-from-file=env/dev.json` ile kabul senaryosunun
+     11 adımını oyna. Ek kontrol listesi: bir kapıya çok hızlı iki kez dokun (tek geçiş olmalı); anahtar seçiliyken
+     Geri'ye bas (seçim kalmalı); telefonun geri tuşunu yakın planda, defter açıkken ve ana sahnede dene; oyunu arka
+     plana alıp geri dön (aynı sahne, aynı eşyalar); mesaj barının altında dokunamadığın bir şey kalıyor mu bak.
+  2. Otomatik (telefon USB ile bağlıyken): `flutter test integration_test/acceptance_test.dart -d <cihaz> --flavor dev
+     --dart-define-from-file=env/dev.json`. Oyun kendi kendine oynanır; sonunda "All tests passed!" yazmalı.
+  3. Performans: `flutter drive --profile --flavor dev -d <cihaz> --driver=test_driver/performance_driver.dart
+     --target=integration_test/performance_test.dart --dart-define-from-file=env/dev.json`; özet
+     `build/performance/acceptance_scenario.json` dosyasına yazılır (`missed_frame_*_budget_count` küçük olmalı).
+- **Öğrenme notu:** Flutter'da üç test katmanı var ve bu adımda üçü de aynı oyunu sınıyor. **Unit test** saf Dart'ı
+  dener (kurallar, `EffectApplier`); milisaniyeler sürer. **Widget test** gerçek widget ağacını sahte bir saatle,
+  ekransız çalıştırır: `tester.tap` ve `pump` ile zamanı biz ilerletiriz; bu yüzden CI'da çalışır ama motor, asset
+  paketi ve pencere sahtedir. **Integration test** aynı `WidgetTester` API'siyle gerçek uygulamayı gerçek cihazda
+  sürer; yavaştır ama "telefonda çalışıyor mu" sorusunun tek dürüst cevabıdır. Senaryoyu bir kez yazıp iki katmanda
+  koşturmak bu yüzden değerli. Profil modu da ayrı bir kavram: debug derleme yavaştır (JIT, kontroller açık), release
+  ölçüm araçlarını kapatır; **profile** release hızında çalışır ama kare sürelerini raporlar. Performans yalnızca
+  profil modunda ölçülür.
