@@ -79,6 +79,7 @@ List<ContentIssue> _validate({
   List<SceneDefinition> extraScenes = const [],
   List<TriggerDefinition> triggers = const [],
   Map<String, Set<String>> texts = const {'en': _texts},
+  Map<String, NoteDefinition> notes = _notes,
   double reservedBottomStrip = 0,
 }) {
   final scenes = [
@@ -120,7 +121,7 @@ List<ContentIssue> _validate({
       triggers: triggers,
     ),
     items: _items,
-    notes: _notes,
+    notes: notes,
     textKeysByLanguage: texts,
     styles: _styles,
     reservedBottomStrip: reservedBottomStrip,
@@ -678,7 +679,8 @@ void main() {
       );
     });
 
-    test('only say, setFlag, addNote and giveItem are allowed', () {
+    test('only say, setFlag, addNote, addNoteEntry and giveItem are '
+        'allowed', () {
       final issues = _validate(
         triggers: [
           trigger(
@@ -784,6 +786,130 @@ void main() {
           ],
         ),
         _reports('first line "say_locked" is already used'),
+      );
+    });
+  });
+
+  group('note entries', () {
+    const file = NoteDefinition(
+      id: 'person_gardener',
+      category: NoteCategory.person,
+      titleKey: 'memo_title',
+      bodyKey: 'memo_body',
+      entries: [
+        NoteEntryDefinition(id: 'saw_light', textKey: 'say_locked'),
+        NoteEntryDefinition(id: 'owes_money', textKey: 'label'),
+      ],
+    );
+    const notes = {..._notes, 'person_gardener': file};
+
+    List<ContentIssue> withEffect(
+      Effect effect, {
+      Map<String, NoteDefinition> notes = notes,
+    }) => _validate(
+      notes: notes,
+      yardHotspots: [
+        _hotspot('door', const [GoToScene('shed')]),
+        _hotspot('gardener', [effect]),
+      ],
+    );
+
+    test('a valid entry and a valid addNoteEntry have no issues', () {
+      expect(
+        withEffect(
+          const AddNoteEntry(noteId: 'person_gardener', entryId: 'saw_light'),
+        ),
+        isEmpty,
+      );
+    });
+
+    test('duplicate entry ID inside a note', () {
+      const twice = NoteDefinition(
+        id: 'person_gardener',
+        category: NoteCategory.person,
+        titleKey: 'memo_title',
+        bodyKey: 'memo_body',
+        entries: [
+          NoteEntryDefinition(id: 'saw_light', textKey: 'say_locked'),
+          NoteEntryDefinition(id: 'saw_light', textKey: 'label'),
+        ],
+      );
+
+      expect(
+        _validate(notes: const {..._notes, 'person_gardener': twice}),
+        _reports('note person_gardener: duplicate entry ID "saw_light"'),
+      );
+    });
+
+    test('the same entry ID in two different notes is fine', () {
+      const other = NoteDefinition(
+        id: 'person_cook',
+        category: NoteCategory.person,
+        titleKey: 'memo_title',
+        bodyKey: 'memo_body',
+        entries: [NoteEntryDefinition(id: 'saw_light', textKey: 'label')],
+      );
+
+      expect(_validate(notes: const {...notes, 'person_cook': other}), isEmpty);
+    });
+
+    test('an entry with a missing text', () {
+      const broken = NoteDefinition(
+        id: 'person_gardener',
+        category: NoteCategory.person,
+        titleKey: 'memo_title',
+        bodyKey: 'memo_body',
+        entries: [NoteEntryDefinition(id: 'saw_light', textKey: 'no_text')],
+      );
+
+      expect(
+        _validate(notes: const {..._notes, 'person_gardener': broken}),
+        _reports(
+          'note person_gardener / entry saw_light: missing text "no_text"',
+        ),
+      );
+    });
+
+    test('addNoteEntry to an unknown note', () {
+      expect(
+        withEffect(
+          const AddNoteEntry(noteId: 'person_cook', entryId: 'saw_light'),
+        ),
+        _reports('unknown note "person_cook"'),
+      );
+    });
+
+    test('addNoteEntry to an unknown entry of a known note', () {
+      expect(
+        withEffect(
+          const AddNoteEntry(noteId: 'person_gardener', entryId: 'saw_ghost'),
+        ),
+        _reports('note "person_gardener" has no entry "saw_ghost"'),
+      );
+    });
+
+    test('addNoteEntry is allowed in a trigger but not in onFirstEnter', () {
+      const effect = AddNoteEntry(
+        noteId: 'person_gardener',
+        entryId: 'saw_light',
+      );
+
+      expect(
+        _validate(
+          notes: notes,
+          triggers: const [
+            TriggerDefinition(
+              id: 'heard',
+              when: Visited('shed'),
+              effects: [effect],
+            ),
+          ],
+        ),
+        isEmpty,
+      );
+      expect(
+        _validate(notes: notes, yardOnFirstEnter: const [effect]),
+        _reports('AddNoteEntry is not allowed here'),
       );
     });
   });

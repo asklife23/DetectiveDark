@@ -359,3 +359,32 @@
   yayınlamaz; ilerlemeyi alır, yeni ilerlemeyi döner. Kaydı yalnızca hat yapar. Böylece "kayıt başarısız olursa
   tetikleyici ateşlenmiş sayılmasın" kuralı kendiliğinden doğru çalışır: ateşlenme işareti de aynı ilerlemenin
   içindedir, ilerleme kaydedilmediyse o da kaydedilmemiştir.
+
+### Adım 1.13 — Not satırları ve "Kişiler" (2026-11-14)
+- **Ne yaptık:** Notlar artık oyun ilerledikçe **satır satır büyüyebiliyor**. Not kataloğuna opsiyonel `entries`
+  (satır kataloğu: `id` + `textKey`) eklendi; yeni `addNoteEntry` etkisi (`{"note": ..., "entry": ...}`) bir satırı
+  açıyor. Kayıtta her notun yanında eklenen satırlar ve eklenme zamanları duruyor (`CollectedNote.entries`). Kural:
+  not defterde yoksa etki önce notu ekler (`NoteAdded`); varsa satırı ekler, notu **yeniden okunmamış** yapar ve yeni
+  `NoteUpdated` olayını üretir; satır zaten ekliyse hiçbir şey olmaz. Defterdeki üçüncü sekme "Suspects" yerine
+  **"People"** oldu (`suspect` → `person`). Açık notta satırlar gövdenin altında, eklenme sırasıyla görünür; notu
+  okunmamış yapan en yeni satır not açıldığında işaretli (koyu, gölgeli kağıt) çizilir. `NoteUpdated` gelince defter
+  düğmesi bir kez büyüyüp küçülür (uçuş animasyonu yalnızca yeni notta).
+- **Neden:** Bir karakter beş şey söylerse beş ayrı not açmak defteri çöplüğe çevirir ve finalde "kanıt seç" ekranını
+  kullanılmaz yapar. Dosya mantığı daha doğal: eczacının dosyası vardır, söyledikleri o dosyaya işlenir. "Şüpheli"
+  adı da yanlıştı: defterde tanıklar da olacak; kimin şüpheli olduğu finalin konusu (Aşama 5.5), sekmenin değil.
+- **Önemli dosyalar:** `notebook/domain/entities/note_definition.dart` (`NoteEntryDefinition`, `person`),
+  `notebook/data/models/note_dto.dart`, `progress/domain/entities/collected_note.dart` (`CollectedNoteEntry`),
+  `progress/domain/entities/game_progress.dart` (`withNoteEntry`), `scene_engine/domain/entities/effect.dart`
+  (`AddNoteEntry`), `scene_engine/domain/services/effect_applier.dart`, `core/events/game_event.dart` (`NoteUpdated`),
+  `notebook/presentation/cubit/notebook_cubit.dart`, `notebook/presentation/widgets/note_page.dart`,
+  `notebook_button.dart`, `core/l10n/arb/app_en.arb`, test: `test/features/notebook/note_entries_test.dart`.
+- **Telefonda nasıl test edilir:** Defteri aç: üçüncü sekme "People" yazmalı ve boşken "No names. Only shadows, so
+  far." göstermeli. Satırların kendisi dilimde 1.16'da (kişi notları) gelecek; 1.17'den sonra telefonda denenecek.
+- **Öğrenme notu:** İki ders. **Katalog ile kayıt ayrımı:** Notun metinleri ve *alabileceği* satırlar katalogdadır
+  (JSON içerik); oyuncunun *aldığı* satırlar kayıttadır ve yalnızca ID tutar. Böylece bir yazım hatasını düzeltmek
+  veya yeni dil eklemek eski kayıtları bozmaz, kayıt da küçük kalır. Defter cubit'i ikisini birleştirir: kayıttaki
+  sıra (eklenme sırası) + katalogdaki metin. **Testte zaman ve "zone":** Widget testleri sahte bir saatle çalışır;
+  `pump` çağırmadıkça zaman ilerlemez. İlk yazdığım test, cubit'i `setUp` içinde (gerçek saat altında) kurduğu için
+  cubit'in dinlediği akışlar olayları test gövdesindeki sahte saate teslim etmiyordu ve rozet hiç güncellenmiyordu.
+  Dart'ta bir akış, **dinlendiği zone'da** teslim eder. Çözüm: widget testinde her şeyi test gövdesinin içinde kurmak.
+  Hata oyunda değil testteydi; ama nedenini anlamadan "bekleme ekleyip" geçiştirmek yerine kök nedeni bulmak gerekir.

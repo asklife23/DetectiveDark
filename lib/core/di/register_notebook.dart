@@ -1,5 +1,6 @@
 import 'package:detective_dark/core/content/content_asset_source.dart';
 import 'package:detective_dark/core/content/content_paths.dart';
+import 'package:detective_dark/core/events/game_event_bus.dart';
 import 'package:detective_dark/features/notebook/data/repositories/asset_note_catalog_repository.dart';
 import 'package:detective_dark/features/notebook/domain/repositories/note_catalog_repository.dart';
 import 'package:detective_dark/features/notebook/domain/usecases/mark_note_read.dart';
@@ -21,6 +22,7 @@ void registerNotebook(GetIt getIt) {
         catalogRepository: getIt<NoteCatalogRepository>(),
         progressRepository: getIt<ProgressRepository>(),
         markNoteRead: getIt<MarkNoteRead>(),
+        eventBus: getIt<GameEventBus>(),
         caseId: ContentPaths.defaultCaseId,
       ),
     );

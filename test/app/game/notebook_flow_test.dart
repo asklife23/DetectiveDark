@@ -100,10 +100,10 @@ void main() {
     await tester.pumpFor();
     expect(find.text('Unsigned letter'), findsOneWidget);
 
-    await tester.tap(find.text(l10n.notebookTabSuspects));
+    await tester.tap(find.text(l10n.notebookTabPeople));
     await tester.pumpFor();
     expect(find.text('Unsigned letter'), findsNothing);
-    expect(find.text(l10n.notebookEmptySuspects), findsOneWidget);
+    expect(find.text(l10n.notebookEmptyPeople), findsOneWidget);
 
     await tester.tap(find.text(l10n.notebookTabObservations));
     await tester.pumpFor();

@@ -665,7 +665,7 @@ tamamlayabilecek her hotspot'a aynı kontrolü kopyalamak sessiz hata kaynağıd
   `triggers.json` olmayan gerçek içerik aynen yükleniyor.
   **Commit:** `feat(scene_engine): add one-shot triggers`
 
-### [ ] 1.13 Not satırları ve "Kişiler"
+### [x] 1.13 Not satırları ve "Kişiler"
 **Amaç:** Oyun ilerledikçe güncellenen dosyalar: bir karakterin ifadesi yeni bir not değil, kişi dosyasına eklenen bir
 satırdır (ADR 0015).
 **Yapılacaklar:**
@@ -1537,3 +1537,10 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
      Menü kodu yalnızca `main_dev.dart`'tan bağlanır; prod, staging ve Steam derlemesinde yoktur, env bayrağıyla
      açılamaz (1.19). Not: bu, menüyü `staging`'de de kapatır (karar "prod ve Steam" diyordu; staging'i de dışarıda
      bırakmak daha güvenli taraf, istenirse `main_staging.dart` da bağlayabilir).
+- 2026-11-14 (1.13): "Son eklenen satır not açılana kadar vurgulu" şöyle yorumlandı: satırların okundu bilgisi kayıtta
+  tutulmaz (kayıt şekli plandaki gibi `entries: [{entryId, addedAtUtcMs}]`). Okunmamış bir not açıldığında **en yeni
+  satırı** o görüntüleme boyunca işaretli çizilir; defter kapanınca veya not yeniden açılınca işaret kalkar
+  (`NotebookState.highlightedLineId`, arayüz durumu). Bir kuralda birden çok satır eklenirse yalnızca sonuncusu
+  işaretlenir. Düğme tepkisi için `NotebookCubit` `GameEventBus`'ı dinler (`NoteUpdated` → `updatePulse`). Not sayfası
+  `note_page.dart` dosyasına ayrıldı (`notebook_screen.dart` 150 satır sınırına yaklaşmıştı). README'deki "suspects"
+  ifadesi de "people" yapıldı.

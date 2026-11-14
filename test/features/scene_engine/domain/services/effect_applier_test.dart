@@ -1,5 +1,6 @@
 import 'package:detective_dark/core/events/game_event.dart';
 import 'package:detective_dark/features/progress/domain/entities/chat_log_entry.dart';
+import 'package:detective_dark/features/progress/domain/entities/collected_note.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/effect.dart';
 import 'package:detective_dark/features/scene_engine/domain/services/effect_applier.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -221,6 +222,93 @@ void main() {
         DetectiveSaid('statue_long'),
         DetectiveSaid('statue_long'),
       ]);
+    });
+  });
+
+  group('addNoteEntry', () {
+    const knowsVilla = AddNoteEntry(
+      noteId: 'person_pharmacist',
+      entryId: 'knows_villa',
+    );
+    const pills = AddNoteEntry(
+      noteId: 'person_pharmacist',
+      entryId: 'pills_prescribed',
+    );
+
+    test('without the note: the note is added with the line, as a new '
+        'note', () {
+      final outcome = applier.apply(newGame, const [knowsVilla], atStatueKey);
+
+      final note = outcome.progress.notes.single;
+      expect(note.noteId, 'person_pharmacist');
+      expect(note.isRead, isFalse);
+      expect(note.entries, const [
+        CollectedNoteEntry(entryId: 'knows_villa', addedAtUtcMs: now),
+      ]);
+      expect(outcome.events, const [
+        NoteAdded(
+          'person_pharmacist',
+          sceneId: 'statue_closeup',
+          hotspotId: 'statue_key',
+        ),
+      ]);
+    });
+
+    test('with the note: the line is added, the note is unread again and '
+        'NoteUpdated is announced', () {
+      final read = applier
+          .apply(newGame, const [knowsVilla], atStatueKey)
+          .progress
+          .withNoteRead('person_pharmacist');
+
+      final outcome = applier.apply(read, const [pills], atStatueKey);
+
+      final note = outcome.progress.notes.single;
+      expect(note.isRead, isFalse);
+      expect(note.entries.map((entry) => entry.entryId), [
+        'knows_villa',
+        'pills_prescribed',
+      ]);
+      expect(outcome.events, const [
+        NoteUpdated('person_pharmacist', entryId: 'pills_prescribed'),
+      ]);
+    });
+
+    test('a line that is already there changes nothing', () {
+      final once = applier
+          .apply(newGame, const [knowsVilla], atStatueKey)
+          .progress
+          .withNoteRead('person_pharmacist');
+
+      final again = applier.apply(once, const [knowsVilla], atStatueKey);
+
+      expect(again.progress, same(once));
+      expect(again.events, isEmpty);
+    });
+
+    test('a note added by addNote gains its first line as an update', () {
+      final outcome = applier.apply(newGame, const [
+        AddNote('person_pharmacist'),
+        knowsVilla,
+      ], atStatueKey);
+
+      expect(outcome.progress.notes.single.entries, hasLength(1));
+      expect(outcome.events.map((event) => event.runtimeType), [
+        NoteAdded,
+        NoteUpdated,
+      ]);
+    });
+
+    test('two lines in one rule keep their order', () {
+      final outcome = applier.apply(newGame, const [
+        pills,
+        knowsVilla,
+      ], atStatueKey);
+
+      expect(
+        outcome.progress.notes.single.entries.map((entry) => entry.entryId),
+        ['pills_prescribed', 'knows_villa'],
+      );
     });
   });
 }

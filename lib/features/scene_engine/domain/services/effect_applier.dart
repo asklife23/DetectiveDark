@@ -109,6 +109,32 @@ class EffectApplier {
               ),
             );
           }
+        case AddNoteEntry(:final noteId, :final entryId):
+          final entry = CollectedNoteEntry(
+            entryId: entryId,
+            addedAtUtcMs: context.nowUtcMs,
+          );
+          if (!next.hasNote(noteId)) {
+            // The file is opened with its first line: a new note.
+            next = next.withNote(
+              CollectedNote(
+                noteId: noteId,
+                addedAtUtcMs: context.nowUtcMs,
+                entries: [entry],
+              ),
+            );
+            events.add(
+              NoteAdded(
+                noteId,
+                sceneId: context.sceneId,
+                hotspotId: hotspotId,
+              ),
+            );
+          } else if (!next.hasNoteEntry(noteId, entryId)) {
+            // A known file gains a line and is unread again.
+            next = next.withNoteEntry(noteId, entry);
+            events.add(NoteUpdated(noteId, entryId: entryId));
+          }
         case SetFlag(:final flag):
           next = next.withFlag(flag);
         case HideHotspot():

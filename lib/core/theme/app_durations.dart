@@ -29,6 +29,9 @@ abstract final class AppDurations {
   /// The frame of an inventory slot changing when it is selected.
   static const itemSelect = Duration(milliseconds: 150);
 
+  /// The notebook button swelling once when a known note gains a line.
+  static const notebookPulse = Duration(milliseconds: 320);
+
   /// The detective message bar: time per typed character.
   static const chatTypePerCharacter = Duration(milliseconds: 18);
 

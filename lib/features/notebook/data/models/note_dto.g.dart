@@ -6,6 +6,16 @@ part of 'note_dto.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
+NoteEntryDto _$NoteEntryDtoFromJson(Map<String, dynamic> json) =>
+    $checkedCreate('NoteEntryDto', json, ($checkedConvert) {
+      $checkKeys(json, allowedKeys: const ['id', 'textKey']);
+      final val = NoteEntryDto(
+        id: $checkedConvert('id', (v) => v as String),
+        textKey: $checkedConvert('textKey', (v) => v as String),
+      );
+      return val;
+    });
+
 NoteDto _$NoteDtoFromJson(Map<String, dynamic> json) =>
     $checkedCreate('NoteDto', json, ($checkedConvert) {
       $checkKeys(
@@ -16,6 +26,7 @@ NoteDto _$NoteDtoFromJson(Map<String, dynamic> json) =>
           'titleKey',
           'bodyKey',
           'imageAsset',
+          'entries',
         ],
       );
       final val = NoteDto(
@@ -27,6 +38,14 @@ NoteDto _$NoteDtoFromJson(Map<String, dynamic> json) =>
         titleKey: $checkedConvert('titleKey', (v) => v as String),
         bodyKey: $checkedConvert('bodyKey', (v) => v as String),
         imageAsset: $checkedConvert('imageAsset', (v) => v as String?),
+        entries: $checkedConvert(
+          'entries',
+          (v) =>
+              (v as List<dynamic>?)
+                  ?.map((e) => NoteEntryDto.fromJson(e as Map<String, dynamic>))
+                  .toList() ??
+              const [],
+        ),
       );
       return val;
     });
@@ -34,7 +53,7 @@ NoteDto _$NoteDtoFromJson(Map<String, dynamic> json) =>
 const _$NoteCategoryEnumMap = {
   NoteCategory.document: 'document',
   NoteCategory.observation: 'observation',
-  NoteCategory.suspect: 'suspect',
+  NoteCategory.person: 'person',
 };
 
 NotesFileDto _$NotesFileDtoFromJson(Map<String, dynamic> json) =>

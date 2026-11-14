@@ -76,6 +76,9 @@ class GameProgress extends Equatable {
 
   bool hasNote(String noteId) => notes.any((note) => note.noteId == noteId);
 
+  bool hasNoteEntry(String noteId, String entryId) =>
+      notes.any((note) => note.noteId == noteId && note.hasEntry(entryId));
+
   bool hasFlag(String flag) => flags.contains(flag);
 
   bool hasVisited(String sceneId) => visitedSceneIds.contains(sceneId);
@@ -98,6 +101,22 @@ class GameProgress extends Equatable {
   /// Adds the note at the end. No change if a note with that ID exists.
   GameProgress withNote(CollectedNote note) =>
       hasNote(note.noteId) ? this : _copy(notes: [...notes, note]);
+
+  /// Adds a line to a collected note and makes that note unread again. No
+  /// change if the note is not in the notebook or already has the line.
+  GameProgress withNoteEntry(String noteId, CollectedNoteEntry entry) {
+    if (!notes.any(
+      (note) => note.noteId == noteId && !note.hasEntry(entry.entryId),
+    )) {
+      return this;
+    }
+    return _copy(
+      notes: [
+        for (final note in notes)
+          if (note.noteId == noteId) note.withEntry(entry) else note,
+      ],
+    );
+  }
 
   GameProgress withNoteRead(String noteId) {
     if (!notes.any((note) => note.noteId == noteId && !note.isRead)) {

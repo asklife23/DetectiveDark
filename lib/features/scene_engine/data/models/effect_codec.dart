@@ -6,6 +6,7 @@ import 'package:detective_dark/features/scene_engine/domain/entities/scene_trans
 /// ```json
 /// {"giveItem": "brass_key"}
 /// {"hideHotspot": true}
+/// {"addNoteEntry": {"note": "person_pharmacist", "entry": "knows_villa"}}
 /// {"goToScene": "villa_hall"}
 /// {"goToScene": {"sceneId": "villa_hall", "holdMs": 600, "sfx": "door"}}
 /// ```
@@ -17,11 +18,14 @@ abstract final class EffectCodec {
     'giveItem',
     'consumeItem',
     'addNote',
+    'addNoteEntry',
     'setFlag',
     'hideHotspot',
     'say',
     'inspect',
   ];
+
+  static const _noteEntryKeys = {'note', 'entry'};
 
   static const _transitionKeys = {
     'sceneId',
@@ -46,6 +50,7 @@ abstract final class EffectCodec {
       'giveItem' => GiveItem(_id(key, value)),
       'consumeItem' => ConsumeItem(_id(key, value)),
       'addNote' => AddNote(_id(key, value)),
+      'addNoteEntry' => _addNoteEntry(value),
       'setFlag' => SetFlag(_id(key, value)),
       'hideHotspot' => _hideHotspot(value),
       'say' => _say(value),
@@ -62,6 +67,26 @@ abstract final class EffectCodec {
   static String _id(String key, Object? value) {
     if (value is String && value.isNotEmpty) return value;
     throw FormatException('Effect "$key" needs a non-empty string.');
+  }
+
+  /// `{"note": "person_pharmacist", "entry": "knows_villa"}`.
+  static AddNoteEntry _addNoteEntry(Object? value) {
+    if (value is! Map<String, dynamic>) {
+      throw const FormatException(
+        'Effect "addNoteEntry" needs an object with "note" and "entry".',
+      );
+    }
+    final unknown = value.keys.where((key) => !_noteEntryKeys.contains(key));
+    if (unknown.isNotEmpty) {
+      throw FormatException(
+        'Unknown "addNoteEntry" keys: ${unknown.join(', ')}. '
+        'Known: ${_noteEntryKeys.join(', ')}.',
+      );
+    }
+    return AddNoteEntry(
+      noteId: _id('addNoteEntry.note', value['note']),
+      entryId: _id('addNoteEntry.entry', value['entry']),
+    );
   }
 
   /// `"key"` or `{"first": "key_long", "then": "key_short"}`.

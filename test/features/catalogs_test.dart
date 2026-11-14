@@ -94,4 +94,88 @@ void main() {
       expect(result.failureOrNull!.message, contains('notes.json'));
     });
   });
+
+  group('note entries', () {
+    String notesWith(Object? entries) => jsonEncode({
+      'formatVersion': 1,
+      'notes': [
+        {
+          'id': 'person_pharmacist',
+          'category': 'person',
+          'titleKey': 'pharmacist_title',
+          'bodyKey': 'pharmacist_body',
+          'entries': ?entries,
+        },
+      ],
+    });
+
+    test('a person file is loaded with its entries, in order', () async {
+      final result = await AssetNoteCatalogRepository(
+        source({
+          chapterAsset('notes.json'): notesWith([
+            {'id': 'knows_villa', 'textKey': 'pharmacist_knows_villa'},
+            {'id': 'pills_prescribed', 'textKey': 'pharmacist_pills'},
+          ]),
+        }),
+      ).loadNotes('case01');
+
+      final note = result.valueOrNull!['person_pharmacist']!;
+      expect(note.category, NoteCategory.person);
+      expect(note.entries, const [
+        NoteEntryDefinition(
+          id: 'knows_villa',
+          textKey: 'pharmacist_knows_villa',
+        ),
+        NoteEntryDefinition(
+          id: 'pills_prescribed',
+          textKey: 'pharmacist_pills',
+        ),
+      ]);
+      expect(note.entry('pills_prescribed')!.textKey, 'pharmacist_pills');
+      expect(note.entry('other'), isNull);
+    });
+
+    test('entries are optional', () async {
+      final result = await AssetNoteCatalogRepository(
+        source({chapterAsset('notes.json'): notesWith(null)}),
+      ).loadNotes('case01');
+
+      expect(result.valueOrNull!['person_pharmacist']!.entries, isEmpty);
+    });
+
+    test('an entry needs id and textKey', () async {
+      final result = await AssetNoteCatalogRepository(
+        source({
+          chapterAsset('notes.json'): notesWith([
+            {'id': 'knows_villa'},
+          ]),
+        }),
+      ).loadNotes('case01');
+
+      expect(result.failureOrNull, isA<ContentFailure>());
+      expect(result.failureOrNull!.message, contains('textKey'));
+    });
+
+    test('the old category name is rejected', () async {
+      final result = await AssetNoteCatalogRepository(
+        source({
+          chapterAsset('notes.json'): jsonEncode({
+            'formatVersion': 1,
+            'notes': [
+              {
+                'id': 'x',
+                'category':
+                    'sus'
+                    'pect',
+                'titleKey': 't',
+                'bodyKey': 'b',
+              },
+            ],
+          }),
+        }),
+      ).loadNotes('case01');
+
+      expect(result.failureOrNull, isA<ContentFailure>());
+    });
+  });
 }

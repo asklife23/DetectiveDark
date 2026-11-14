@@ -160,11 +160,11 @@ abstract class AppLocalizations {
   /// **'Observations'**
   String get notebookTabObservations;
 
-  /// Notebook tab: one file per suspect.
+  /// Notebook tab: one file per person the detective has met or heard of. Each file grows line by line as the game goes on.
   ///
   /// In en, this message translates to:
-  /// **'Suspects'**
-  String get notebookTabSuspects;
+  /// **'People'**
+  String get notebookTabPeople;
 
   /// Shown in the Documents tab of the notebook while it is empty. Atmospheric, in the voice of the detective.
   ///
@@ -178,11 +178,11 @@ abstract class AppLocalizations {
   /// **'Nothing worth writing down. Not yet.'**
   String get notebookEmptyObservations;
 
-  /// Shown in the Suspects tab of the notebook while it is empty. Atmospheric, in the voice of the detective.
+  /// Shown in the People tab of the notebook while it is empty. Atmospheric, in the voice of the detective.
   ///
   /// In en, this message translates to:
   /// **'No names. Only shadows, so far.'**
-  String get notebookEmptySuspects;
+  String get notebookEmptyPeople;
 
   /// Shown on the right page of the notebook while no note is selected.
   ///

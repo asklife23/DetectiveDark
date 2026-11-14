@@ -3,8 +3,23 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'note_dto.g.dart';
 
+/// JSON form of a [NoteEntryDefinition]: a line a note can gain.
+@JsonSerializable()
+class NoteEntryDto {
+  const NoteEntryDto({required this.id, required this.textKey});
+
+  factory NoteEntryDto.fromJson(Map<String, dynamic> json) =>
+      _$NoteEntryDtoFromJson(json);
+
+  final String id;
+  final String textKey;
+
+  NoteEntryDefinition toEntity() =>
+      NoteEntryDefinition(id: id, textKey: textKey);
+}
+
 /// JSON form of a [NoteDefinition]. `category` is one of `document`,
-/// `observation`, `suspect`.
+/// `observation`, `person`.
 @JsonSerializable()
 class NoteDto {
   const NoteDto({
@@ -13,6 +28,7 @@ class NoteDto {
     required this.titleKey,
     required this.bodyKey,
     this.imageAsset,
+    this.entries = const [],
   });
 
   factory NoteDto.fromJson(Map<String, dynamic> json) =>
@@ -23,6 +39,7 @@ class NoteDto {
   final String titleKey;
   final String bodyKey;
   final String? imageAsset;
+  final List<NoteEntryDto> entries;
 
   NoteDefinition toEntity() => NoteDefinition(
     id: id,
@@ -30,6 +47,7 @@ class NoteDto {
     titleKey: titleKey,
     bodyKey: bodyKey,
     imageAsset: imageAsset,
+    entries: List.unmodifiable(entries.map((entry) => entry.toEntity())),
   );
 }
 

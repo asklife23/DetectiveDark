@@ -42,7 +42,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notebookTabObservations => 'Observations';
 
   @override
-  String get notebookTabSuspects => 'Suspects';
+  String get notebookTabPeople => 'People';
 
   @override
   String get notebookEmptyDocuments =>
@@ -53,7 +53,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Nothing worth writing down. Not yet.';
 
   @override
-  String get notebookEmptySuspects => 'No names. Only shadows, so far.';
+  String get notebookEmptyPeople => 'No names. Only shadows, so far.';
 
   @override
   String get notebookSelectHint => 'Pick a note to read it.';

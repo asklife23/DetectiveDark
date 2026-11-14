@@ -53,7 +53,8 @@ class ContentValidator {
   static const _firstEnterEffects = 'say, setFlag, addNote, giveItem';
 
   /// Effects allowed in a trigger.
-  static const _triggerEffects = 'say, setFlag, addNote, giveItem';
+  static const _triggerEffects =
+      'say, setFlag, addNote, addNoteEntry, giveItem';
 
   /// [reservedBottomStrip] is the share of the scene height, along its
   /// bottom edge, that the interface keeps for itself (the detective
@@ -92,9 +93,17 @@ class ContentValidator {
       }
     }
     for (final note in notes.values) {
+      final where = 'note ${note.id}';
       run
-        ..text('note ${note.id}', note.titleKey)
-        ..text('note ${note.id}', note.bodyKey);
+        ..text(where, note.titleKey)
+        ..text(where, note.bodyKey);
+      final seen = <String>{};
+      for (final entry in note.entries) {
+        if (!seen.add(entry.id)) {
+          run.add(where, 'duplicate entry ID "${entry.id}"');
+        }
+        run.text('$where / entry ${entry.id}', entry.textKey);
+      }
     }
     run
       ..triggers()
@@ -312,6 +321,13 @@ class _Run {
         if (!items.containsKey(itemId)) add(where, 'unknown item "$itemId"');
       case AddNote(:final noteId):
         if (!notes.containsKey(noteId)) add(where, 'unknown note "$noteId"');
+      case AddNoteEntry(:final noteId, :final entryId):
+        final note = notes[noteId];
+        if (note == null) {
+          add(where, 'unknown note "$noteId"');
+        } else if (note.entry(entryId) == null) {
+          add(where, 'note "$noteId" has no entry "$entryId"');
+        }
       case SetFlag(:final flag):
         _flagsSet.add(flag);
       case Say(:final messageKey, :final repeatKey):
@@ -341,6 +357,7 @@ class _Run {
             effect is Say ||
             effect is SetFlag ||
             effect is AddNote ||
+            effect is AddNoteEntry ||
             effect is GiveItem;
         if (!allowed) {
           add(

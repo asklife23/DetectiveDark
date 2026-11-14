@@ -44,9 +44,9 @@
   "@notebookTabObservations": {
     "description": "Notebook tab: conclusions the detective has drawn."
   },
-  "notebookTabSuspects": "Suspects",
-  "@notebookTabSuspects": {
-    "description": "Notebook tab: one file per suspect."
+  "notebookTabPeople": "People",
+  "@notebookTabPeople": {
+    "description": "Notebook tab: one file per person the detective has met or heard of. Each file grows line by line as the game goes on."
   },
   "notebookEmptyDocuments": "No papers yet. Somebody always leaves something behind.",
   "@notebookEmptyDocuments": {
@@ -56,9 +56,9 @@
   "@notebookEmptyObservations": {
     "description": "Shown in the Observations tab of the notebook while it is empty. Atmospheric, in the voice of the detective."
   },
-  "notebookEmptySuspects": "No names. Only shadows, so far.",
-  "@notebookEmptySuspects": {
-    "description": "Shown in the Suspects tab of the notebook while it is empty. Atmospheric, in the voice of the detective."
+  "notebookEmptyPeople": "No names. Only shadows, so far.",
+  "@notebookEmptyPeople": {
+    "description": "Shown in the People tab of the notebook while it is empty. Atmospheric, in the voice of the detective."
   },
   "notebookSelectHint": "Pick a note to read it.",
   "@notebookSelectHint": {

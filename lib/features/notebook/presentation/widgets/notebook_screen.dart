@@ -5,11 +5,13 @@ import 'package:detective_dark/core/theme/app_spacing.dart';
 import 'package:detective_dark/core/widgets/hud_icon_button.dart';
 import 'package:detective_dark/features/notebook/domain/entities/note_definition.dart';
 import 'package:detective_dark/features/notebook/presentation/cubit/notebook_cubit.dart';
+import 'package:detective_dark/features/notebook/presentation/widgets/note_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// The open notebook: three tabs, the notes of the tab on the left page
-/// and the selected note on the right page.
+/// The open notebook: three tabs (documents, observations, people), the
+/// notes of the tab on the left page and the selected note on the right
+/// page.
 ///
 /// It lies above the scene (it is not a route), so the game underneath
 /// stays exactly as it was. A tap outside or the close button closes it.
@@ -63,7 +65,10 @@ class NotebookScreen extends StatelessWidget {
                             ),
                             Expanded(
                               flex: _noteFlex,
-                              child: _NotePage(entry: state.selectedEntry),
+                              child: NotePage(
+                                entry: state.selectedEntry,
+                                highlightedLineId: state.highlightedLineId,
+                              ),
                             ),
                           ],
                         ),
@@ -97,14 +102,14 @@ String _tabLabel(AppLocalizations l10n, NoteCategory category) =>
     switch (category) {
       NoteCategory.document => l10n.notebookTabDocuments,
       NoteCategory.observation => l10n.notebookTabObservations,
-      NoteCategory.suspect => l10n.notebookTabSuspects,
+      NoteCategory.person => l10n.notebookTabPeople,
     };
 
 String _emptyText(AppLocalizations l10n, NoteCategory category) =>
     switch (category) {
       NoteCategory.document => l10n.notebookEmptyDocuments,
       NoteCategory.observation => l10n.notebookEmptyObservations,
-      NoteCategory.suspect => l10n.notebookEmptySuspects,
+      NoteCategory.person => l10n.notebookEmptyPeople,
     };
 
 class _Tabs extends StatelessWidget {
@@ -225,53 +230,4 @@ class _NoteList extends StatelessWidget {
       ],
     );
   }
-}
-
-class _NotePage extends StatelessWidget {
-  const _NotePage({required this.entry});
-
-  final NotebookEntry? entry;
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final entry = this.entry;
-
-    if (entry == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Text(
-            context.l10n.notebookSelectHint,
-            textAlign: TextAlign.center,
-            style: textTheme.bodyMedium?.copyWith(color: AppColors.inkFaded),
-          ),
-        ),
-      );
-    }
-
-    final texts = context.storyTexts;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            texts.text(entry.note.titleKey),
-            style: textTheme.titleLarge?.copyWith(color: AppColors.ink),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            texts.text(entry.note.bodyKey),
-            style: textTheme.titleSmall?.copyWith(
-              color: AppColors.ink,
-              height: _bodyLineHeight,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  static const _bodyLineHeight = 1.5;
 }

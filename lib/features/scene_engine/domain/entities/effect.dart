@@ -51,6 +51,19 @@ final class AddNote extends Effect {
   List<Object?> get props => [noteId];
 }
 
+/// Adds a line to a note (ADR 0015): what a person said goes into their
+/// file instead of becoming a note of its own. If the note is not in the
+/// notebook yet, it is added first.
+final class AddNoteEntry extends Effect {
+  const AddNoteEntry({required this.noteId, required this.entryId});
+
+  final String noteId;
+  final String entryId;
+
+  @override
+  List<Object?> get props => [noteId, entryId];
+}
+
 /// Sets a flag. Flags are never cleared: the story only moves forward.
 final class SetFlag extends Effect {
   const SetFlag(this.flag);

@@ -1,5 +1,6 @@
 import 'package:detective_dark/core/content/content_asset_source.dart';
 import 'package:detective_dark/core/error/failure.dart';
+import 'package:detective_dark/core/events/game_event_bus.dart';
 import 'package:detective_dark/features/notebook/data/repositories/asset_note_catalog_repository.dart';
 import 'package:detective_dark/features/notebook/domain/entities/note_definition.dart';
 import 'package:detective_dark/features/notebook/domain/usecases/mark_note_read.dart';
@@ -15,9 +16,16 @@ import '../../helpers/slice_fixtures.dart';
 void main() {
   const letter = CollectedNote(noteId: 'hall_letter', addedAtUtcMs: 1);
   late InMemoryProgressRepository progress;
+  late GameEventBus bus;
 
-  setUp(() => progress = InMemoryProgressRepository());
-  tearDown(() => progress.dispose());
+  setUp(() {
+    progress = InMemoryProgressRepository();
+    bus = GameEventBus();
+  });
+  tearDown(() async {
+    await progress.dispose();
+    await bus.dispose();
+  });
 
   group('MarkNoteRead', () {
     test('saves the note as read', () async {
@@ -68,6 +76,7 @@ void main() {
         progressRepository: progress,
         markNoteRead: MarkNoteRead(progress),
         caseId: 'case01',
+        eventBus: bus,
       );
       addTearDown(cubit.close);
       await cubit.load();
@@ -84,6 +93,7 @@ void main() {
         progressRepository: progress,
         markNoteRead: MarkNoteRead(progress),
         caseId: 'case01',
+        eventBus: bus,
       );
       addTearDown(cubit.close);
       await cubit.load();
@@ -105,7 +115,7 @@ void main() {
       final cubit = await cubitWithLetter();
       expect(cubit.state.visibleEntries, hasLength(1));
 
-      cubit.selectCategory(NoteCategory.suspect);
+      cubit.selectCategory(NoteCategory.person);
       expect(cubit.state.visibleEntries, isEmpty);
 
       cubit.selectCategory(NoteCategory.document);

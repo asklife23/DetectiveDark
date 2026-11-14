@@ -57,6 +57,18 @@ final class NoteAdded extends GameEvent {
   List<Object?> get props => [noteId, sceneId, hotspotId];
 }
 
+/// A line was added to a note that is already in the notebook (ADR 0015):
+/// a statement entered into the file of a person. The note is unread again.
+final class NoteUpdated extends GameEvent {
+  const NoteUpdated(this.noteId, {required this.entryId});
+
+  final String noteId;
+  final String entryId;
+
+  @override
+  List<Object?> get props => [noteId, entryId];
+}
+
 /// The detective said something through the inner voice.
 final class DetectiveSaid extends GameEvent {
   const DetectiveSaid(this.messageKey);

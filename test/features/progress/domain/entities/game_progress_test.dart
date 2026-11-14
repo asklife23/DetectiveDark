@@ -175,4 +175,58 @@ void main() {
       expect(progress, isNot(newGame));
     });
   });
+
+  group('note entries', () {
+    const first = CollectedNoteEntry(entryId: 'knows_villa', addedAtUtcMs: 20);
+    const second = CollectedNoteEntry(entryId: 'pills', addedAtUtcMs: 30);
+
+    test('are appended in order and make the note unread again', () {
+      final read = newGame.withNote(letter).withNoteRead('hall_letter');
+
+      final updated = read
+          .withNoteEntry('hall_letter', first)
+          .withNoteRead('hall_letter')
+          .withNoteEntry('hall_letter', second);
+
+      expect(updated.notes.single.entries, [first, second]);
+      expect(updated.notes.single.isRead, isFalse);
+      expect(updated.unreadNoteCount, 1);
+      expect(updated.hasNoteEntry('hall_letter', 'pills'), isTrue);
+      expect(updated.hasNoteEntry('hall_letter', 'other'), isFalse);
+    });
+
+    test('the same line twice changes nothing', () {
+      final once = newGame
+          .withNote(letter)
+          .withNoteEntry('hall_letter', first)
+          .withNoteRead('hall_letter');
+
+      expect(once.withNoteEntry('hall_letter', first), same(once));
+      expect(once.notes.single.isRead, isTrue);
+    });
+
+    test('a note that is not in the notebook gains nothing', () {
+      expect(newGame.withNoteEntry('hall_letter', first), same(newGame));
+    });
+
+    test('marking as read keeps the lines', () {
+      final read = newGame
+          .withNote(letter)
+          .withNoteEntry('hall_letter', first)
+          .withNoteRead('hall_letter');
+
+      expect(read.notes.single.entries, [first]);
+    });
+
+    test('only the named note changes', () {
+      const diary = CollectedNote(noteId: 'diary', addedAtUtcMs: 11);
+      final progress = newGame
+          .withNote(letter)
+          .withNote(diary)
+          .withNoteRead('diary')
+          .withNoteEntry('hall_letter', first);
+
+      expect(progress.notes.last, diary.markedRead());
+    });
+  });
 }

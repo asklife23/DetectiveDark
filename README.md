@@ -30,7 +30,7 @@ What the vertical slice already does:
   The wrong place only earns a dry remark; the right place consumes the item and changes the scene.
 - **Object layer.** Things that can be taken are separate pictures on top of the background and vanish with
   their hotspot, so a scene needs one background instead of one per combination of collected objects.
-- **Notebook.** Documents, observations and suspects, with an unread badge. In the finale the evidence will
+- **Notebook.** Documents, observations and people, with an unread badge. In the finale the evidence will
   be picked from here.
 - **Inspection panel.** A look-only detail (a plaque, later a clock or a photo) opens in a small window
   without leaving the scene.

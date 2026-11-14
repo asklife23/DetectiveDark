@@ -306,6 +306,40 @@ void main() {
       expect(() => EffectCodec.parse({'say': ''}), _formatError('"say"'));
     });
 
+    test('addNoteEntry', () {
+      expect(
+        EffectCodec.parse({
+          'addNoteEntry': {'note': 'person_pharmacist', 'entry': 'knows_villa'},
+        }),
+        const AddNoteEntry(noteId: 'person_pharmacist', entryId: 'knows_villa'),
+      );
+    });
+
+    test('addNoteEntry rejects malformed objects', () {
+      expect(
+        () => EffectCodec.parse({'addNoteEntry': 'person_pharmacist'}),
+        _formatError('"note" and "entry"'),
+      );
+      expect(
+        () => EffectCodec.parse({
+          'addNoteEntry': {'note': 'person_pharmacist'},
+        }),
+        _formatError('"addNoteEntry.entry"'),
+      );
+      expect(
+        () => EffectCodec.parse({
+          'addNoteEntry': {'entry': 'knows_villa'},
+        }),
+        _formatError('"addNoteEntry.note"'),
+      );
+      expect(
+        () => EffectCodec.parse({
+          'addNoteEntry': {'note': 'a', 'entry': 'b', 'line': 'c'},
+        }),
+        _formatError('Unknown "addNoteEntry" keys: line'),
+      );
+    });
+
     test('hideHotspot accepts only true', () {
       expect(
         () => EffectCodec.parse({'hideHotspot': 'statue_key'}),
