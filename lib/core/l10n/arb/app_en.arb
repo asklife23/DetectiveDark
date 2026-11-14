@@ -10,7 +10,7 @@
   },
   "closeTooltip": "Close",
   "@closeTooltip": {
-    "description": "Label of the button that closes a panel (inspection panel, notebook, message history)."
+    "description": "Label of the button that closes a panel (inspection panel, notebook, message history, dialogue panel)."
   },
   "exitHint": "Press back again to leave the game.",
   "@exitHint": {
@@ -63,6 +63,22 @@
   "notebookSelectHint": "Pick a note to read it.",
   "@notebookSelectHint": {
     "description": "Shown on the right page of the notebook while no note is selected."
+  },
+  "dialogueTopicNew": "new",
+  "@dialogueTopicNew": {
+    "description": "Small tag on a question in the dialogue panel that the player has not asked yet. Very little space: one short word, lower case."
+  },
+  "dialogueTopicAsked": "asked",
+  "@dialogueTopicAsked": {
+    "description": "Accessibility text for a question in the dialogue panel that the player has already asked (shown as a check mark)."
+  },
+  "dialogueContinueHint": "Tap to continue",
+  "@dialogueContinueHint": {
+    "description": "Accessibility hint on the line a character is saying in the dialogue panel: a tap shows the next line."
+  },
+  "dialogueNoTopics": "Nothing to ask. Not yet.",
+  "@dialogueNoTopics": {
+    "description": "Shown in the dialogue panel when the character has no question on offer. In the voice of the detective."
   },
   "chatTooltip": "Thoughts",
   "@chatTooltip": {

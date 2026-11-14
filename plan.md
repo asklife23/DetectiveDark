@@ -860,7 +860,7 @@ sahnede durur, mantık testlerle kanıtlanmıştır; panel 1.17'de gelir.
   yok); içerik doğrulama testi yeşil; `dialogue/domain`'de Flutter import'u yok.
   **Commit:** `feat(dialogue): add dialogue domain, content format and talk effect`
 
-### [ ] 1.17 Konuşma paneli
+### [x] 1.17 Konuşma paneli
 **Amaç:** Konuşmayı oynanır hale getirmek: silüete dokun, soruyu seç, cevabı satır satır oku.
 **Yapılacaklar:**
 - `SceneBloc`: `activeDialogueId` (arayüz durumu; kayda girmez), `DialogueClosed` olayı. `talk` sonucu doldurur.
@@ -1586,3 +1586,13 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   portre olarak da aynı çizimi kullanır (`silhouette_pharmacist`, `silhouette_cafe_owner`); cilası 1.20'de.
   (h) Mimari testine iki açık kural eklendi: `scene_engine` → `dialogue` import'u yok; bir feature'ın `data` katmanı
   başka feature'ın `data` katmanını import etmez.
+- 2026-11-15 (1.17): Küçük sapmalar. (a) `DialogueCubit` tetikleyicileri `SceneContentRepository`'den okur; aynı
+  vakanın iki kez ayrıştırılmaması için `AssetSceneContentRepository` yüklenen vakayı bellekte tutar (başarısız
+  yükleme tutulmaz; "tekrar dene" gerçekten yeniden okur). (b) Panel sahne görselinin üst %87'sini kaplar
+  (`1 - SceneLayout.chatStripHeight`); 640×360'ta ≈ 278 dp, `DialogueLayout.minPanelHeight` = 252 dp. (c) Konuşma
+  açılamazsa (kayıt hatası, içerikte olmayan konuşma) `app/` katmanı `SceneBloc`'a `DialogueClosed` gönderir; sahne
+  görünmeyen bir panelin altında kilitli kalmaz. (d) Yeni ARB metinleri: `dialogueTopicNew`, `dialogueTopicAsked`,
+  `dialogueContinueHint`, `dialogueNoTopics`. (e) `tool/render_screenshots_test.dart` çarşı ve konuşma görüntülerini de
+  üretir (`06_market`, `07_dialogue_line`, `08_dialogue_questions`); README'ye 1.20'de eklenecek. **Telefonda
+  doğrulanacak (kullanıcı):** kabul senaryosunun 14–16. ve 19. adımları ve devlog'daki "bakılacak yerler" listesi;
+  CI'daki widget testleri (telefon boyutu dokunma, 1280×720 fare, 640×360 ve 800×360) geçti.

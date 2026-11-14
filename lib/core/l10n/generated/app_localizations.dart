@@ -106,7 +106,7 @@ abstract class AppLocalizations {
   /// **'Back'**
   String get backTooltip;
 
-  /// Label of the button that closes a panel (inspection panel, notebook, message history).
+  /// Label of the button that closes a panel (inspection panel, notebook, message history, dialogue panel).
   ///
   /// In en, this message translates to:
   /// **'Close'**
@@ -189,6 +189,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pick a note to read it.'**
   String get notebookSelectHint;
+
+  /// Small tag on a question in the dialogue panel that the player has not asked yet. Very little space: one short word, lower case.
+  ///
+  /// In en, this message translates to:
+  /// **'new'**
+  String get dialogueTopicNew;
+
+  /// Accessibility text for a question in the dialogue panel that the player has already asked (shown as a check mark).
+  ///
+  /// In en, this message translates to:
+  /// **'asked'**
+  String get dialogueTopicAsked;
+
+  /// Accessibility hint on the line a character is saying in the dialogue panel: a tap shows the next line.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to continue'**
+  String get dialogueContinueHint;
+
+  /// Shown in the dialogue panel when the character has no question on offer. In the voice of the detective.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to ask. Not yet.'**
+  String get dialogueNoTopics;
 
   /// Label of the HUD button that opens the history of the detective's inner voice, and title of that history.
   ///

@@ -59,6 +59,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notebookSelectHint => 'Pick a note to read it.';
 
   @override
+  String get dialogueTopicNew => 'new';
+
+  @override
+  String get dialogueTopicAsked => 'asked';
+
+  @override
+  String get dialogueContinueHint => 'Tap to continue';
+
+  @override
+  String get dialogueNoTopics => 'Nothing to ask. Not yet.';
+
+  @override
   String get chatTooltip => 'Thoughts';
 
   @override

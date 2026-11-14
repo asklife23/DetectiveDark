@@ -32,6 +32,10 @@ abstract final class AppDurations {
   /// The notebook button swelling once when a known note gains a line.
   static const notebookPulse = Duration(milliseconds: 320);
 
+  /// A line of a character in the dialogue panel: time per typed
+  /// character. A little slower than the inner voice: somebody is talking.
+  static const dialogueTypePerCharacter = Duration(milliseconds: 22);
+
   /// The detective message bar: time per typed character.
   static const chatTypePerCharacter = Duration(milliseconds: 18);
 

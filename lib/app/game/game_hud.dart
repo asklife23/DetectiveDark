@@ -5,6 +5,7 @@ import 'package:detective_dark/app/game/hud_side_panel.dart';
 import 'package:detective_dark/app/game/pickup_flights.dart';
 import 'package:detective_dark/app/game/scene_buttons.dart';
 import 'package:detective_dark/app/game/scene_chat_strip.dart';
+import 'package:detective_dark/app/game/scene_dialogue_area.dart';
 import 'package:detective_dark/core/events/game_event_bus.dart';
 import 'package:detective_dark/core/l10n/l10n.dart';
 import 'package:detective_dark/core/theme/app_durations.dart';
@@ -31,10 +32,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// - a collected item flies from the scene into the item panel, a
 ///   collected note into the notebook button ([PickupFlights]);
 /// - the notebook and the message history open above the scene;
-/// - the detective message bar lies on the bottom strip of the scene.
+/// - the detective message bar lies on the bottom strip of the scene;
+/// - the dialogue panel opens above the scene, leaving that strip and the
+///   item panel free.
 ///
 /// It also owns Back from outside the scene: the Android system back
-/// button and the Esc key first close what is open, then leave the
+/// button and the Esc key first close what is open (notebook or message
+/// history, then the dialogue or inspection panel), then leave the
 /// close-up. In a main scene a second press of the system button exits the
 /// app; Esc does nothing there.
 class GameHud extends StatefulWidget {
@@ -100,6 +104,7 @@ class _GameHudState extends State<GameHud> {
     final hasSomethingToClose =
         state.canGoBack ||
         state.activeInspection != null ||
+        state.activeDialogueId != null ||
         state.transitionPhase != TransitionPhase.idle;
     if (hasSomethingToClose) bloc.add(const BackPressed());
     return hasSomethingToClose;
@@ -159,6 +164,7 @@ class _GameHudState extends State<GameHud> {
                           onToggleHotspots: () =>
                               setState(() => _showHotspots = !_showHotspots),
                         ),
+                        const SceneDialogueArea(),
                       ],
                     ),
                   ),

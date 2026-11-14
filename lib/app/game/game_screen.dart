@@ -6,6 +6,7 @@ import 'package:detective_dark/app/game/game_texts_cubit.dart';
 import 'package:detective_dark/core/content/content_text_scope.dart';
 import 'package:detective_dark/core/events/game_event_bus.dart';
 import 'package:detective_dark/features/detective_chat/presentation/cubit/chat_cubit.dart';
+import 'package:detective_dark/features/dialogue/presentation/cubit/dialogue_cubit.dart';
 import 'package:detective_dark/features/inventory/presentation/cubit/inventory_cubit.dart';
 import 'package:detective_dark/features/notebook/presentation/cubit/notebook_cubit.dart';
 import 'package:detective_dark/features/scene_engine/presentation/bloc/scene_bloc.dart';
@@ -15,7 +16,7 @@ import 'package:get_it/get_it.dart';
 
 /// The in-game screen. It is the place where the features meet: the `app/`
 /// layer is the only one allowed to combine the presentation of several
-/// features (scene, inventory, notebook, detective messages).
+/// features (scene, inventory, notebook, dialogue, detective messages).
 ///
 /// It creates the blocs, waits until content and texts are loaded, and
 /// then shows the game.
@@ -48,6 +49,13 @@ class GameScreen extends StatelessWidget {
         BlocProvider(
           create: (_) {
             final cubit = getIt<NotebookCubit>();
+            unawaited(cubit.load());
+            return cubit;
+          },
+        ),
+        BlocProvider(
+          create: (_) {
+            final cubit = getIt<DialogueCubit>();
             unawaited(cubit.load());
             return cubit;
           },

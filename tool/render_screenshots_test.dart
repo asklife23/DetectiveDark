@@ -13,6 +13,7 @@ import 'dart:ui' as ui;
 import 'package:detective_dark/app/game/game_screen.dart';
 import 'package:detective_dark/core/l10n/l10n.dart';
 import 'package:detective_dark/core/theme/app_theme.dart';
+import 'package:detective_dark/features/dialogue/presentation/widgets/dialogue_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -126,6 +127,29 @@ void main() {
     await tester.tap(find.text('Unsigned letter'));
     await tester.pumpFor();
     await save('05_notebook');
+
+    // On to the market square: the bottle from the desk, then the signpost
+    // that appeared in front of the villa.
+    await tester.tap(find.byTooltip(l10n.closeTooltip));
+    await tester.pumpFor();
+    await tester.tapHotspot('Small bottle on the desk');
+    await tester.pumpFor(const Duration(seconds: 1));
+    await tester.tap(find.byTooltip(l10n.backTooltip));
+    await tester.pumpFor();
+    await tester.tap(find.byTooltip(l10n.backTooltip));
+    await tester.pumpFor();
+    await tester.tapHotspot('Signpost to the market');
+    await tester.pumpFor(const Duration(seconds: 3));
+    await save('06_market');
+
+    // The pharmacist speaks; then the questions.
+    final panel = find.byType(DialoguePanel);
+    await tester.tapHotspot('Figure at the pharmacy window');
+    await tester.pumpFor(const Duration(seconds: 2));
+    await save('07_dialogue_line');
+    await tester.tapAt(tester.getCenter(panel));
+    await tester.pumpFor();
+    await save('08_dialogue_questions');
 
     await tester.closeGame();
   });

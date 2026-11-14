@@ -55,6 +55,11 @@ final class InspectionClosed extends SceneEvent {
   const InspectionClosed();
 }
 
+/// The dialogue panel was closed with its own button.
+final class DialogueClosed extends SceneEvent {
+  const DialogueClosed();
+}
+
 /// The stored progress changed (possibly from another feature).
 final class _ProgressChanged extends SceneEvent {
   const _ProgressChanged(this.progress);

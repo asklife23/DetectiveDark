@@ -29,6 +29,7 @@ class SceneState extends Equatable {
     this.pendingTransition,
     this.pendingSceneId,
     this.activeInspection,
+    this.activeDialogueId,
   });
 
   final SceneStatus status;
@@ -60,6 +61,12 @@ class SceneState extends Equatable {
   /// The open inspection panel, if any.
   final InspectionDefinition? activeInspection;
 
+  /// The conversation that is open, if any (`talk`, ADR 0016). Like the
+  /// inspection it is interface state: it is not saved and the navigation
+  /// stack does not know about it. Only one of the two panels is open at a
+  /// time.
+  final String? activeDialogueId;
+
   /// Navigation stack, root first.
   List<String> get stack => progress?.sceneStack ?? const [];
 
@@ -71,7 +78,8 @@ class SceneState extends Equatable {
   bool get acceptsTaps =>
       isReady &&
       transitionPhase == TransitionPhase.idle &&
-      activeInspection == null;
+      activeInspection == null &&
+      activeDialogueId == null;
 
   SceneState _copy({
     GameProgress? progress,
@@ -82,6 +90,7 @@ class SceneState extends Equatable {
     SceneTransition? Function()? pendingTransition,
     String? Function()? pendingSceneId,
     InspectionDefinition? Function()? activeInspection,
+    String? Function()? activeDialogueId,
   }) {
     return SceneState(
       status: status,
@@ -101,6 +110,9 @@ class SceneState extends Equatable {
       activeInspection: activeInspection == null
           ? this.activeInspection
           : activeInspection(),
+      activeDialogueId: activeDialogueId == null
+          ? this.activeDialogueId
+          : activeDialogueId(),
     );
   }
 
@@ -117,5 +129,6 @@ class SceneState extends Equatable {
     pendingTransition,
     pendingSceneId,
     activeInspection,
+    activeDialogueId,
   ];
 }

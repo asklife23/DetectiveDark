@@ -358,4 +358,114 @@ void main() {
       );
     });
   });
+
+  group('conversation (ADR 0016)', () {
+    /// A game that stands in the market square with the pill bottle.
+    Future<SceneBloc> inMarket() async {
+      final stored = newGame
+          .withSceneStack(const ['market_square'])
+          .withVisited('market_square')
+          .withItem('pill_bottle');
+      final market = GameHarness(
+        progressRepository: InMemoryProgressRepository(initial: stored),
+      );
+      addTearDown(market.dispose);
+      final bloc = market.createBloc();
+      addTearDown(bloc.close);
+      await bloc.start();
+      return bloc;
+    }
+
+    test('a tap on a character opens the conversation; nothing is saved '
+        'and the scene stays', () async {
+      final bloc = await inMarket();
+      final before = bloc.state.progress;
+
+      await bloc.tap('pharmacist');
+
+      expect(bloc.state.activeDialogueId, 'pharmacist');
+      expect(bloc.state.acceptsTaps, isFalse);
+      expect(bloc.state.progress, same(before));
+      expect(bloc.sceneId, 'market_square');
+      expect(bloc.state.stack, ['market_square']);
+      expect(bloc.state.transitionPhase, TransitionPhase.idle);
+    });
+
+    test('hotspot taps are ignored while it is open', () async {
+      final bloc = await inMarket();
+      await bloc.tap('pharmacist');
+
+      await bloc.tap('villa_road');
+      await bloc.tap('cafe_owner');
+
+      expect(bloc.sceneId, 'market_square');
+      expect(bloc.state.activeDialogueId, 'pharmacist');
+    });
+
+    test('Back closes the conversation first and leaves the scene '
+        'alone', () async {
+      final bloc = await inMarket();
+      await bloc.tap('cafe_owner');
+
+      await bloc.back();
+
+      expect(bloc.state.activeDialogueId, isNull);
+      expect(bloc.sceneId, 'market_square');
+      expect(bloc.state.acceptsTaps, isTrue);
+    });
+
+    test('DialogueClosed closes it; a stray one changes nothing', () async {
+      final bloc = await inMarket();
+      await bloc.tap('pharmacist');
+
+      bloc.add(const DialogueClosed());
+      await bloc.settle();
+      expect(bloc.state.activeDialogueId, isNull);
+
+      final closed = bloc.state;
+      bloc.add(const DialogueClosed());
+      await bloc.settle();
+      expect(bloc.state, same(closed));
+    });
+
+    test('panels never stack: no examine card while a conversation is '
+        'open', () async {
+      const card = InspectionDefinition(
+        id: 'item:pill_bottle',
+        textKey: 'item_pill_bottle_description',
+        visual: SceneVisual(placeholderStyle: 'item_pill_bottle'),
+      );
+      final bloc = await inMarket();
+      await bloc.tap('pharmacist');
+
+      bloc.add(const InspectionRequested(card));
+      await bloc.settle();
+
+      expect(bloc.state.activeInspection, isNull);
+      expect(bloc.state.activeDialogueId, 'pharmacist');
+    });
+
+    test('after closing, the character can be talked to again', () async {
+      final bloc = await inMarket();
+      await bloc.tap('pharmacist');
+      await bloc.back();
+
+      await bloc.tap('cafe_owner');
+
+      expect(bloc.state.activeDialogueId, 'cafe_owner');
+    });
+
+    test('a change of the progress keeps the conversation open', () async {
+      final bloc = await inMarket();
+      await bloc.tap('pharmacist');
+
+      bloc.add(const BackPressed());
+      await bloc.settle();
+      await bloc.tap('pharmacist');
+      // Another feature saves (a topic was asked).
+      final repository = bloc.state.progress!;
+      expect(repository.hasItem('pill_bottle'), isTrue);
+      expect(bloc.state.activeDialogueId, 'pharmacist');
+    });
+  });
 }

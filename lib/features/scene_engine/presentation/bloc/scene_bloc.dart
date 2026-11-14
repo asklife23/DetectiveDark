@@ -21,7 +21,8 @@ part 'scene_event.dart';
 part 'scene_state.dart';
 
 /// Runs the scene view: which scene is on screen, what it looks like, what
-/// a tap does, the navigation stack, transitions and the inspection panel.
+/// a tap does, the navigation stack, transitions, the inspection panel and
+/// which conversation is open.
 ///
 /// Events are handled strictly one after another. A save is asynchronous,
 /// so without this two quick taps could run the same rule twice.
@@ -64,6 +65,7 @@ class SceneBloc extends Bloc<SceneEvent, SceneState> {
       TransitionFinished() => _onTransitionFinished(emit),
       InspectionRequested() => _onInspectionRequested(event, emit),
       InspectionClosed() => _onInspectionClosed(emit),
+      DialogueClosed() => _onDialogueClosed(emit),
       _ProgressChanged() => _onProgressChanged(event, emit),
     };
   }
@@ -115,9 +117,10 @@ class SceneBloc extends Bloc<SceneEvent, SceneState> {
       case Success(value: final outcome):
         final inspection = state.content?.inspections[outcome.inspectionId];
         emit(
-          _withProgress(
-            outcome.progress,
-          )._copy(activeInspection: () => inspection),
+          _withProgress(outcome.progress)._copy(
+            activeInspection: () => inspection,
+            activeDialogueId: () => outcome.dialogueId,
+          ),
         );
         if (outcome.navigation case final navigation?) {
           await _startTransition(
@@ -133,6 +136,11 @@ class SceneBloc extends Bloc<SceneEvent, SceneState> {
     if (!state.isReady) return;
     if (state.activeInspection != null) {
       emit(state._copy(activeInspection: () => null));
+      return;
+    }
+    // Back closes the conversation first and leaves the scene alone.
+    if (state.activeDialogueId != null) {
+      emit(state._copy(activeDialogueId: () => null));
       return;
     }
     if (state.transitionPhase != TransitionPhase.idle || !state.canGoBack) {
@@ -224,6 +232,7 @@ class SceneBloc extends Bloc<SceneEvent, SceneState> {
     InspectionRequested event,
     Emitter<SceneState> emit,
   ) async {
+    // Panels never stack: no examine card while a conversation is open.
     if (!state.acceptsTaps) return;
     emit(state._copy(activeInspection: () => event.inspection));
   }
@@ -231,6 +240,11 @@ class SceneBloc extends Bloc<SceneEvent, SceneState> {
   Future<void> _onInspectionClosed(Emitter<SceneState> emit) async {
     if (state.activeInspection == null) return;
     emit(state._copy(activeInspection: () => null));
+  }
+
+  Future<void> _onDialogueClosed(Emitter<SceneState> emit) async {
+    if (state.activeDialogueId == null) return;
+    emit(state._copy(activeDialogueId: () => null));
   }
 
   Future<void> _onProgressChanged(

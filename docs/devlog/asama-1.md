@@ -501,3 +501,53 @@
   import ederek değil, `scene_engine/domain`'deki **`RuleParser` arayüzü** üzerinden ulaşır; gerçek uygulamayı DI
   verir. Üçüncüsüne **bağımlılığın tersine çevrilmesi** (dependency inversion) denir: üst seviye kod somut sınıfa
   değil arayüze bağlanır, somut sınıf dışarıdan takılır. Böylece ok hep tek yöne bakar: `dialogue` → `scene_engine`.
+
+### Adım 1.17 — Konuşma paneli (2026-11-15)
+- **Ne yaptık:** Konuşmayı oynanır hale getirdik: silüete dokun → panel **doğrudan** açılır (arada "Konuş" adımı yok)
+  → karakter karşılar → soruyu seç → cevabı satır satır oku.
+  - **`SceneBloc`:** `activeDialogueId` (inceleme penceresi gibi arayüz durumu; kayda girmez) ve `DialogueClosed`
+    olayı. Panel açıkken hotspot dokunuşları yok sayılır; Geri önce paneli kapatır, sahneye dokunmaz; paneller üst üste
+    binmez (konuşma açıkken eşyaya uzun basma kartı açmaz).
+  - **`DialogueCubit`:** iki mod: karakter **konuşuyor** (karşılama ya da cevap satırları) veya oyuncu **soru
+    seçiyor**. `advance()`: yazılmakta olan satırı tamamlar; tamamlanmış satırdan sonrakine geçer; son satırdan sonra
+    soru listesine döner. Açılışta `StartConversation`, konu seçilince `AskTopic` çağrılır. Soru listesi ilerlemeyi
+    izler (koşulu yeni tutan soru panel açıkken de belirir).
+  - **`DialoguePanel`:** solda portre, sağda karakterin adı ve altında ya satır (daktilo efekti) ya soru listesi.
+    Sorulmamış soru **"new"** etiketi, sorulmuş soru onay işareti taşır. Sahnedeki silüette işaret yoktur.
+  - **Yerleşim (`app/`):** panel sahne görselinin üstünü kaplar ama **alt şeridi ve eşya panelini açık bırakır**:
+    dedektifin yorumu konuşma sırasında mesaj barında görünür, eşya göstermek için panele dokunulabilir (1.18).
+  - **4 soru kaydırmasız:** ölçüler `core/theme/dialogue_layout.dart`'ta; widget testi 640×360 ve 800×360'ta dördüncü
+    sorunun tamamen görünür ve dokunulabilir olduğunu, altıncıya kaydırarak ulaşıldığını doğrular.
+- **Neden:** Kurallar 1.16'da hazırdı; bu adım yalnızca "göster" işi. Panelin alt şeridi kapatmaması bilinçli: iç ses
+  (dedektif) ile karakterin sesi iki ayrı kanal ve ikisi aynı anda görünmeli. Geri sırasının tek yerde olması
+  (`not defteri / mesaj geçmişi → panel → sahne`) da önemli: sistem geri tuşu, `Esc` ve ekrandaki düğmeler aynı sırayı
+  izlemezse oyuncu "geri"ye basınca ne olacağını kestiremez.
+- **Önemli dosyalar:** `dialogue/presentation/cubit/dialogue_cubit.dart`,
+  `dialogue/presentation/widgets/dialogue_panel.dart`, `dialogue_line.dart`, `dialogue_topic_list.dart`,
+  `core/theme/dialogue_layout.dart`, `app/game/scene_dialogue_area.dart`, `app/game/game_hud.dart`,
+  `scene_engine/presentation/bloc/scene_bloc.dart` (+ `scene_state.dart`, `scene_event.dart`), testler:
+  `test/app/game/dialogue_flow_test.dart`, `test/features/dialogue/presentation/cubit/dialogue_cubit_test.dart`.
+- **Telefonda nasıl test edilir** (`flutter run --flavor dev -t lib/main_dev.dart --dart-define-from-file=env/dev.json`;
+  çarşıya gelmek için: anahtar → kapı → holde şişe ve mektup → villa önünde tabela):
+  1. **Kahveciye** dokun: panel hemen açılmalı, karakter karşılamalı. Yazı akarken dokun → satır tamamlanır; bir daha
+     dokun → soru listesi. İki soru, ikisi de "new".
+  2. "Ask about Ashgrove Villa" → iki satır, dokunuşla ilerler; sonra soru onay işaretiyle görünür. Defter rozeti
+     yanar (kahvecinin dosyası).
+  3. Paneli kapat, **eczacıya** dokun: üç soru (şişe elde olduğu için "Ask about the pills" de var). Villayı sor →
+     alttaki mesaj barında dedektif konuşur ("Empty since spring, says one..."), defterde gözlem notu belirir.
+  4. "Ask about the pills" → cevap panelde, dedektifin düşüncesi alttaki barda.
+  5. Paneli kapatıp eczacıya tekrar dokun: karşılama bu kez "You again. Ask, then."
+  6. **Bakılacak yerler:** panel eşya panelini ve alttaki mesaj barını kapatmıyor mu; çentik / kamera deliği paneli
+     kesiyor mu; dört soru sığıyor mu (dilimde en çok üç soru var; dördüncü 1.18'den sonra eczacıda görünür);
+     telefonun geri tuşu yalnızca paneli kapatıyor mu; silüetlerin dokunma alanı parmakla rahat mı.
+- **Öğrenme notu:** İki ders. **Durumu kim tutar?** "Hangi konuşma açık" bilgisi `SceneBloc`'ta (sahnenin dokunuş
+  kabul edip etmediği ona bağlı), "panelde hangi satır var" bilgisi `DialogueCubit`'te (yalnızca panelin işi).
+  İkisini `app/` katmanındaki küçük bir `BlocListener` bağlar. Her durum, onu **kullanan** en dar yerde durmalı; her
+  şeyi tek bir dev bloc'a koymak kısa vadede kolay, uzun vadede her değişikliği riskli yapar. **Daktilo efekti ve
+  "tek doğruluk kaynağı":** Satırın "tamamlandı" bilgisi widget'ın animasyonunda değil cubit'te durur. Animasyon
+  bitince cubit'e haber verir (`lineTyped`), oyuncu dokununca cubit satırı tamamlanmış sayar ve widget buna uyar.
+  Tersi olsaydı (karar animasyonda), "dokununca tamamla, bir daha dokununca geç" kuralını test etmek için gerçek zaman
+  beklemek gerekirdi; şimdi `bloc_test` ile tek satırda sınanıyor. Küçük bir tuzak da öğretici: erişilebilirlik
+  ağacında (ekran okuyucular için) satırın kendi düğümü yoktu, dokunulabilir panelin düğümüne karışıyordu; testler
+  satırı bulamayınca fark ettik ve `container: true` ile ayırdık. Test, yalnızca hatayı değil erişilebilirlik
+  eksikliğini de yakaladı.

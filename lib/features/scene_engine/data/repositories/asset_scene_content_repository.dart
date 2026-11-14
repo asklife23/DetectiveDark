@@ -19,16 +19,31 @@ import 'package:detective_dark/features/scene_engine/domain/repositories/scene_c
 /// chapter may extend the scenes of an earlier one (`sceneExtensions`, ADR
 /// 0018). All of that is resolved here, in the data layer: the domain gets
 /// one merged [CaseContent].
+///
+/// A case that loaded is kept: the content never changes while the app
+/// runs, and more than one feature asks for it (the scene bloc for the
+/// scenes, the dialogue cubit for the triggers). A failure is not kept, so
+/// "try again" really tries again.
 class AssetSceneContentRepository implements SceneContentRepository {
-  const AssetSceneContentRepository(this._source, {this.chapterLimit});
+  AssetSceneContentRepository(this._source, {this.chapterLimit});
 
   final ContentAssetSource _source;
 
   /// Loads only the first N chapters (content validation per prefix).
   final int? chapterLimit;
 
+  final _loaded = <String, CaseContent>{};
+
   @override
-  Future<Result<CaseContent>> loadCase(String caseId) {
+  Future<Result<CaseContent>> loadCase(String caseId) async {
+    if (_loaded[caseId] case final content?) return Success(content);
+
+    final result = await _read(caseId);
+    if (result case Success(:final value)) _loaded[caseId] = value;
+    return result;
+  }
+
+  Future<Result<CaseContent>> _read(String caseId) {
     return guardContent(() async {
       final manifest = await CaseManifest.read(
         _source,
