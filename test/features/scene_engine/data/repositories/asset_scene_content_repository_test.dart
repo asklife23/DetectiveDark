@@ -5,6 +5,7 @@ import 'package:detective_dark/core/error/failure.dart';
 import 'package:detective_dark/features/scene_engine/data/repositories/asset_scene_content_repository.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/condition.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/effect.dart';
+import 'package:detective_dark/features/scene_engine/domain/entities/normalized_rect.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/scene_visual.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/trigger_definition.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -349,6 +350,86 @@ void main() {
       });
 
       expect(message, contains('invalid JSON'));
+    });
+  });
+
+  group('sprite overlays', () {
+    Map<String, Object?> sceneWithSprite(Map<String, Object?> sprite) => {
+      'id': 'yard',
+      'titleKey': 'scene_yard',
+      'visual': {'placeholderStyle': 'villa_exterior'},
+      'hotspots': [
+        {
+          'id': 'sign',
+          'rect': {'x': 0.1, 'y': 0.4, 'width': 0.1, 'height': 0.3},
+          'labelKey': 'hotspot_sign',
+          'sprite': sprite,
+        },
+      ],
+    };
+
+    test('are read with rect, text, style and rotation', () async {
+      final content = (await repository({
+        chapterAsset('scenes.json'): scenesJson([
+          sceneWithSprite({
+            'rect': {'x': 0.1, 'y': 0.4, 'width': 0.1, 'height': 0.3},
+            'placeholderStyle': 'sprite_market_sign',
+            'overlays': [
+              {
+                'type': 'text',
+                'rect': {'x': 0.11, 'y': 0.42, 'width': 0.08, 'height': 0.05},
+                'textKey': 'market_sign_text',
+                'style': 'engraved',
+                'rotation': -3,
+              },
+            ],
+          }),
+        ]),
+      }).loadCase('case01')).valueOrNull!;
+
+      final sprite = content.scenes['yard']!.hotspots.single.sprite!;
+      expect(sprite.overlays, const [
+        TextOverlay(
+          rect: NormalizedRect(x: 0.11, y: 0.42, width: 0.08, height: 0.05),
+          textKey: 'market_sign_text',
+          style: 'engraved',
+          rotation: -3,
+        ),
+      ]);
+    });
+
+    test('are optional', () async {
+      final content = (await repository({
+        chapterAsset('scenes.json'): scenesJson([
+          sceneWithSprite({
+            'rect': {'x': 0.1, 'y': 0.4, 'width': 0.1, 'height': 0.3},
+            'placeholderStyle': 'sprite_market_sign',
+          }),
+        ]),
+      }).loadCase('case01')).valueOrNull!;
+
+      expect(content.scenes['yard']!.hotspots.single.sprite!.overlays, isEmpty);
+    });
+
+    test('an unknown overlay type is rejected', () async {
+      final message = await failureMessage({
+        chapterAsset('scenes.json'): scenesJson([
+          sceneWithSprite({
+            'rect': {'x': 0.1, 'y': 0.4, 'width': 0.1, 'height': 0.3},
+            'placeholderStyle': 'sprite_market_sign',
+            'overlays': [
+              {
+                'type': 'clock',
+                'rect': {'x': 0.1, 'y': 0.4, 'width': 0.1, 'height': 0.1},
+                'textKey': 'x',
+                'style': 'engraved',
+              },
+            ],
+          }),
+        ]),
+      });
+
+      expect(message, contains('Unknown overlay type "clock"'));
     });
   });
 }

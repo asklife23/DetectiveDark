@@ -35,7 +35,14 @@ class SceneVisualView extends StatelessWidget {
         children: [
           _Background(visual: visual),
           SpriteLayer(sprites: sprites),
-          OverlayLayer(overlays: visual.overlays),
+          // The text of an object (the word on a signpost) is drawn with
+          // the text of the scene: above every object, under the filter.
+          OverlayLayer(
+            overlays: [
+              ...visual.overlays,
+              for (final sprite in sprites) ...sprite.overlays,
+            ],
+          ),
           NoirFilter(preset: NoirFilterPresets.resolve(visual.filterPreset)),
         ],
       ),

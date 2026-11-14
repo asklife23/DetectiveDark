@@ -10,12 +10,16 @@ abstract final class PlaceholderStyles {
   static const statueCloseup = 'statue_closeup';
   static const villaHall = 'villa_hall';
   static const statuePlaque = 'statue_plaque';
+  static const marketSquare = 'market_square';
   static const itemBrassKey = 'item_brass_key';
+  static const itemPillBottle = 'item_pill_bottle';
 
   /// Objects drawn on top of a scene (hotspot sprites, ADR 0012). They
   /// fill their own small box and have a transparent background.
   static const spriteBrassKey = 'sprite_brass_key';
   static const spriteLetter = 'sprite_letter';
+  static const spritePillBottle = 'sprite_pill_bottle';
+  static const spriteMarketSign = 'sprite_market_sign';
 
   /// Every style name content may use.
   static const Set<String> names = {
@@ -25,8 +29,12 @@ abstract final class PlaceholderStyles {
     statueCloseup,
     villaHall,
     statuePlaque,
+    marketSquare,
     itemBrassKey,
+    itemPillBottle,
     spriteBrassKey,
     spriteLetter,
+    spritePillBottle,
+    spriteMarketSign,
   };
 }

@@ -5,6 +5,7 @@
     "scene_villa_door_closeup": "Front Door",
     "scene_statue_closeup": "Garden Statue",
     "scene_villa_hall": "Entrance Hall",
+    "scene_market_square": "Market Square",
 
     "hotspot_door": "Front door",
     "hotspot_statue": "Garden statue",
@@ -14,9 +15,16 @@
     "hotspot_statue_key": "Something behind the statue's ear",
     "hotspot_statue_plaque": "Plaque on the pedestal",
     "hotspot_desk_paper": "Sheet of paper on the desk",
+    "hotspot_pill_bottle": "Small bottle on the desk",
+    "hotspot_market_sign": "Signpost to the market",
+    "hotspot_villa_road": "Road back to the villa",
 
     "villa_house_number": "17",
     "statue_plaque_inscription": "FIDES ET SILENTIUM",
+    "market_sign_text": "MARKET",
+    "market_road_sign_text": "VILLA",
+    "market_pharmacy_sign_text": "PHARMACY",
+    "market_cafe_sign_text": "CAFÉ",
 
     "say_villa_first_look": "Ashgrove Villa. No lights, no car in the drive. Somebody left in a hurry. Or never left at all.",
     "say_door_locked": "Locked. Of course it is.",
@@ -25,9 +33,14 @@
     "say_statue_body_again": "Still marble. Still watching.",
     "say_statue_key_found": "A brass key, hooked behind her ear. People hide things where nobody thinks to look up.",
     "say_hall_letter_taken": "A letter, left out in the open. Careless. Or meant to be found.",
+    "say_pill_bottle_taken": "A pill bottle, half empty, the label torn off. Somebody in town will know whose it was.",
+    "say_market_first_look": "The market square. Two lit windows in the whole town, and both of them are watching me.",
 
     "item_brass_key_name": "Brass key",
     "item_brass_key_description": "Old and heavy, worn smooth by years of use. It was hidden on the garden statue.",
+
+    "item_pill_bottle_name": "Pill bottle",
+    "item_pill_bottle_description": "Brown glass, a torn label, a dozen white pills. It stood on the desk in the villa hall.",
 
     "note_hall_letter_title": "Unsigned letter",
     "note_hall_letter_body": "You were told what would happen if you kept the ledger.\n\nMidnight. Come alone, and leave the door on the latch.\n\nThere is no signature. The ink is still sharp.",

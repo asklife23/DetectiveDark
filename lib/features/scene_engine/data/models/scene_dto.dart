@@ -35,6 +35,7 @@ class SpriteDto {
     required this.rect,
     required this.placeholderStyle,
     this.image,
+    this.overlays = const [],
   });
 
   factory SpriteDto.fromJson(Map<String, dynamic> json) =>
@@ -43,11 +44,13 @@ class SpriteDto {
   final RectDto rect;
   final String placeholderStyle;
   final String? image;
+  final List<OverlayDto> overlays;
 
   HotspotSprite toEntity() => HotspotSprite(
     rect: rect.toEntity(),
     placeholderStyle: placeholderStyle,
     image: image,
+    overlays: List.unmodifiable(overlays.map((overlay) => overlay.toEntity())),
   );
 }
 

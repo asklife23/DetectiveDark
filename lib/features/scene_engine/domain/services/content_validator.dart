@@ -148,7 +148,8 @@ class ContentValidator {
     run
       ..triggers()
       ..flags()
-      ..reachability();
+      ..reachability()
+      ..trapLocations();
 
     return List.unmodifiable(run.issues);
   }
@@ -280,6 +281,7 @@ class _Run {
             'unknown sprite placeholder style "${sprite.placeholderStyle}"',
           );
         }
+        overlays('$at / sprite', sprite.overlays);
       }
 
       for (final (index, rule) in hotspot.interactions.indexed) {
@@ -290,6 +292,7 @@ class _Run {
         if (rule.effects.isEmpty) add(ruleAt, 'has no effects');
         for (final ruleEffect in rule.effects) {
           effect(ruleAt, ruleEffect);
+          if (ruleEffect is GoToScene) crossLink(ruleAt, scene, ruleEffect);
         }
 
         final inspects = rule.effects.whereType<Inspect>().length;
@@ -326,7 +329,12 @@ class _Run {
     if (preset != null && !styles.filterPresets.contains(preset)) {
       add(where, 'unknown filter preset "$preset"');
     }
-    for (final overlay in visual.overlays) {
+    overlays(where, visual.overlays);
+  }
+
+  /// Overlay text of a visual or of an object in a scene.
+  void overlays(String where, List<VisualOverlay> overlays) {
+    for (final overlay in overlays) {
       if (!overlay.rect.isValid) {
         add(where, 'overlay rect is outside 0–1 or empty');
       }
@@ -462,6 +470,70 @@ class _Run {
     });
   }
 
+  /// Travel without a map (ADR 0017) keeps the game readable when every
+  /// `goToScene` leads to a close-up of the scene, back to its parent or to
+  /// a main location. Anything else (a jump into the close-up of another
+  /// place) may be intended, so it is only a warning.
+  void crossLink(String where, SceneDefinition from, GoToScene effect) {
+    final target = content.scenes[effect.sceneId];
+    if (target == null || target.id == from.id) return;
+    final isChild = target.parentId == from.id;
+    final isParent = from.parentId == target.id;
+    final isMainLocation = target.parentId == null;
+    if (!isChild && !isParent && !isMainLocation) {
+      warn(
+        where,
+        'goToScene "${target.id}" is neither a close-up of this scene, its '
+        'parent nor a main location (cross link)',
+      );
+    }
+  }
+
+  /// The scenes reachable from [startId] by `goToScene` effects and by Back
+  /// (to the parent). Conditions are not looked at: this proves that a way
+  /// is *written*, not that it is open at every moment.
+  Set<String> _reachableFrom(String startId) {
+    final reached = <String>{};
+    final queue = [startId];
+    while (queue.isNotEmpty) {
+      final scene = content.scenes[queue.removeLast()];
+      if (scene == null || !reached.add(scene.id)) continue;
+      if (scene.parentId case final parentId?) queue.add(parentId);
+      for (final hotspot in scene.hotspots) {
+        for (final rule in hotspot.interactions) {
+          queue.addAll(
+            rule.effects.whereType<GoToScene>().map((e) => e.sceneId),
+          );
+        }
+      }
+    }
+    return reached;
+  }
+
+  /// No location may be a trap (ADR 0017): from every main location (a
+  /// scene without a parent) there must be a way back to the entry scene of
+  /// its chapter. There is no map to escape with.
+  void trapLocations() {
+    final entries = {
+      for (final chapter in content.definition.chapters)
+        chapter.id: chapter.entrySceneId,
+    };
+    for (final scene in content.scenes.values) {
+      if (scene.parentId != null) continue;
+      final entry = entries[content.sceneChapters[scene.id]];
+      if (entry == null || !content.scenes.containsKey(entry)) continue;
+      // A scene nothing leads to is reported as unreachable already.
+      if (!_reachableFrom(entry).contains(scene.id)) continue;
+      if (!_reachableFrom(scene.id).contains(entry)) {
+        add(
+          'scene ${scene.id}',
+          'trap location: no way leads from here back to "$entry", the '
+              'entry scene of its chapter',
+        );
+      }
+    }
+  }
+
   /// Every scene of a chapter must be reachable from the entry scene of
   /// that chapter, by `goToScene` effects and by Back (to the parent).
   void reachability() {
@@ -474,20 +546,7 @@ class _Run {
         continue;
       }
 
-      final reached = <String>{};
-      final queue = [chapter.entrySceneId];
-      while (queue.isNotEmpty) {
-        final scene = content.scenes[queue.removeLast()];
-        if (scene == null || !reached.add(scene.id)) continue;
-        if (scene.parentId case final parentId?) queue.add(parentId);
-        for (final hotspot in scene.hotspots) {
-          for (final rule in hotspot.interactions) {
-            queue.addAll(
-              rule.effects.whereType<GoToScene>().map((e) => e.sceneId),
-            );
-          }
-        }
-      }
+      final reached = _reachableFrom(chapter.entrySceneId);
 
       content.sceneChapters.forEach((sceneId, chapterId) {
         if (chapterId == chapter.id && !reached.contains(sceneId)) {

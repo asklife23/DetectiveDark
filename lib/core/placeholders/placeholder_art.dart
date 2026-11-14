@@ -1,3 +1,4 @@
+import 'package:detective_dark/core/placeholders/market_painters.dart';
 import 'package:detective_dark/core/placeholders/placeholder_brush.dart';
 import 'package:detective_dark/core/placeholders/placeholder_styles.dart';
 import 'package:detective_dark/core/placeholders/statue_painters.dart';
@@ -23,9 +24,13 @@ class PlaceholderArt extends StatelessWidget {
     PlaceholderStyles.statueCloseup => const StatueCloseupPainter(),
     PlaceholderStyles.villaHall => const VillaHallPainter(),
     PlaceholderStyles.statuePlaque => const StatuePlaquePainter(),
+    PlaceholderStyles.marketSquare => const MarketSquarePainter(),
     PlaceholderStyles.itemBrassKey => const BrassKeyPainter(),
+    PlaceholderStyles.itemPillBottle => const PillBottlePainter(),
     PlaceholderStyles.spriteBrassKey => const BrassKeySpritePainter(),
     PlaceholderStyles.spriteLetter => const LetterSpritePainter(),
+    PlaceholderStyles.spritePillBottle => const PillBottleSpritePainter(),
+    PlaceholderStyles.spriteMarketSign => const MarketSignSpritePainter(),
     _ => const UnknownPlaceholderPainter(),
   };
 

@@ -61,4 +61,27 @@ void main() {
 
     expect(resolver.stackFor('a', cyclic).failureOrNull, isA<ContentFailure>());
   });
+
+  test('a main location is always a stack of one, wherever the player '
+      'comes from: travelling between places leaves no Back (ADR 0017)', () {
+    final town = _scenes([
+      _scene('villa_exterior'),
+      _scene('villa_hall', parentId: 'villa_exterior'),
+      _scene('market_square'),
+      _scene('pharmacy', parentId: 'market_square'),
+    ]);
+
+    // From deep inside the villa to the market, and back to the villa.
+    expect(resolver.stackFor('market_square', town).valueOrNull, [
+      'market_square',
+    ]);
+    expect(resolver.stackFor('villa_exterior', town).valueOrNull, [
+      'villa_exterior',
+    ]);
+    // A close-up of the other place gets that place below it.
+    expect(resolver.stackFor('pharmacy', town).valueOrNull, [
+      'market_square',
+      'pharmacy',
+    ]);
+  });
 }

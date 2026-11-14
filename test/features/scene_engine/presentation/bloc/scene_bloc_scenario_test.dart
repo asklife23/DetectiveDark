@@ -90,7 +90,8 @@ void main() {
       'villa_hall',
     ]);
     await bloc.tap('desk_paper');
-    expect(bloc.hotspotIds, isEmpty);
+    // Only the pill bottle is left on the desk (scenario step 12).
+    expect(bloc.hotspotIds, ['pill_bottle']);
     expect(bloc.state.visual!.placeholderStyle, 'villa_hall');
 
     // 9. The letter is in the notebook, unread.

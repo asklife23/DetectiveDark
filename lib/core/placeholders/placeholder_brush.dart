@@ -26,6 +26,7 @@ abstract final class PlaceholderPalette {
   static const interiorFloor = Color(0xFF120E0B);
   static const paper = Color(0xFFD8CFB8);
   static const paperShade = Color(0xFF9E957F);
+  static const glass = Color(0xFF5C3B22);
   static const black = Color(0xFF000000);
 }
 

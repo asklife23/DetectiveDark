@@ -428,3 +428,37 @@
   yazdık: unutulan klasör artık adıyla birlikte kırmızı bir testtir. İkinci ders **önek doğrulaması**: "Bölüm 1,
   Bölüm 2 olmadan da tutarlı mı" sorusunu elle kontrol etmek imkânsız; test her öneki ayrı yükleyip doğrulayınca demo
   derlemesinin bozuk çıkması baştan engellenmiş olur.
+
+### Adım 1.15 — Mekan geçişi: tabela, çarşı, tuzak kontrolü (2026-11-14)
+- **Ne yaptık:** Haritasız mekan geçişini (ADR 0017) kurduk ve dilime ikinci bir kök mekan ekledik.
+  - **Nesnenin yazısı:** `HotspotSprite.overlays`. Tabelanın üstündeki "MARKET" yazısı tabelanın kendisine aittir:
+    tabela görünürken çizilir, kaybolunca yazısı da kaybolur. Koordinatları sahne görseline göredir ve sahnenin diğer
+    yazılarıyla aynı katmanda (nesnelerin üstünde, noir filtrenin altında) çizilir.
+  - **İçerik:** Holde alınabilir bir ilaç şişesi (`pill_bottle`); Villa Önü'nde, mektup deftere girince beliren çarşı
+    tabelası (`visibleWhen: hasNote hall_letter`); yeni kök sahne **Çarşı** (`market_square`) ve içinde villaya dönen
+    yol (`villa_road`). Çarşıya ilk girişte dedektif yorum yapar. Eczane, kafe ve yol tabelasının yazıları overlay.
+  - **Doğrulayıcı:** *Tuzak mekan* artık hatadır: her kök sahneden, bölümünün giriş sahnesine `goToScene` ve Geri
+    üzerinden bir yol yazılmış olmalı. *Çapraz bağlantı* uyarıdır: hedefi mevcut sahnenin çocuğu, ebeveyni veya bir kök
+    sahne olmayan `goToScene`. Nesne overlay'lerinin koordinatı, metni ve stili de kontrol edilir.
+  - **Placeholder çizimler:** çarşı, tabela, ilaç şişesi (sahnedeki nesne + eşya ikonu).
+- **Neden:** Oyunda harita yok; oyuncu mekanlara yalnızca sahnedeki geçiş noktalarından gidiyor. Bu, keşfi oyunun
+  parçası yapar ama bir risk doğurur: yazar bir mekana giriş yazıp çıkışı unutursa oyuncu orada **sıkışır** ve
+  kurtulmanın hiçbir yolu yoktur (harita yok, hızlı yolculuk yok). 50 sahnede bunu gözle yakalamak mümkün değil; graf
+  taraması her push'ta yakalar.
+- **Önemli dosyalar:** `scene_engine/domain/entities/hotspot_sprite.dart`, `scene_engine/data/models/scene_dto.dart`,
+  `scene_engine/presentation/widgets/scene_visual_view.dart`, `scene_engine/domain/services/content_validator.dart`
+  (`trapLocations`, `crossLink`), `core/placeholders/market_painters.dart`, `assets/content/.../ch01/scenes.json`,
+  `items.json`, `text_en.json`, testler: `test/app/game/travel_flow_test.dart`, `scene_bloc_test.dart`.
+- **Telefonda nasıl test edilir:** `flutter run --flavor dev -t lib/main_dev.dart --dart-define-from-file=env/dev.json`.
+  Kapıyı aç, hole gir; masadaki **şişeye** dokun (panele uçmalı) ve **mektubu** al. Geri, Geri → Villa Önü: solda
+  üstünde "MARKET" yazan **tabela** belirmiş olmalı (mektuptan önce yoktu). Tabelaya dokun → **Çarşı**; sol üstte Geri
+  butonu **olmamalı**; dedektif yorum yapar. Soldaki "VILLA" tabelasına dokun → Villa Önü. Telefonun geri tuşu çarşıda
+  "çıkmak için tekrar bas" uyarısı vermeli (ana sahne davranışı).
+- **Öğrenme notu:** Sahneler ve aralarındaki geçişler bir **graf**tır: sahneler düğüm, `goToScene` etkileri ve Geri
+  (ebeveyne dönüş) kenardır. "Bu mekandan çıkış var mı" sorusu, "bu düğümden şu düğüme bir yol var mı" sorusudur ve
+  basit bir tarama (kuyruğa komşuları ekleyerek ilerleme) ile cevaplanır. Burada bilinçli bir sınır var: tarama
+  **koşullara bakmaz**. Kapı kilitli olabilir; ama yolun *yazılmış* olduğunu kanıtlarız, *her an açık* olduğunu değil.
+  İkincisini kanıtlamak oyunun bütün olası durumlarını denemeyi gerektirir; onu 7.4'teki walkthrough (baştan sona
+  oynanış kaydı) üstlenecek. Ucuz ve kesin olan kontrolü otomatik yap, pahalı olanı başka bir araca bırak. İkinci
+  ders **hata ile uyarı** ayrımı: tuzak mekan her zaman yanlıştır (hata, test kırılır); çapraz bağlantı bazen
+  bilinçli bir kısayoldur (uyarı, yazara gösterilir ama engellemez).

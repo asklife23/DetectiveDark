@@ -487,11 +487,9 @@ void main() {
     });
 
     test('Back counts: a parent is reachable from its child', () {
-      // The chapter starts in the shed; the yard is only reachable by Back.
-      final issues = _validate(
-        entryScene: 'shed',
-        yardHotspots: const [],
-      );
+      // The chapter starts in the shed; the yard is only reachable by Back
+      // (its door leads into the shed again, so the yard is no trap).
+      final issues = _validate(entryScene: 'shed');
 
       expect(issues, isEmpty);
     });
@@ -911,6 +909,187 @@ void main() {
         _validate(notes: notes, yardOnFirstEnter: const [effect]),
         _reports('AddNoteEntry is not allowed here'),
       );
+    });
+  });
+
+  group('travel without a map', () {
+    const market = SceneDefinition(
+      id: 'market',
+      titleKey: 'scene_yard',
+      visual: _visual,
+    );
+
+    SceneDefinition marketWith(List<HotspotDefinition> hotspots) =>
+        SceneDefinition(
+          id: 'market',
+          titleKey: 'scene_yard',
+          visual: _visual,
+          hotspots: hotspots,
+        );
+
+    final toMarket = [
+      _hotspot('door', const [GoToScene('shed')]),
+      _hotspot('sign', const [GoToScene('market')]),
+    ];
+
+    test('a main location with a way back is fine', () {
+      expect(
+        _validate(
+          yardHotspots: toMarket,
+          extraScenes: [
+            marketWith([
+              _hotspot('road', const [GoToScene('yard')]),
+            ]),
+          ],
+        ),
+        isEmpty,
+      );
+    });
+
+    test('a main location without a way back is a trap', () {
+      expect(
+        _validate(yardHotspots: toMarket, extraScenes: const [market]),
+        _reports(
+          'scene market: trap location: no way leads from here back to '
+          '"yard"',
+        ),
+      );
+    });
+
+    test('the way back may lead through a close-up', () {
+      expect(
+        _validate(
+          yardHotspots: toMarket,
+          extraScenes: [
+            marketWith([
+              _hotspot('stall', const [GoToScene('stall')]),
+            ]),
+            SceneDefinition(
+              id: 'stall',
+              parentId: 'market',
+              titleKey: 'scene_yard',
+              visual: _visual,
+              hotspots: [
+                _hotspot('cart', const [GoToScene('yard')]),
+              ],
+            ),
+          ],
+        ).errors,
+        isEmpty,
+      );
+    });
+
+    test('conditions are not looked at: a guarded way back counts', () {
+      expect(
+        _validate(
+          yardHotspots: toMarket,
+          extraScenes: [
+            marketWith([
+              _hotspot(
+                'road',
+                const [GoToScene('yard')],
+                when: const HasItem('key'),
+              ),
+            ]),
+          ],
+        ),
+        isEmpty,
+      );
+    });
+
+    test('a jump into the close-up of another place is a warning', () {
+      final issues = _validate(
+        yardHotspots: toMarket,
+        extraScenes: [
+          marketWith([
+            _hotspot('road', const [GoToScene('yard')]),
+            _hotspot('shortcut', const [GoToScene('shed')]),
+          ]),
+        ],
+      );
+
+      expect(issues.errors, isEmpty);
+      expect(issues.warnings.single.location, contains('hotspot shortcut'));
+      expect(
+        issues.warnings.single.message,
+        contains('goToScene "shed" is neither a close-up of this scene'),
+      );
+    });
+
+    test('to a close-up, to the parent and to a main location: no '
+        'warning', () {
+      final issues = _validate(
+        yardHotspots: toMarket,
+        extraScenes: [
+          marketWith([
+            _hotspot('road', const [GoToScene('yard')]),
+          ]),
+          SceneDefinition(
+            id: 'loft',
+            parentId: 'shed',
+            titleKey: 'scene_yard',
+            visual: _visual,
+            hotspots: [
+              _hotspot('ladder', const [GoToScene('shed')]),
+              _hotspot('window', const [GoToScene('market')]),
+            ],
+          ),
+          const SceneDefinition(
+            id: 'bench',
+            parentId: 'yard',
+            titleKey: 'scene_yard',
+            visual: _visual,
+          ),
+        ],
+      );
+
+      // (The loft and the bench are unreachable; that is not the point.)
+      expect(issues.warnings, isEmpty);
+    });
+  });
+
+  group('sprite overlays', () {
+    HotspotDefinition sign(List<VisualOverlay> overlays) => _hotspot(
+      'sign',
+      const [Say('say_locked')],
+      sprite: HotspotSprite(
+        rect: _rect,
+        placeholderStyle: 'plain',
+        overlays: overlays,
+      ),
+    );
+
+    List<ContentIssue> withOverlays(List<VisualOverlay> overlays) => _validate(
+      yardHotspots: [
+        _hotspot('door', const [GoToScene('shed')]),
+        sign(overlays),
+      ],
+    );
+
+    test('a valid overlay has no issues', () {
+      expect(
+        withOverlays(const [
+          TextOverlay(rect: _rect, textKey: 'sign_text', style: 'engraved'),
+        ]),
+        isEmpty,
+      );
+    });
+
+    test('a bad rect, an unknown style and a missing text', () {
+      final issues = withOverlays(const [
+        TextOverlay(
+          rect: NormalizedRect(x: 0.9, y: 0.1, width: 0.3, height: 0.1),
+          textKey: 'no_such_text',
+          style: 'neon',
+        ),
+      ]);
+
+      expect(
+        issues,
+        _reports('hotspot sign / sprite: overlay rect is outside 0–1'),
+      );
+      expect(issues, _reports('unknown overlay style "neon"'));
+      expect(issues, _reports('missing text "no_such_text" (en)'));
     });
   });
 }

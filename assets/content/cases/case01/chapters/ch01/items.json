@@ -6,6 +6,12 @@
       "nameKey": "item_brass_key_name",
       "descriptionKey": "item_brass_key_description",
       "iconStyle": "item_brass_key"
+    },
+    {
+      "id": "pill_bottle",
+      "nameKey": "item_pill_bottle_name",
+      "descriptionKey": "item_pill_bottle_description",
+      "iconStyle": "item_pill_bottle"
     }
   ]
 }

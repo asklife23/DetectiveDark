@@ -742,7 +742,7 @@ bölünebilsin, sonraki bölüm öncekini kendi dosyasından genişletebilsin, d
   hotspot ve kural birleşmiş içerikte doğru sırada; B2 klasörü silinince oyun B1 ile açılıyor.
   **Commit:** `feat(content): support multi-file chapters, chapter extensions and missing chapters`
 
-### [ ] 1.15 Mekan geçişi: tabela, çarşı, tuzak kontrolü
+### [x] 1.15 Mekan geçişi: tabela, çarşı, tuzak kontrolü
 **Amaç:** Haritasız mekan geçişini (ADR 0017) içerikle ve doğrulayıcıyla kurmak; dilime ikinci bir kök mekan eklemek.
 **Yapılacaklar:**
 - `HotspotSprite.overlays` (opsiyonel; sahne görseline göre normalize `TextOverlay` listesi). Nesneyle birlikte
@@ -1559,3 +1559,12 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   işaretli olduğu için ayrı bir liste parametresi gerekmedi. (g) `pubspec.yaml` kontrolü ve fixture yardımcıları
   `test/helpers/` altında (diski okudukları için `lib/`'e konmadı). Test paketi (`FakeAssetBundle`) gerçek paket gibi
   `AssetManifest.bin` de sunar.
+- 2026-11-14 (1.15): Tabela, plandaki örnek koordinatlar yerine villanın soluna alındı (`x: 0.015`; örnekteki `0.06`
+  cepheyle çakışıyordu). Çarşının üç tabelası (PHARMACY, CAFÉ, VILLA) sahnenin kendi overlay'idir; yalnızca villa
+  önündeki "MARKET" yazısı nesne overlay'idir (tabela koşulla belirdiği için). Yeni overlay stili gerekmedi
+  (`engraved`). Tuzak mekan kontrolü, girişten **ulaşılamayan** kök sahneyi ayrıca tuzak diye raporlamaz (zaten
+  "ulaşılamıyor" hatası alır; çift hata gürültü olurdu). Bu kural yüzünden doğrulayıcı testindeki bir fixture'a
+  (giriş sahnesi çocuk sahne olan vaka) dönüş yolu eklendi; bloc senaryo testinde holün kalan hotspot beklentisi
+  `['pill_bottle']` oldu. Çapraz bağlantı uyarısı gerçek içerikte tetiklenmiyor. **Telefonda doğrulanacak (kullanıcı):**
+  kabul senaryosunun 12–13. adımları (silüetler hariç) ve dönüş; CI widget testleri ve bloc testleri geçti, Windows
+  ve telefon doğrulaması 1.20'deki toplu kontrolde.

@@ -2,6 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:detective_dark/core/content/content_asset_source.dart';
 import 'package:detective_dark/core/error/failure.dart';
 import 'package:detective_dark/features/progress/data/repositories/in_memory_progress_repository.dart';
+import 'package:detective_dark/features/progress/domain/entities/collected_note.dart';
 import 'package:detective_dark/features/scene_engine/data/repositories/asset_scene_content_repository.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/inspection_definition.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/scene_transition.dart';
@@ -278,5 +279,83 @@ void main() {
     expect(bloc.sceneId, 'villa_exterior');
     expect(bloc.state.transitionPhase, TransitionPhase.idle);
     expect(bloc.state.progress, before.progress);
+  });
+
+  group('travel between places (ADR 0017)', () {
+    /// A game that stands in front of the villa with the letter read: the
+    /// signpost to the market has appeared.
+    Future<SceneBloc> blocWithLetter() async {
+      final stored = newGame
+          .withVisited('villa_exterior')
+          .withNote(
+            const CollectedNote(noteId: 'hall_letter', addedAtUtcMs: 1),
+          );
+      final travelling = GameHarness(
+        progressRepository: InMemoryProgressRepository(initial: stored),
+      );
+      addTearDown(travelling.dispose);
+      final bloc = travelling.createBloc();
+      addTearDown(bloc.close);
+      await bloc.start();
+      return bloc;
+    }
+
+    test(
+      'the signpost appears only once the letter is in the notebook',
+      () async {
+        final without = game.createBloc();
+        addTearDown(without.close);
+        await without.start();
+        final withLetter = await blocWithLetter();
+
+        expect(without.hotspotIds, isNot(contains('market_sign')));
+        expect(withLetter.hotspotIds, contains('market_sign'));
+      },
+    );
+
+    test('the market is a main location: no Back', () async {
+      final bloc = await blocWithLetter();
+
+      await bloc.tap('market_sign');
+
+      expect(bloc.sceneId, 'market_square');
+      expect(bloc.state.stack, ['market_square']);
+      expect(bloc.state.canGoBack, isFalse);
+      expect(
+        bloc.state.progress!.chatLog.last.textKey,
+        'say_market_first_look',
+      );
+
+      // Back does nothing here.
+      await bloc.back();
+      expect(bloc.sceneId, 'market_square');
+    });
+
+    test('the road leads back to the villa, again without Back', () async {
+      final bloc = await blocWithLetter();
+      await bloc.tap('market_sign');
+
+      await bloc.tap('villa_road');
+
+      expect(bloc.sceneId, 'villa_exterior');
+      expect(bloc.state.stack, ['villa_exterior']);
+      expect(bloc.state.canGoBack, isFalse);
+      expect(bloc.hotspotIds, contains('market_sign'));
+    });
+
+    test('the first look at the market is commented once', () async {
+      final bloc = await blocWithLetter();
+      await bloc.tap('market_sign');
+      await bloc.tap('villa_road');
+      await bloc.tap('market_sign');
+
+      final lines = [
+        for (final entry in bloc.state.progress!.chatLog) entry.textKey,
+      ];
+      expect(
+        lines.where((key) => key == 'say_market_first_look'),
+        hasLength(1),
+      );
+    });
   });
 }

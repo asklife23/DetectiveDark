@@ -25,7 +25,10 @@ SpriteDto _$SpriteDtoFromJson(Map<String, dynamic> json) => $checkedCreate(
   'SpriteDto',
   json,
   ($checkedConvert) {
-    $checkKeys(json, allowedKeys: const ['rect', 'placeholderStyle', 'image']);
+    $checkKeys(
+      json,
+      allowedKeys: const ['rect', 'placeholderStyle', 'image', 'overlays'],
+    );
     final val = SpriteDto(
       rect: $checkedConvert(
         'rect',
@@ -33,6 +36,14 @@ SpriteDto _$SpriteDtoFromJson(Map<String, dynamic> json) => $checkedCreate(
       ),
       placeholderStyle: $checkedConvert('placeholderStyle', (v) => v as String),
       image: $checkedConvert('image', (v) => v as String?),
+      overlays: $checkedConvert(
+        'overlays',
+        (v) =>
+            (v as List<dynamic>?)
+                ?.map((e) => OverlayDto.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            const [],
+      ),
     );
     return val;
   },
