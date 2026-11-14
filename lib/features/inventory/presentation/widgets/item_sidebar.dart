@@ -14,14 +14,22 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 ///
 /// Tap selects an item (tap again to put it back); the next tap on the
 /// scene uses it. Long press calls [onExamine] to open the examine card.
+///
+/// When [onItemTap] is given, a tap calls it instead of selecting. The
+/// panel does not know why: the screen that owns it decides what a tap
+/// means right now (while a conversation is open it shows the item).
 class ItemSidebar extends StatelessWidget {
   const ItemSidebar({
     required this.onExamine,
+    this.onItemTap,
     this.arrivingItemIds = const {},
     super.key,
   });
 
   final ValueChanged<ItemDefinition> onExamine;
+
+  /// Replaces "tap selects" while it is not null.
+  final ValueChanged<ItemDefinition>? onItemTap;
 
   /// Items that are still flying towards the panel: their slot stays empty
   /// until they land.
@@ -56,8 +64,9 @@ class ItemSidebar extends StatelessWidget {
                             item: item,
                             isSelected: item.id == state.selectedItemId,
                             isArriving: arrivingItemIds.contains(item.id),
-                            onTap: () =>
-                                context.read<InventoryCubit>().toggle(item.id),
+                            onTap: () => onItemTap == null
+                                ? context.read<InventoryCubit>().toggle(item.id)
+                                : onItemTap!(item),
                             onLongPress: () => onExamine(item),
                           ),
                       ],

@@ -5,6 +5,7 @@ import 'package:detective_dark/core/events/game_event_bus.dart';
 import 'package:detective_dark/features/dialogue/domain/entities/dialogue_definition.dart';
 import 'package:detective_dark/features/dialogue/domain/repositories/dialogue_catalog_repository.dart';
 import 'package:detective_dark/features/dialogue/domain/usecases/ask_topic.dart';
+import 'package:detective_dark/features/dialogue/domain/usecases/show_to_character.dart';
 import 'package:detective_dark/features/dialogue/domain/usecases/start_conversation.dart';
 import 'package:detective_dark/features/dialogue/presentation/cubit/dialogue_cubit.dart';
 import 'package:detective_dark/features/progress/data/repositories/in_memory_progress_repository.dart';
@@ -123,6 +124,7 @@ class DialogueHarness {
     clock: GameHarness.clock,
   );
   late final askTopic = AskTopic(pipeline: pipeline, clock: GameHarness.clock);
+  late final showToCharacter = ShowToCharacter(askTopic: askTopic);
 
   Future<void> dispose() => bus.dispose();
 }
@@ -171,6 +173,7 @@ extension DialogueHarnessCubit on DialogueHarness {
     progressRepository: progress,
     startConversation: startConversation,
     askTopic: askTopic,
+    showToCharacter: showToCharacter,
     caseId: 'case01',
   );
 }

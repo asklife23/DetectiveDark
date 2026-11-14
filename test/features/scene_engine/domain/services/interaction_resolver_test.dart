@@ -208,4 +208,146 @@ void main() {
       expect(result.effects, genericReaction);
     });
   });
+
+  group('an item on a character (ADR 0016)', () {
+    const figure = HotspotDefinition(
+      id: 'pharmacist',
+      rect: anyRect,
+      labelKey: 'hotspot_pharmacist',
+      interactions: [
+        InteractionRule(effects: [Talk('pharmacist')]),
+      ],
+    );
+
+    test('without an item the conversation simply opens', () {
+      final result = resolver.resolve(figure, newGame);
+
+      expect(result.effects, const [Talk('pharmacist')]);
+      expect(result.shownItemId, isNull);
+      expect(result.usedItemId, isNull);
+    });
+
+    test('with an item selected the conversation opens and the item is '
+        'shown: no generic reaction, the item is not "used"', () {
+      final result = resolver.resolve(
+        figure,
+        newGame.withItem(brassKey),
+        usingItemId: brassKey,
+      );
+
+      expect(result.effects, const [Talk('pharmacist')]);
+      expect(result.shownItemId, brassKey);
+      expect(result.usedItemId, isNull);
+    });
+
+    test('any item is shown: the hotspot needs no rule per item', () {
+      for (final item in [brassKey, crowbar]) {
+        final result = resolver.resolve(
+          figure,
+          newGame.withItem(item),
+          usingItemId: item,
+        );
+
+        expect(result.shownItemId, item);
+      }
+    });
+
+    test('an explicit usingItem rule on the character comes first', () {
+      const bribable = HotspotDefinition(
+        id: 'guard',
+        rect: anyRect,
+        labelKey: 'hotspot_guard',
+        interactions: [
+          InteractionRule(
+            when: UsingItem(brassKey),
+            effects: [ConsumeItem(brassKey), SetFlag('guard_left')],
+          ),
+          InteractionRule(effects: [Talk('guard')]),
+        ],
+      );
+
+      final withKey = resolver.resolve(
+        bribable,
+        newGame.withItem(brassKey),
+        usingItemId: brassKey,
+      );
+      final withCrowbar = resolver.resolve(
+        bribable,
+        newGame.withItem(crowbar),
+        usingItemId: crowbar,
+      );
+
+      expect(withKey.effects, const [
+        ConsumeItem(brassKey),
+        SetFlag('guard_left'),
+      ]);
+      expect(withKey.usedItemId, brassKey);
+      expect(withKey.shownItemId, isNull);
+      // Another item is shown to the guard instead.
+      expect(withCrowbar.effects, const [Talk('guard')]);
+      expect(withCrowbar.shownItemId, crowbar);
+    });
+
+    test('the talk rule must be the one that would run without an item', () {
+      const gone = HotspotDefinition(
+        id: 'pharmacist',
+        rect: anyRect,
+        labelKey: 'hotspot_pharmacist',
+        interactions: [
+          InteractionRule(
+            when: FlagSet('shop_closed'),
+            effects: [Say('nobody_here')],
+          ),
+          InteractionRule(effects: [Talk('pharmacist')]),
+        ],
+      );
+
+      final closed = resolver.resolve(
+        gone,
+        newGame.withItem(brassKey).withFlag('shop_closed'),
+        usingItemId: brassKey,
+      );
+      final open = resolver.resolve(
+        gone,
+        newGame.withItem(brassKey),
+        usingItemId: brassKey,
+      );
+
+      // Nobody to show it to: the usual reaction to a wrong item.
+      expect(closed.effects, genericReaction);
+      expect(closed.shownItemId, isNull);
+      expect(open.shownItemId, brassKey);
+    });
+
+    test('a hotspot without talk still gives only the generic reaction', () {
+      final result = resolver.resolve(
+        plaqueHotspot,
+        newGame.withItem(brassKey),
+        usingItemId: brassKey,
+      );
+
+      expect(result.effects, genericReaction);
+      expect(result.shownItemId, isNull);
+    });
+
+    test('talk next to other effects: all of them run', () {
+      const greeter = HotspotDefinition(
+        id: 'porter',
+        rect: anyRect,
+        labelKey: 'hotspot_porter',
+        interactions: [
+          InteractionRule(effects: [SetFlag('met_porter'), Talk('porter')]),
+        ],
+      );
+
+      final result = resolver.resolve(
+        greeter,
+        newGame.withItem(brassKey),
+        usingItemId: brassKey,
+      );
+
+      expect(result.effects, const [SetFlag('met_porter'), Talk('porter')]);
+      expect(result.shownItemId, brassKey);
+    });
+  });
 }

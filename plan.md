@@ -885,7 +885,7 @@ sahnede durur, mantık testlerle kanıtlanmıştır; panel 1.17'de gelir.
   **Kabul kriterleri:** Kabul senaryosunun 14–16. ve 19. adımları telefonda ve Windows'ta çalışıyor.
   **Commit:** `feat(dialogue): add dialogue panel`
 
-### [ ] 1.18 Eşya verme ve kanıt gösterme
+### [x] 1.18 Eşya verme ve kanıt gösterme
 **Amaç:** Toplananların sorguda da işe yaraması: doğru şeyi doğru kişiye göster (ADR 0016).
 **Yapılacaklar:**
 - `InteractionResolver` (tek yeni kural): eşya seçiliyken önce bugünkü gibi `usingItem` adaylarına bakılır. Hiçbiri
@@ -1596,3 +1596,14 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   üretir (`06_market`, `07_dialogue_line`, `08_dialogue_questions`); README'ye 1.20'de eklenecek. **Telefonda
   doğrulanacak (kullanıcı):** kabul senaryosunun 14–16. ve 19. adımları ve devlog'daki "bakılacak yerler" listesi;
   CI'daki widget testleri (telefon boyutu dokunma, 1280×720 fare, 640×360 ve 800×360) geçti.
+- 2026-11-15 (1.18): Küçük sapmalar ve yorumlar. (a) `ShowToCharacter(dialogueId, item | note)` imzası: gösterilen şey
+  için ayrı bir tür açılmadı, konunun `TopicTrigger`'ı kullanıldı (`ShowItem(id)` / `ShowNote(id)`); eşleşme tek bir
+  eşitlik karşılaştırması. (b) Eşleşme kuralı bir noktada genişletildi: **daha önce oynamış** bir konu, `visibleWhen`
+  koşulu sonradan bozulsa da yeniden gösterilince cevabını tekrar oynar ("bir kez sorulan konu listede kalır" kuralının
+  karşılığı). Oynamamış konu için koşul tutmalıdır. (c) Sahneden gösterimde eşya, karşılama **okunduktan sonra**
+  gösterilir (`DialogueCubit` bekleyen gösterimi son karşılama satırından sonra çalıştırır); böylece şişe, karakter
+  daha "merhaba" derken panelden kaybolmaz. (d) Karakter konuşurken eşya dokunuşu ve "Show evidence" düğmesi
+  etkisizdir (düğme gizlenir): kanıt iki cevap arasında gösterilir. (e) `SceneState.shownItemId` eklendi (arayüz
+  durumu; konuşma kapanınca sıfırlanır). (f) Yeni ARB metinleri: `dialogueShowEvidence`, `notebookShowButton`,
+  `notebookPickEvidenceHint`. **Telefonda doğrulanacak (kullanıcı):** kabul senaryosunun 17–18. adımları ve devlog'daki
+  "bakılacak yerler"; CI widget testleri (telefon boyutu, dokunma) geçti.

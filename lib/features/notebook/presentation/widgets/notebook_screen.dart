@@ -15,8 +15,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 ///
 /// It lies above the scene (it is not a route), so the game underneath
 /// stays exactly as it was. A tap outside or the close button closes it.
+///
+/// In selection mode (`NotebookState.isSelecting`) the open note carries a
+/// "Show" button that calls [onShowNote]: the player picks a note as
+/// evidence. The notebook does not know who it is shown to.
 class NotebookScreen extends StatelessWidget {
-  const NotebookScreen({super.key});
+  const NotebookScreen({this.onShowNote, super.key});
+
+  /// Called with the ID of the note the player wants to show.
+  final ValueChanged<String>? onShowNote;
 
   /// Share of the width used by the list; the note gets the rest.
   static const _listFlex = 2;
@@ -68,6 +75,7 @@ class NotebookScreen extends StatelessWidget {
                               child: NotePage(
                                 entry: state.selectedEntry,
                                 highlightedLineId: state.highlightedLineId,
+                                onShow: state.isSelecting ? onShowNote : null,
                               ),
                             ),
                           ],

@@ -35,6 +35,7 @@ class NotebookState extends Equatable {
   const NotebookState({
     this.entries = const [],
     this.isOpen = false,
+    this.isSelecting = false,
     this.category = NoteCategory.document,
     this.selectedNoteId,
     this.highlightedLineId,
@@ -46,6 +47,10 @@ class NotebookState extends Equatable {
 
   /// Whether the notebook covers the scene right now.
   final bool isOpen;
+
+  /// The notebook was opened to pick a note as evidence: the open note
+  /// offers a "Show" button. Interface state, never saved.
+  final bool isSelecting;
 
   /// The open tab.
   final NoteCategory category;
@@ -81,6 +86,7 @@ class NotebookState extends Equatable {
   List<Object?> get props => [
     entries,
     isOpen,
+    isSelecting,
     category,
     selectedNoteId,
     highlightedLineId,
@@ -142,11 +148,16 @@ class NotebookCubit extends Cubit<NotebookState> {
   void _onNoteUpdated(NoteUpdated event) =>
       emit(_copy(updatePulse: state.updatePulse + 1));
 
-  void openNotebook() => emit(_copy(isOpen: true));
+  /// Opens the notebook for reading.
+  void openNotebook() => emit(_copy(isOpen: true, isSelecting: false));
+
+  /// Opens the notebook to pick a note that is shown to a character.
+  void openForSelection() => emit(_copy(isOpen: true, isSelecting: true));
 
   /// Closes the notebook. The open note stays selected; its marked line
   /// does not (it has been seen).
-  void closeNotebook() => emit(_copy(isOpen: false, keepHighlight: false));
+  void closeNotebook() =>
+      emit(_copy(isOpen: false, isSelecting: false, keepHighlight: false));
 
   /// Switches the tab; the right page is cleared.
   void selectCategory(NoteCategory category) {
@@ -155,6 +166,7 @@ class NotebookCubit extends Cubit<NotebookState> {
       NotebookState(
         entries: state.entries,
         isOpen: state.isOpen,
+        isSelecting: state.isSelecting,
         category: category,
         updatePulse: state.updatePulse,
       ),
@@ -172,6 +184,7 @@ class NotebookCubit extends Cubit<NotebookState> {
       NotebookState(
         entries: state.entries,
         isOpen: state.isOpen,
+        isSelecting: state.isSelecting,
         category: state.category,
         selectedNoteId: noteId,
         highlightedLineId: entry.isRead ? null : entry.lines.lastOrNull?.id,
@@ -185,12 +198,14 @@ class NotebookCubit extends Cubit<NotebookState> {
   NotebookState _copy({
     List<NotebookEntry>? entries,
     bool? isOpen,
+    bool? isSelecting,
     int? updatePulse,
     bool keepHighlight = true,
   }) {
     return NotebookState(
       entries: entries ?? state.entries,
       isOpen: isOpen ?? state.isOpen,
+      isSelecting: isSelecting ?? state.isSelecting,
       category: state.category,
       selectedNoteId: state.selectedNoteId,
       highlightedLineId: keepHighlight ? state.highlightedLineId : null,

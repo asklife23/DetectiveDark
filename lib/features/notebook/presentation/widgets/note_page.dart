@@ -9,7 +9,12 @@ import 'package:flutter/material.dart';
 /// text and, below, the lines it has gained so far (ADR 0015), oldest
 /// first.
 class NotePage extends StatelessWidget {
-  const NotePage({required this.entry, this.highlightedLineId, super.key});
+  const NotePage({
+    required this.entry,
+    this.highlightedLineId,
+    this.onShow,
+    super.key,
+  });
 
   /// Key of the line that is marked as new, for tests.
   static const Key highlightKey = ValueKey('note_page_new_line');
@@ -21,17 +26,24 @@ class NotePage extends StatelessWidget {
   /// The line that made the note unread; drawn marked.
   final String? highlightedLineId;
 
+  /// When set, the page offers a "Show" button that calls this with the ID
+  /// of the note (the notebook was opened to pick evidence).
+  final ValueChanged<String>? onShow;
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final entry = this.entry;
+    final onShow = this.onShow;
 
     if (entry == null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Text(
-            context.l10n.notebookSelectHint,
+            onShow == null
+                ? context.l10n.notebookSelectHint
+                : context.l10n.notebookPickEvidenceHint,
             textAlign: TextAlign.center,
             style: textTheme.bodyMedium?.copyWith(color: AppColors.inkFaded),
           ),
@@ -44,7 +56,7 @@ class NotePage extends StatelessWidget {
       color: AppColors.ink,
       height: _bodyLineHeight,
     );
-    return SingleChildScrollView(
+    final page = SingleChildScrollView(
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,6 +76,27 @@ class NotePage extends StatelessWidget {
             ),
         ],
       ),
+    );
+
+    if (onShow == null) return page;
+    // Picking evidence: the button stays under the text, always in reach.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(child: page),
+        Padding(
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          child: FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.ink,
+              foregroundColor: AppColors.paper,
+            ),
+            onPressed: () => onShow(entry.note.id),
+            icon: const Icon(Icons.front_hand_outlined),
+            label: Text(context.l10n.notebookShowButton),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,7 +1,9 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:detective_dark/core/error/failure.dart';
 import 'package:detective_dark/core/events/game_event.dart';
+import 'package:detective_dark/features/dialogue/domain/entities/dialogue_definition.dart';
 import 'package:detective_dark/features/dialogue/presentation/cubit/dialogue_cubit.dart';
+import 'package:detective_dark/features/progress/domain/entities/collected_note.dart';
 import 'package:detective_dark/features/progress/domain/entities/game_progress.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -428,6 +430,7 @@ void main() {
           progressRepository: game.progress,
           startConversation: game.startConversation,
           askTopic: game.askTopic,
+          showToCharacter: game.showToCharacter,
           caseId: 'case01',
         );
         addTearDown(cubit.close);
@@ -455,5 +458,167 @@ void main() {
         expect(cubit.state.isOpen, isFalse);
       },
     );
+  });
+
+  group('showing evidence', () {
+    const letter = CollectedNote(noteId: hallLetter, addedAtUtcMs: 1);
+
+    /// Open, with the greeting read and the question list on screen.
+    Future<DialogueCubit> choosing(
+      String dialogueId,
+      GameProgress progress,
+    ) async {
+      final cubit = await ready(progress);
+      await cubit.open(dialogueId);
+      cubit
+        ..advance()
+        ..advance();
+      return cubit;
+    }
+
+    Future<void> readAnswer(DialogueCubit cubit) async {
+      while (cubit.state.isSpeaking) {
+        cubit.advance();
+      }
+      await pumpEventQueue();
+    }
+
+    test('an item the character waits for: the answer plays, the item is '
+        'handed over and the topic joins the list as asked', () async {
+      final cubit = await choosing('pharmacist', newGame.withItem(pillBottle));
+      addTearDown(cubit.close);
+
+      await cubit.show(const ShowItem(pillBottle));
+
+      expect(cubit.state.lineKeys, ['give_1', 'give_2']);
+      expect(game.progress.current!.hasItem(pillBottle), isFalse);
+
+      await readAnswer(cubit);
+      // The question about the pills was never asked: it is gone with the
+      // bottle. The hand-over is listed as asked.
+      expect(topicIds(cubit), [
+        'about_villa (new)',
+        'about_night (new)',
+        'give_pills',
+      ]);
+    });
+
+    test('a question that was asked before the hand-over stays in the '
+        'list', () async {
+      final cubit = await choosing('pharmacist', newGame.withItem(pillBottle));
+      addTearDown(cubit.close);
+      await cubit.ask('ask_pills');
+      await readAnswer(cubit);
+
+      await cubit.show(const ShowItem(pillBottle));
+      await readAnswer(cubit);
+
+      expect(topicIds(cubit), [
+        'about_villa (new)',
+        'about_night (new)',
+        'ask_pills',
+        'give_pills',
+      ]);
+      // It can still be read again.
+      await cubit.ask('ask_pills');
+      expect(cubit.state.lineKeys, ['pills_1']);
+    });
+
+    test('a note the character knows: the answer plays', () async {
+      final cubit = await choosing('cafe_owner', newGame.withNote(letter));
+      addTearDown(cubit.close);
+
+      await cubit.show(const ShowNote(hallLetter));
+
+      expect(cubit.state.lineKeys, ['letter_1']);
+      await readAnswer(cubit);
+      expect(topicIds(cubit), ['about_villa (new)', 'show_letter']);
+    });
+
+    test('evidence that means nothing: the shrug, nothing changes', () async {
+      final cubit = await choosing('pharmacist', newGame.withNote(letter));
+      addTearDown(cubit.close);
+      final saved = game.progress.current;
+
+      await cubit.show(const ShowNote(hallLetter));
+
+      expect(cubit.state.lineKeys, ['pharmacist_no_reaction']);
+      await readAnswer(cubit);
+      expect(game.progress.current, same(saved));
+      expect(topicIds(cubit), ['about_villa (new)', 'about_night (new)']);
+    });
+
+    test('nothing can be shown while the character speaks', () async {
+      final cubit = await ready(newGame.withItem(pillBottle));
+      addTearDown(cubit.close);
+      await cubit.open('pharmacist');
+
+      await cubit.show(const ShowItem(pillBottle));
+
+      expect(cubit.state.currentLineKey, 'pharmacist_hello');
+      expect(game.progress.current!.hasItem(pillBottle), isTrue);
+    });
+
+    test('nothing can be shown while the panel is closed', () async {
+      final cubit = await ready(newGame.withItem(pillBottle));
+      addTearDown(cubit.close);
+
+      await cubit.show(const ShowItem(pillBottle));
+
+      expect(cubit.state.isOpen, isFalse);
+      expect(game.progress.current!.hasItem(pillBottle), isTrue);
+    });
+
+    group('from the scene (tapped the character with an item)', () {
+      test('first the greeting, then the reaction to the item', () async {
+        final cubit = await ready(newGame.withItem(pillBottle));
+        addTearDown(cubit.close);
+
+        await cubit.open('pharmacist', showItemId: pillBottle);
+        expect(cubit.state.lineKeys, ['pharmacist_hello']);
+        expect(game.progress.current!.hasItem(pillBottle), isTrue);
+
+        cubit
+          ..advance() // completes the greeting
+          ..advance(); // the greeting is read: the item is shown
+        await pumpEventQueue();
+
+        expect(cubit.state.lineKeys, ['give_1', 'give_2']);
+        expect(game.progress.current!.hasItem(pillBottle), isFalse);
+      });
+
+      test('an item that means nothing gets the shrug after the '
+          'greeting', () async {
+        final cubit = await ready(newGame.withItem(pillBottle));
+        addTearDown(cubit.close);
+
+        await cubit.open('cafe_owner', showItemId: pillBottle);
+        cubit
+          ..advance()
+          ..advance();
+        await pumpEventQueue();
+
+        expect(cubit.state.lineKeys, ['cafe_owner_no_reaction']);
+        await readAnswer(cubit);
+        expect(cubit.state.isSpeaking, isFalse);
+        expect(game.progress.current!.hasItem(pillBottle), isTrue);
+      });
+
+      test('the item is shown once: the next conversation opens '
+          'normally', () async {
+        final cubit = await ready(newGame.withItem(pillBottle));
+        addTearDown(cubit.close);
+        await cubit.open('cafe_owner', showItemId: pillBottle);
+        cubit.leave();
+
+        await cubit.open('cafe_owner');
+        cubit
+          ..advance()
+          ..advance();
+        await pumpEventQueue();
+
+        expect(cubit.state.isSpeaking, isFalse);
+      });
+    });
   });
 }

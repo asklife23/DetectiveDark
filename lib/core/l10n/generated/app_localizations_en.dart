@@ -71,6 +71,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dialogueNoTopics => 'Nothing to ask. Not yet.';
 
   @override
+  String get dialogueShowEvidence => 'Show evidence';
+
+  @override
+  String get notebookShowButton => 'Show';
+
+  @override
+  String get notebookPickEvidenceHint => 'Pick the note to show.';
+
+  @override
   String get chatTooltip => 'Thoughts';
 
   @override

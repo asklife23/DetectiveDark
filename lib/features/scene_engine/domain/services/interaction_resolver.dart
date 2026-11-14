@@ -7,7 +7,11 @@ import 'package:equatable/equatable.dart';
 
 /// What a tap on a hotspot leads to.
 class ResolvedInteraction extends Equatable {
-  const ResolvedInteraction({required this.effects, this.usedItemId});
+  const ResolvedInteraction({
+    required this.effects,
+    this.usedItemId,
+    this.shownItemId,
+  });
 
   /// Nothing happens.
   static const none = ResolvedInteraction(effects: []);
@@ -18,8 +22,12 @@ class ResolvedInteraction extends Equatable {
   /// The selected item, when a rule accepted it.
   final String? usedItemId;
 
+  /// The selected item, when the tap opens a conversation instead: the
+  /// item is shown to the character (ADR 0016). It was not *used*.
+  final String? shownItemId;
+
   @override
-  List<Object?> get props => [effects, usedItemId];
+  List<Object?> get props => [effects, usedItemId, shownItemId];
 }
 
 /// Decides which rule of a hotspot runs. Pure Dart, no state.
@@ -30,6 +38,12 @@ class ResolvedInteraction extends Equatable {
 ///   ([UsingItem] somewhere in their condition) are candidates. If none of
 ///   them holds, the detective gives the generic reaction and nothing else
 ///   happens: a wrong item never triggers the normal interaction.
+/// - **The one exception is a character.** If no item rule took the item
+///   and the rule that would run without an item contains a `talk`, that
+///   rule runs and the item is handed on as [ResolvedInteraction
+///   .shownItemId]: the conversation opens and the item is shown. So a
+///   character needs no `usingItem` rule per item; an explicit one still
+///   comes first.
 /// - Without an item selected, [UsingItem] is always false.
 class InteractionResolver {
   const InteractionResolver({this._evaluator = const ConditionEvaluator()});
@@ -44,14 +58,7 @@ class InteractionResolver {
     GameProgress progress, {
     String? usingItemId,
   }) {
-    if (usingItemId == null) {
-      for (final rule in hotspot.interactions) {
-        if (_evaluator.holds(rule.when, progress)) {
-          return ResolvedInteraction(effects: rule.effects);
-        }
-      }
-      return ResolvedInteraction.none;
-    }
+    if (usingItemId == null) return _withoutItem(hotspot, progress);
 
     for (final rule in hotspot.interactions) {
       final condition = rule.when;
@@ -63,7 +70,29 @@ class InteractionResolver {
         );
       }
     }
+
+    // No item rule took the item. A character takes a look at it.
+    final plain = _withoutItem(hotspot, progress);
+    if (plain.effects.any((effect) => effect is Talk)) {
+      return ResolvedInteraction(
+        effects: plain.effects,
+        shownItemId: usingItemId,
+      );
+    }
     return const ResolvedInteraction(effects: [Say(genericItemNoEffectKey)]);
+  }
+
+  /// The first rule whose condition holds for a tap without an item.
+  ResolvedInteraction _withoutItem(
+    HotspotDefinition hotspot,
+    GameProgress progress,
+  ) {
+    for (final rule in hotspot.interactions) {
+      if (_evaluator.holds(rule.when, progress)) {
+        return ResolvedInteraction(effects: rule.effects);
+      }
+    }
+    return ResolvedInteraction.none;
   }
 
   bool _asksFor(Condition condition, String itemId) => switch (condition) {

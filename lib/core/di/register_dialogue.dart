@@ -4,6 +4,7 @@ import 'package:detective_dark/core/time/clock.dart';
 import 'package:detective_dark/features/dialogue/data/repositories/asset_dialogue_catalog_repository.dart';
 import 'package:detective_dark/features/dialogue/domain/repositories/dialogue_catalog_repository.dart';
 import 'package:detective_dark/features/dialogue/domain/usecases/ask_topic.dart';
+import 'package:detective_dark/features/dialogue/domain/usecases/show_to_character.dart';
 import 'package:detective_dark/features/dialogue/domain/usecases/start_conversation.dart';
 import 'package:detective_dark/features/dialogue/presentation/cubit/dialogue_cubit.dart';
 import 'package:detective_dark/features/progress/domain/repositories/progress_repository.dart';
@@ -38,6 +39,9 @@ void registerDialogue(GetIt getIt) {
         clock: getIt<Clock>(),
       ),
     )
+    ..registerLazySingleton<ShowToCharacter>(
+      () => ShowToCharacter(askTopic: getIt<AskTopic>()),
+    )
     ..registerFactory<DialogueCubit>(
       () => DialogueCubit(
         catalogRepository: getIt<DialogueCatalogRepository>(),
@@ -45,6 +49,7 @@ void registerDialogue(GetIt getIt) {
         progressRepository: getIt<ProgressRepository>(),
         startConversation: getIt<StartConversation>(),
         askTopic: getIt<AskTopic>(),
+        showToCharacter: getIt<ShowToCharacter>(),
         caseId: ContentPaths.defaultCaseId,
       ),
     );

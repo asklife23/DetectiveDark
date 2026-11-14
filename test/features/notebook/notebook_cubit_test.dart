@@ -165,4 +165,74 @@ void main() {
       expect(cubit.state.entries, hasLength(1));
     });
   });
+
+  group('picking evidence (selection mode)', () {
+    Future<NotebookCubit> cubitWithLetter() async {
+      final cubit = NotebookCubit(
+        catalogRepository: AssetNoteCatalogRepository(
+          ContentAssetSource(realContentBundle()),
+        ),
+        progressRepository: progress,
+        markNoteRead: MarkNoteRead(progress),
+        caseId: 'case01',
+        eventBus: bus,
+      );
+      addTearDown(cubit.close);
+      await cubit.load();
+      await progress.save(newGame.withNote(letter));
+      await pumpEventQueue();
+      return cubit;
+    }
+
+    test('openForSelection opens the notebook in selection mode', () async {
+      final cubit = await cubitWithLetter()
+        ..openForSelection();
+
+      expect(cubit.state.isOpen, isTrue);
+      expect(cubit.state.isSelecting, isTrue);
+    });
+
+    test('openNotebook opens it for reading', () async {
+      final cubit = await cubitWithLetter()
+        ..openForSelection()
+        ..closeNotebook()
+        ..openNotebook();
+
+      expect(cubit.state.isOpen, isTrue);
+      expect(cubit.state.isSelecting, isFalse);
+    });
+
+    test('closing leaves selection mode', () async {
+      final cubit = await cubitWithLetter()
+        ..openForSelection()
+        ..closeNotebook();
+
+      expect(cubit.state.isOpen, isFalse);
+      expect(cubit.state.isSelecting, isFalse);
+    });
+
+    test(
+      'tabs and notes can be browsed without leaving selection mode',
+      () async {
+        final cubit = await cubitWithLetter()
+          ..openForSelection()
+          ..selectCategory(NoteCategory.person)
+          ..selectCategory(NoteCategory.document);
+        await cubit.selectNote('hall_letter');
+
+        expect(cubit.state.isSelecting, isTrue);
+        expect(cubit.state.selectedNoteId, 'hall_letter');
+      },
+    );
+
+    test('a note that is looked at while picking is marked read', () async {
+      final cubit = await cubitWithLetter()
+        ..openForSelection();
+
+      await cubit.selectNote('hall_letter');
+      await pumpEventQueue();
+
+      expect(progress.current!.unreadNoteCount, 0);
+    });
+  });
 }

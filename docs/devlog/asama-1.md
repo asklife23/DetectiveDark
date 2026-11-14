@@ -551,3 +551,48 @@
   ağacında (ekran okuyucular için) satırın kendi düğümü yoktu, dokunulabilir panelin düğümüne karışıyordu; testler
   satırı bulamayınca fark ettik ve `container: true` ile ayırdık. Test, yalnızca hatayı değil erişilebilirlik
   eksikliğini de yakaladı.
+
+### Adım 1.18 — Eşya verme ve kanıt gösterme (2026-11-15)
+- **Ne yaptık:** Toplananlar artık sorguda da işe yarıyor (ADR 0016).
+  - **`ShowToCharacter` use case'i** (etki hattından): oyuncunun gösterdiği eşya / not için, `trigger`'ı eşleşen ve
+    koşulu tutan **ilk** konuyu bulur ve `AskTopic` gibi oynatır (vermek = konunun `do` listesindeki `consumeItem`).
+    Daha önce oynamış konu yeniden gösterilirse yalnızca cevabı tekrar okunur. Eşleşen konu yoksa karakterin
+    `noReactionKey` repliği gelir: ceza yok, işaret yok, kayıt yok. Oyuncunun taşımadığı şey gösterilemez.
+  - **Sahneden gösterme (`InteractionResolver`, tek yeni kural):** eşya seçiliyken bir karaktere dokunulursa (eşyasız
+    dokunuşta çalışacak kural `talk` içeriyorsa) genel tepki yerine panel açılır; karakter önce karşılar, sonra eşyaya
+    tepki verir. Hotspot'taki açık bir `usingItem` kuralı yine önce gelir. Eşya "kullanılmış" sayılmaz (`ItemUsed` yok).
+  - **Panel açıkken:** sağ paneldeki eşyaya **tek dokunuş = göster** (seçim yapılmaz). Not için paneldeki
+    **"Show evidence"** düğmesi defteri **seçim modunda** açar; açık notun altında **"Show"** düğmesi belirir;
+    basınca defter kapanır ve karakter tepki verir. Konuşma açıkken HUD'daki defter düğmesi de seçim modunda açar.
+  - Gösterilerek oynayan konu sonra listede kendi sorusuyla, sorulmuş olarak durur.
+- **Neden:** "Doğru şeyi doğru kişiye göster" bir dedektif oyununun özüdür ve yeni bir bulmaca türü demektir; ama
+  içerik yazarı için ucuz olmalı. Karakterin hotspot'una eşya başına kural yazmak (50 eşya × 10 karakter) imkânsız
+  olurdu; bunun yerine "neye tepki verir" bilgisi konuşmanın kendi dosyasında, konunun `trigger`'ında durur. İlgisiz
+  gösterimde ceza olmaması da bilinçli: deneme-yanılma cezalandırılırsa oyuncu denemekten korkar.
+- **Önemli dosyalar:** `dialogue/domain/usecases/show_to_character.dart`,
+  `scene_engine/domain/services/interaction_resolver.dart`, `dialogue/presentation/cubit/dialogue_cubit.dart`
+  (`show`, karşılamadan sonra gösterme), `notebook/presentation/cubit/notebook_cubit.dart` (`openForSelection`),
+  `notebook/presentation/widgets/note_page.dart` ("Show" düğmesi), `inventory/presentation/widgets/item_sidebar.dart`
+  (`onItemTap`), `app/game/hud_side_panel.dart`, `app/game/scene_dialogue_area.dart`, `app/game/game_hud.dart`,
+  testler: `show_to_character_test.dart`, `test/app/game/evidence_flow_test.dart`, `test/helpers/dialogue_driver.dart`.
+- **Telefonda nasıl test edilir** (çarşıda, şişe elde, mektup defterde):
+  1. Eczacıya dokun, karşılamayı geç. "Ask about the pills" sor ve oku.
+  2. Panel açıkken sağdaki **şişeye bir kez dokun**: eczacı cevap verir, şişe panelden düşer, defter rozeti yanar.
+     Listeye dön: "Ask about the pills" hâlâ orada (yeniden okunabilir), "Hand over the pill bottle" sorulmuş olarak
+     eklenmiş. Artık **dört soru** var: kaydırmadan sığıyor mu bak.
+  3. Paneli kapat, kahveciye dokun. **"Show evidence"** → defter açılır → "Unsigned letter" → **"Show"**: defter
+     kendiliğinden kapanır, kahveci mektubu tanır.
+  4. Eczacıya git, aynı mektubu göster: "I couldn't tell you anything about that." (hiçbir şey değişmez).
+  5. (Yeni oyunda) şişeyi **seçip** sahnede eczacıya dokun: "That won't do anything here" yerine panel açılmalı; önce
+     karşılama, sonra şişeye tepki.
+  6. **Bakılacak yerler:** "Show evidence" düğmesi ve "Show" düğmesi parmakla rahat mı; seçim modundaki defterde
+     telefonun geri tuşu panele dönüyor mu; panel açıkken eşyaya uzun basınca inceleme kartı **açılmamalı**.
+- **Öğrenme notu:** Bu adımda `app/` katmanının neden var olduğu çok net görünüyor. Üç feature birbirini tanımadan
+  birlikte çalışıyor: `inventory` yalnızca "eşyaya dokunuldu" diyor (`onItemTap`), `notebook` yalnızca "bu not
+  gösterilmek isteniyor" diyor (`onShowNote`), `dialogue` yalnızca "bana şunu göster" komutunu biliyor
+  (`DialogueCubit.show`). Dokunuşun **ne anlama geldiğine** `app/` karar veriyor: konuşma açıksa göster, değilse seç.
+  Buna **geri çağrı (callback) ile bağımlılığı kırma** denir: alt seviye widget, kimin dinlediğini bilmeden bir olay
+  bildirir. `inventory` `dialogue`'u import etseydi hem katman kuralı bozulur hem de eşya paneli konuşma olmadan test
+  edilemezdi. İkinci ders küçük ama değerli: `ShowToCharacter` yeni bir "oynat" kodu yazmadı, `AskTopic.play`'i
+  kullandı; böylece "ilk seferde etkiler çalışır, tetikleyiciler aynı kayıtta değerlendirilir, tekrar edince yalnızca
+  cevap okunur" kuralları iki yolda da kendiliğinden aynı.

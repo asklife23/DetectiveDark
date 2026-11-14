@@ -214,6 +214,24 @@ abstract class AppLocalizations {
   /// **'Nothing to ask. Not yet.'**
   String get dialogueNoTopics;
 
+  /// Button in the dialogue panel: opens the notebook so the player can pick a note and show it to the character. Little space: keep it short.
+  ///
+  /// In en, this message translates to:
+  /// **'Show evidence'**
+  String get dialogueShowEvidence;
+
+  /// Button under the open note while the player picks evidence for a character: shows this note to the character.
+  ///
+  /// In en, this message translates to:
+  /// **'Show'**
+  String get notebookShowButton;
+
+  /// Shown on the right page of the notebook while the player picks evidence for a character and no note is selected yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick the note to show.'**
+  String get notebookPickEvidenceHint;
+
   /// Label of the HUD button that opens the history of the detective's inner voice, and title of that history.
   ///
   /// In en, this message translates to:

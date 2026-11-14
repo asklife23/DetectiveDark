@@ -120,6 +120,7 @@ class SceneBloc extends Bloc<SceneEvent, SceneState> {
           _withProgress(outcome.progress)._copy(
             activeInspection: () => inspection,
             activeDialogueId: () => outcome.dialogueId,
+            shownItemId: () => outcome.shownItemId,
           ),
         );
         if (outcome.navigation case final navigation?) {
@@ -140,7 +141,7 @@ class SceneBloc extends Bloc<SceneEvent, SceneState> {
     }
     // Back closes the conversation first and leaves the scene alone.
     if (state.activeDialogueId != null) {
-      emit(state._copy(activeDialogueId: () => null));
+      emit(_withoutDialogue());
       return;
     }
     if (state.transitionPhase != TransitionPhase.idle || !state.canGoBack) {
@@ -244,8 +245,11 @@ class SceneBloc extends Bloc<SceneEvent, SceneState> {
 
   Future<void> _onDialogueClosed(Emitter<SceneState> emit) async {
     if (state.activeDialogueId == null) return;
-    emit(state._copy(activeDialogueId: () => null));
+    emit(_withoutDialogue());
   }
+
+  SceneState _withoutDialogue() =>
+      state._copy(activeDialogueId: () => null, shownItemId: () => null);
 
   Future<void> _onProgressChanged(
     _ProgressChanged event,

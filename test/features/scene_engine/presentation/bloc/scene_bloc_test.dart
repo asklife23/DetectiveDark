@@ -445,6 +445,29 @@ void main() {
       expect(bloc.state.activeDialogueId, 'pharmacist');
     });
 
+    test('a tap with an item selected opens the conversation with the '
+        'item to show', () async {
+      final bloc = await inMarket();
+
+      await bloc.tap('pharmacist', usingItemId: 'pill_bottle');
+
+      expect(bloc.state.activeDialogueId, 'pharmacist');
+      expect(bloc.state.shownItemId, 'pill_bottle');
+      // No "that won't do anything here".
+      expect(bloc.state.progress!.chatLog, isEmpty);
+    });
+
+    test('closing the conversation forgets the shown item', () async {
+      final bloc = await inMarket();
+      await bloc.tap('pharmacist', usingItemId: 'pill_bottle');
+
+      await bloc.back();
+      await bloc.tap('pharmacist');
+
+      expect(bloc.state.activeDialogueId, 'pharmacist');
+      expect(bloc.state.shownItemId, isNull);
+    });
+
     test('after closing, the character can be talked to again', () async {
       final bloc = await inMarket();
       await bloc.tap('pharmacist');

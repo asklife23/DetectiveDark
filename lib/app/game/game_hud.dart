@@ -13,6 +13,8 @@ import 'package:detective_dark/core/widgets/flight_layer.dart';
 import 'package:detective_dark/core/widgets/fly_anchors.dart';
 import 'package:detective_dark/features/detective_chat/presentation/cubit/chat_cubit.dart';
 import 'package:detective_dark/features/detective_chat/presentation/widgets/chat_history_sheet.dart';
+import 'package:detective_dark/features/dialogue/domain/entities/dialogue_definition.dart';
+import 'package:detective_dark/features/dialogue/presentation/cubit/dialogue_cubit.dart';
 import 'package:detective_dark/features/inventory/presentation/cubit/inventory_cubit.dart';
 import 'package:detective_dark/features/notebook/presentation/cubit/notebook_cubit.dart';
 import 'package:detective_dark/features/notebook/presentation/widgets/notebook_screen.dart';
@@ -34,7 +36,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 /// - the notebook and the message history open above the scene;
 /// - the detective message bar lies on the bottom strip of the scene;
 /// - the dialogue panel opens above the scene, leaving that strip and the
-///   item panel free.
+///   item panel free; while it is open, a tap on an item shows it to the
+///   character and the notebook opens to pick a note as evidence.
 ///
 /// It also owns Back from outside the scene: the Android system back
 /// button and the Esc key first close what is open (notebook or message
@@ -83,6 +86,13 @@ class _GameHudState extends State<GameHud> {
       HotspotTapped(hotspotId, usingItemId: inventory.state.selectedItemId),
     );
     inventory.clearSelection();
+  }
+
+  /// The player picked a note as evidence: the notebook closes and the
+  /// character reacts.
+  void _showNote(String noteId) {
+    context.read<NotebookCubit>().closeNotebook();
+    unawaited(context.read<DialogueCubit>().show(ShowNote(noteId)));
   }
 
   /// Closes the topmost open thing or leaves the close-up. Returns false
@@ -173,8 +183,9 @@ class _GameHudState extends State<GameHud> {
               ),
               BlocSelector<NotebookCubit, NotebookState, bool>(
                 selector: (state) => state.isOpen,
-                builder: (context, isOpen) =>
-                    isOpen ? const NotebookScreen() : const SizedBox.shrink(),
+                builder: (context, isOpen) => isOpen
+                    ? NotebookScreen(onShowNote: _showNote)
+                    : const SizedBox.shrink(),
               ),
               BlocSelector<ChatCubit, ChatState, bool>(
                 selector: (state) => state.isHistoryOpen,

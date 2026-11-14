@@ -5,6 +5,7 @@ import 'package:detective_dark/features/dialogue/domain/entities/dialogue_defini
 import 'package:detective_dark/features/dialogue/domain/repositories/dialogue_catalog_repository.dart';
 import 'package:detective_dark/features/dialogue/domain/services/dialogue_view_resolver.dart';
 import 'package:detective_dark/features/dialogue/domain/usecases/ask_topic.dart';
+import 'package:detective_dark/features/dialogue/domain/usecases/show_to_character.dart';
 import 'package:detective_dark/features/dialogue/domain/usecases/start_conversation.dart';
 import 'package:detective_dark/features/progress/domain/entities/game_progress.dart';
 import 'package:detective_dark/features/progress/domain/repositories/progress_repository.dart';
@@ -75,6 +76,7 @@ class DialogueCubit extends Cubit<DialogueState> {
     required this._progressRepository,
     required this._startConversation,
     required this._askTopic,
+    required this._showToCharacter,
     required this._caseId,
     this._viewResolver = const DialogueViewResolver(),
   }) : super(const DialogueState());
@@ -84,6 +86,7 @@ class DialogueCubit extends Cubit<DialogueState> {
   final ProgressRepository _progressRepository;
   final StartConversation _startConversation;
   final AskTopic _askTopic;
+  final ShowToCharacter _showToCharacter;
   final String _caseId;
   final DialogueViewResolver _viewResolver;
 
@@ -93,6 +96,10 @@ class DialogueCubit extends Cubit<DialogueState> {
 
   /// Guards against a second tap while a use case is saving.
   bool _isBusy = false;
+
+  /// What the player tapped the character with: shown once the greeting
+  /// has been read.
+  TopicTrigger? _shownAfterGreeting;
 
   /// Loads the dialogue catalog and the triggers of the case, and starts
   /// following the progress.
@@ -124,10 +131,14 @@ class DialogueCubit extends Cubit<DialogueState> {
   }
 
   /// Opens the conversation [dialogueId]: the character greets first.
-  Future<void> open(String dialogueId) async {
+  ///
+  /// With [showItemId] (the player tapped the character with an item
+  /// selected) the item is shown right after the greeting.
+  Future<void> open(String dialogueId, {String? showItemId}) async {
     final dialogue = _dialogues[dialogueId];
     final progress = _progressRepository.current;
     if (dialogue == null || progress == null || _isBusy) return;
+    _shownAfterGreeting = showItemId == null ? null : ShowItem(showItemId);
 
     _isBusy = true;
     final result = await _startConversation(
@@ -184,6 +195,47 @@ class DialogueCubit extends Cubit<DialogueState> {
     }
   }
 
+  /// Shows an item or a note to the character. Ignored while the character
+  /// speaks: evidence is shown between two answers.
+  Future<void> show(TopicTrigger shown) async {
+    if (state.isSpeaking) return;
+    await _show(shown);
+  }
+
+  Future<void> _show(TopicTrigger shown) async {
+    final dialogue = state.dialogue;
+    final progress = _progressRepository.current;
+    if (dialogue == null || progress == null || _isBusy) return;
+
+    _isBusy = true;
+    final result = await _showToCharacter(
+      dialogue: dialogue,
+      shown: shown,
+      progress: progress,
+      triggers: _triggers,
+    );
+    _isBusy = false;
+    if (isClosed || state.dialogue != dialogue) return;
+
+    switch (result) {
+      case Failed(:final failure):
+        addError(failure);
+        // Do not leave the last line standing for ever.
+        if (state.isSpeaking) emit(_listAgain());
+      case Success(value: final reply):
+        emit(
+          DialogueState(
+            dialogue: dialogue,
+            topics: _viewResolver.visibleTopics(dialogue, reply.progress),
+            lineKeys: reply.lineKeys,
+          ),
+        );
+    }
+  }
+
+  DialogueState _listAgain() =>
+      _copy(lineKeys: const [], lineIndex: 0, isLineComplete: false);
+
   /// The typewriter effect reached the end of the line.
   void lineTyped() {
     if (!state.isSpeaking || state.isLineComplete) return;
@@ -199,14 +251,20 @@ class DialogueCubit extends Cubit<DialogueState> {
       emit(_copy(isLineComplete: true));
     } else if (!state.isLastLine) {
       emit(_copy(lineIndex: state.lineIndex + 1, isLineComplete: false));
+    } else if (_shownAfterGreeting case final shown?) {
+      // The greeting is read: now the character looks at what the player
+      // held out. The greeting stays on screen until the reaction is ready.
+      _shownAfterGreeting = null;
+      unawaited(_show(shown));
     } else {
-      emit(_copy(lineKeys: const [], lineIndex: 0, isLineComplete: false));
+      emit(_listAgain());
     }
   }
 
   /// Closes the panel. Nothing is saved: an open conversation is interface
   /// state.
   void leave() {
+    _shownAfterGreeting = null;
     if (!state.isOpen) return;
     emit(const DialogueState());
   }

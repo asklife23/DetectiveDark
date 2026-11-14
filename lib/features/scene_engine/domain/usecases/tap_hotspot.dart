@@ -17,6 +17,7 @@ class TapOutcome extends Equatable {
     this.navigation,
     this.inspectionId,
     this.dialogueId,
+    this.shownItemId,
   });
 
   /// The progress after the tap (unchanged when nothing happened).
@@ -31,8 +32,18 @@ class TapOutcome extends Equatable {
   /// A conversation to open, if the rule asked for one (`talk`).
   final String? dialogueId;
 
+  /// The selected item, when it is to be shown to the character of
+  /// [dialogueId] once the conversation is open.
+  final String? shownItemId;
+
   @override
-  List<Object?> get props => [progress, navigation, inspectionId, dialogueId];
+  List<Object?> get props => [
+    progress,
+    navigation,
+    inspectionId,
+    dialogueId,
+    shownItemId,
+  ];
 }
 
 /// Handles a tap on a hotspot: pick the rule and hand its effects to the
@@ -95,6 +106,7 @@ class TapHotspot {
           navigation: value.navigation,
           inspectionId: value.inspectionId,
           dialogueId: value.dialogueId,
+          shownItemId: value.dialogueId == null ? null : resolved.shownItemId,
         ),
       ),
       Failed(:final failure) => Failed(failure),

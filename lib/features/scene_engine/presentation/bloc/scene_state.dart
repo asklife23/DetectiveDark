@@ -30,6 +30,7 @@ class SceneState extends Equatable {
     this.pendingSceneId,
     this.activeInspection,
     this.activeDialogueId,
+    this.shownItemId,
   });
 
   final SceneStatus status;
@@ -67,6 +68,10 @@ class SceneState extends Equatable {
   /// time.
   final String? activeDialogueId;
 
+  /// The item the player tapped the character with: it is shown as soon as
+  /// the conversation [activeDialogueId] has opened. Null otherwise.
+  final String? shownItemId;
+
   /// Navigation stack, root first.
   List<String> get stack => progress?.sceneStack ?? const [];
 
@@ -91,6 +96,7 @@ class SceneState extends Equatable {
     String? Function()? pendingSceneId,
     InspectionDefinition? Function()? activeInspection,
     String? Function()? activeDialogueId,
+    String? Function()? shownItemId,
   }) {
     return SceneState(
       status: status,
@@ -113,6 +119,7 @@ class SceneState extends Equatable {
       activeDialogueId: activeDialogueId == null
           ? this.activeDialogueId
           : activeDialogueId(),
+      shownItemId: shownItemId == null ? this.shownItemId : shownItemId(),
     );
   }
 
@@ -130,5 +137,6 @@ class SceneState extends Equatable {
     pendingSceneId,
     activeInspection,
     activeDialogueId,
+    shownItemId,
   ];
 }

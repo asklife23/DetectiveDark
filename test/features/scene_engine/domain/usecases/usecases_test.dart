@@ -262,4 +262,51 @@ void main() {
       expect(outcome.dialogueId, 'cafe_owner');
     });
   });
+
+  group('showing an item to a character (ADR 0016)', () {
+    test('a tap with an item selected opens the conversation with the '
+        'item to show; nothing is said, used or saved', () async {
+      final inMarket = at(['market_square']).withItem('pill_bottle');
+
+      final outcome = (await game.tapHotspot(
+        scene: content.scenes['market_square']!,
+        progress: inMarket,
+        hotspotId: 'pharmacist',
+        usingItemId: 'pill_bottle',
+      )).valueOrNull!;
+      await pumpEventQueue();
+
+      expect(outcome.dialogueId, 'pharmacist');
+      expect(outcome.shownItemId, 'pill_bottle');
+      expect(outcome.progress, same(inMarket));
+      expect(game.events, isEmpty);
+    });
+
+    test('an item the player does not carry is not shown', () async {
+      final outcome = (await game.tapHotspot(
+        scene: content.scenes['market_square']!,
+        progress: at(['market_square']),
+        hotspotId: 'pharmacist',
+        usingItemId: 'pill_bottle',
+      )).valueOrNull!;
+
+      expect(outcome.dialogueId, 'pharmacist');
+      expect(outcome.shownItemId, isNull);
+    });
+
+    test('an item on something that is not a character still gets the '
+        'generic reaction', () async {
+      final outcome = (await game.tapHotspot(
+        scene: content.scenes['market_square']!,
+        progress: at(['market_square']).withItem('pill_bottle'),
+        hotspotId: 'villa_road',
+        usingItemId: 'pill_bottle',
+      )).valueOrNull!;
+
+      expect(outcome.dialogueId, isNull);
+      expect(outcome.shownItemId, isNull);
+      expect(outcome.navigation, isNull);
+      expect(outcome.progress.chatLog.last.textKey, 'generic_item_no_effect');
+    });
+  });
 }
