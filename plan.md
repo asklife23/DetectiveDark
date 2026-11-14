@@ -19,18 +19,24 @@ Aşamalar numara sırasıyla değil, bu sırayla yapılır. Numaralar değişmez
 Önce oyunun eğlenceli olduğu doğrulanır, sonra hesap ve bulut eklenir.
 
 1. Aşama 0 — Proje temeli ✔
-2. Aşama 1 — Oyun motoru ✔
-3. Aşama 2 — Kalıcı kayıt
-4. Aşama 5 — Bulmacalar ve vaka akışı
-5. Aşama 7, **yalnızca Bölüm 1** (7.0–7.4): repoyu private yapma, hikaye, görseller, Bölüm 1 içeriği ve 10–15 kişiyle oyun testi.
+2. Aşama 1 — Oyun motoru (adım 1.1–1.8 bitti, `phase-1` etiketi atıldı)
+3. Aşama 1b (adım 1.9–1.20) — motor eksikleri: konuşma, tetikleyiciler, mekan geçişi, içerik düzeni
+4. Aşama 2 — Kalıcı kayıt
+5. Aşama 5 — Bulmacalar ve vaka akışı
+6. Aşama 7, **yalnızca Bölüm 1** (7.0–7.4): repoyu private yapma, hikaye, görseller, Bölüm 1 içeriği ve 10–15 kişiyle oyun testi.
    **9.1 (çökme raporlama) oyun testinden önce yapılır:** sıra 7.0 → 7.1 → 7.2 → 7.3 → 7.4'ün içeriği → 9.1 → oyun testi
-6. Aşama 3 — Supabase ve kimlik
-7. Aşama 4 — Bulut eşitleme
-8. Aşama 6 — Oyun hissi ve uygulama kabuğu
-9. Aşama 7'nin kalanı (7.5: Bölüm 2–4)
-10. Aşama 8 → 9 (9.1 hariç; öne alındı) → 10 → 11
+7. Aşama 3 — Supabase ve kimlik
+8. Aşama 4 — Bulut eşitleme
+9. Aşama 6 — Oyun hissi ve uygulama kabuğu
+10. Aşama 7'nin kalanı (7.5: Bölüm 2–4)
+11. Aşama 8 → 9 (9.1 hariç; öne alındı) → 10 → 11
 
 **Sıradan doğan bağımlılıklar:**
+- **Aşama 1b → Aşama 2:** 1b kayıt şekline alan ekler (`spokenLines`, `firedTriggers`, `askedTopics`, not `entries`).
+  Kalıcı kayıt (2.2) bu alanlarla **ilk sürüm olarak** yazılır; 1b Aşama 2'den sonra yapılsaydı ilk gerçek kayıt
+  sürümü hemen bir migration gerektirirdi.
+- **Aşama 1b → Aşama 7:** İçerik dosya düzeni ve bölüm genişletmeleri (1.14) Bölüm 1 yazılmadan önce kesinleşir;
+  sonradan değiştirmek yazılmış bölüm dosyalarını yeniden yazmak demektir.
 - **Aşama 5 → Aşama 2:** Bulmaca durumu, bölüm ve suçlama hakları ilerlemeye eklenir. Kayıt şekli değişirse payload
   sürümü artar ve 2.2'deki migration zinciriyle taşınır (eski kayıt bozulmaz).
 - **Aşama 5 → Aşama 3:** Bölüm 1 sonundaki hesap bağlama önerisi 5.4'ten 3.3'e taşındı. 5.4 bölüm sonu ekranını
@@ -63,6 +69,11 @@ Aşamalar numara sırasıyla değil, bu sırayla yapılır. Numaralar değişmez
 | DI | `get_it` | Sade, kod üretimi gerektirmez |
 | Yönlendirme | `go_router` (ekranlar), `SceneBloc` yığını (sahneler) | Sahneler oyun durumudur, URL rotası değil |
 | Etkileşim | **Koşul + etki kuralları**, tamamen JSON'dan | Yeni bulmaca = yeni veri, yeni kod değil; 150+ sahneye ölçeklenir |
+| Kural dili | Koşullar: `not`, `atLeast`, `visited`, `inScene`, `topicAsked`; `say` `first/then`; `chatLog` son 200 (ADR 0013) | Yardımcı bayrak ihtiyacı azalır; kayıt boyutu sınırlı kalır |
+| Etki hattı | İlerlemeyi değiştiren her use case tek hattan geçer: etkiler → tetikleyiciler → tek atomik kayıt → olaylar (ADR 0014) | Yeni özellik kendi kayıt/olay kodunu yazmaz; yarım durum oluşmaz |
+| Tetikleyiciler | `triggers.json`: koşulu tutunca bir kez çalışan kurallar (ADR 0014) | Birleşik koşul ("ikisi de soruldu") tek yerde yazılır |
+| Konuşma | Ayrı feature `dialogue`; `talk` etkisi; `dialogues.json`; kanıt gösterme ve eşya verme konu `trigger`'ıyla (ADR 0016) | Karakterler veriyle eklenir; iç ses ve tek yol hikaye değişmez |
+| İçerik dosyaları | Tür başına dosya veya klasör; sonraki bölüm öncekini kendi dosyasında genişletir; eksik bölüm atlanır; önek doğrulaması (ADR 0018) | Bölüm dosyaları okunabilir kalır; demo yalnızca Bölüm 1 ile derlenir |
 | Yerel veri | Drift (SQLite); ayarlar için `shared_preferences` | Migration sistemi, SQL bilgisi Supabase/FastAPI'ye aktarılır |
 | Kayıt modeli | Tek tablo: özet + eşitleme sütunları + JSON payload; **tek kayıt yuvası** | Tek yol hikaye; yarım kayıt oluşmaz; bulut ile aynı şekil |
 | Backend | Supabase (Auth + Postgres + RLS + Edge Functions) | Hazır kimlik ve veritabanı; açık kaynak |
@@ -81,10 +92,13 @@ Aşamalar numara sırasıyla değil, bu sırayla yapılır. Numaralar değişmez
 | Konu | Karar |
 |---|---|
 | Oyuncu | Dedektifi yönetir; dedektif görünmez, iç sesiyle tek yönlü konuşur |
-| Toplananlar | **Eşyalar** (sağ panel, kullanılır) ve **notlar** (not defteri: belgeler, gözlemler, şüpheliler) |
+| Toplananlar | **Eşyalar** (sağ panel, kullanılır) ve **notlar** (not defteri: belgeler, gözlemler, kişiler). Kişi dosyaları oyun ilerledikçe satır satır güncellenir (ADR 0015) |
 | Eşya kullanımı | Dokun-seç → hedefe dokun; yanlış yerde cezasız genel tepki |
 | Bulmacalar | Eşya kullanma, şifre/kilit, kayıt inceleme; zincirleme |
-| Hikaye | Tek yol; karakterler görünmez |
+| Hikaye | Tek yol; dallanma yok |
+| Karakterler | Sahnede silüet; dokununca konuşma paneli doğrudan açılır; oyuncu yalnızca önceden yazılmış soruları seçer; sorular bilgi ortaya çıkarır (ADR 0016) |
+| Kanıt ve eşya | Karakterlere eşya ve not gösterilir, eşya verilir; ilgisiz gösterimde cezasız kısa tepki (ADR 0016) |
+| Yön bulma | **Harita ve mekan listesi yok.** Mekanlara sahnedeki geçiş noktalarıyla gidilir; keşif oyunun parçası (ADR 0017) |
 | Yapı | Tek vaka, 4 bölüm (B1 30–45 dk, B2–B4 45–60 dk); Vaka 2 ileride |
 | Para (mobil) | Bölüm 1 ücretsiz; devamı ücretli; Vaka 2 ayrı ücretli |
 | Para (Steam) | Bölüm 1 ücretsiz demo; Vaka 1 peşin ücretli; Vaka 2 DLC; reklam yok |
@@ -101,7 +115,6 @@ Aşamalar numara sırasıyla değil, bu sırayla yapılır. Numaralar değişmez
 | 5 | Kayıt inceleme biçimi | Kare dizisi + ses (ucuz, hafif); sanat yönüne göre video |
 | 5 | İsim doğru, kanıt yetersizse hak düşer mi | Düşer; polis "kanıtlar zayıf" der |
 | 6 | Ses kütüphanesi | `flutter_soloud` (düşük gecikme, oyun odaklı) veya `audioplayers` |
-| 7 | Yön bulma (harita / mekan listesi) | İlk 15–20 sahne oynandıktan sonra ihtiyaca göre |
 | 7 | Görsel üretim aracı (AI) ve ticari kullanım koşulları | Ticari kullanıma açık lisanslı araç; seçim stil denemeleriyle |
 | 8 | Satın alma biçimi, fiyat, ipucu/reklam | Vaka 1'in kalanı tek satın alım; ipucu modeli test sonrası |
 | 9 | Çökme raporlama / analitik | Sentry veya Firebase Crashlytics; minimal analitik. Çökme raporlama kararı 9.1 başlarken (7.4'teki oyun testinden önce) sorulur |
@@ -237,6 +250,31 @@ Yan fayda: geliştirme sırasında telefonu bağlamadan bilgisayarda hızlı tes
 10. Geri, Geri → Villa Önü → Heykel: anahtar **yok**. Kapı yakın planı: kapı **açık** kalmış.
 11. Heykel yakın planında kaidedeki plakete dokun → sahne değişmeden **inceleme penceresi** açılır: plaket görseli,
     üstünde oyunun çizdiği kazıma yazı ve kısa bir metin. Geri → yalnızca pencere kapanır; bir daha Geri → Villa Önü.
+
+### Aşama 1b — motor eksikleri (adım 1.9–1.20)
+
+**Neden:** Dikey dilim "eşyayı al, doğru yerde kullan" döngüsünü kanıtladı; ama Bölüm 1'i yazmaya başlamadan yapılan
+motor incelemesi, 40–50 sahnelik bir bölümün dayanacağı parçaların eksik olduğunu gösterdi: karakterlerle konuşma,
+birleşik koşullara tepki veren tetikleyiciler, mekanlar arası geçiş, güncellenen kişi dosyaları ve büyük bölümleri
+taşıyacak içerik dosya düzeni. Bunlar **kayıt şeklini** (Aşama 2) ve **içerik dosyalarını** (Aşama 7) belirlediği için
+o aşamalardan önce yapılır; sonradan eklemek migration ve yazılmış içeriğin yeniden yazılması demektir.
+Adımlar aşağıda 1.8'den sonra yer alır. Komut: `Aşama 1b'yi yap` veya `Sıradaki adım`. Devlog `docs/devlog/asama-1.md`'ye
+devam eder. Kararlar: ADR 0013–0018.
+
+**Kabul senaryosunun devamı (1b'nin sonunda 1–20 kusursuz çalışmalı; "çarşı demosu"):**
+12. Holde ilaç şişesine dokun → panele uçar. Villa Önü'ne dön: mektup alındığı için tabela belirmiş, üstünde yazı.
+13. Tabelaya dokun → Çarşı. Geri butonu görünmez. İki silüet: eczacı ve kahveci.
+14. Kahveciye dokun → panel doğrudan açılır; iki soru, ikisi de "yeni". Villayı sor → satırlar dokunuşla ilerler;
+    soru sorulmuş olarak işaretlenir.
+15. Eczacıya dokun → üç soru görünür (ikisi sabit + şişe elde olduğu için "İlacı sor"). Villayı sor → kişi
+    dosyasına satır eklenir, defter rozeti yanar; tetikleyici bir kez çalışır: dedektif konuşur, gözlem notu gelir.
+16. "İlacı sor" → cevap + dedektifin iç sesi.
+17. Panel açıkken sağ panelde şişeye dokun → eczacı cevap verir, şişe panelden düşer, dosyaya satır eklenir.
+    "İlacı sor" listede kalır ve yeniden okunabilir; verme konusu listede sorulmuş olarak görünür.
+18. "Kanıt göster" → defter seçim modunda → holdeki mektubu kahveciye göster → cevap. Eczacıya göster →
+    `noReactionKey`.
+19. Paneli kapat, eczacıya tekrar dokun → ikinci karşılama repliği (`greeting.then`). Tetikleyici tekrar çalışmaz.
+20. "Villaya dön" → Villa Önü. Heykel gövdesine iki kez dokun: önce uzun, sonra kısa replik.
 
 ### [x] 1.1 Domain modelleri ve etkileşim kuralları
 **Amaç:** Oyunun dilini saf Dart ile tanımlamak; bütün bulmacaların üzerine kurulacağı koşul + etki sistemini kurmak.
@@ -508,6 +546,389 @@ yerine tek arka plan + küçük bir nesne görseli (ADR 0012). Gerçek görselle
   **Commit:** `test: add end-to-end vertical slice test`
   **Aşama sonu:** `phase-1` etiketi.
 
+<!-- Aşama 1b: Neden ve kabul senaryosunun devamı (adım 12–20) Aşama 1 başlığının altındadır. -->
+
+### [ ] 1.9 Koşul eklemeleri: `not`, `atLeast`, `visited`, `inScene`
+**Amaç:** Kural dilini, yardımcı bayraklara başvurmadan "değilse", "şunlardan en az ikisi", "oradaydım", "şu an
+buradayım" diyebilecek hale getirmek (ADR 0013). Tetikleyiciler (1.12) ve konuşma (1.16) bunların üzerine kurulur.
+**Yapılacaklar:**
+- `scene_engine/domain/entities/condition.dart`: `Not(condition)`, `AtLeast(count, conditions)`, `Visited(sceneId)`,
+  `InScene(sceneId)`. `notFlag` (`FlagNotSet`) kalır.
+  ```json
+  {"not": {"hasItem": "pill_bottle"}}
+  {"atLeast": {"count": 2, "of": [{"flag": "a"}, {"flag": "b"}, {"visited": "market_square"}]}}
+  {"visited": "villa_hall"}
+  {"inScene": "market_square"}
+  ```
+- `ConditionEvaluator`: `Not` → tersi; `AtLeast` → doğru olanların sayısı ≥ `count`; `Visited` →
+  `progress.hasVisited`; `InScene` → `progress.currentSceneId == sceneId` (yığının tepesi; alttaki sahneler sayılmaz).
+- `InteractionResolver._asksFor`: `Not` ve `AtLeast` içine bakılmaz (içlerinde `usingItem` yasak); yeni türler `false`.
+- `condition_codec.dart`: dört yeni anahtar. `atLeast` nesnesi yalnızca `count` (tam sayı) ve `of` (boş olmayan liste)
+  alır; bilinmeyen anahtar anlaşılır hatayla reddedilir.
+- `ContentValidator`: `not` / `atLeast` içinde (her derinlikte) `usingItem` hatadır; `1 ≤ count ≤ of.length`;
+  `visited` / `inScene` sahnesi vardır; iç içe koşullardaki bayraklar "okunan bayrak" kontrolüne girer.
+- İçerik değişmez (yeni koşullar 1.12 ve 1.15'te kullanılır).
+- Testler: evaluator (her tür, iç içe), codec (geçerli + her hata), resolver (`not` içindeki kural eşya adayı olmaz),
+  doğrulayıcı (yasak `usingItem`, bozuk `count`, bilinmeyen sahne).
+  **Kabul kriterleri:** `sealed` switch'lerin hepsi yeni türleri kapsıyor (derleyici zorlar); mevcut testler aynen
+  geçiyor; içerik doğrulama testi yeşil.
+  **Commit:** `feat(scene_engine): add not, atLeast, visited and inScene conditions`
+
+### [ ] 1.10 `say` `first/then`, `spokenLines` ve `chatLog` sınırı
+**Amaç:** Aynı yere ikinci dokunuşta uzun repliğin tekrarlanmasını bayrak yazmadan önlemek; kayıt boyutunu sınırlamak
+(ADR 0013).
+**Yapılacaklar:**
+- `Say` iki biçim alır; codec ikisini de ayrıştırır (nesne biçiminde yalnızca `first` ve `then`, ikisi de zorunlu):
+  ```json
+  {"say": "say_door_locked"}
+  {"say": {"first": "say_statue_body", "then": "say_statue_body_again"}}
+  ```
+  Entity: `Say(messageKey, {repeatKey})`.
+- `GameProgress`: `spokenLines` (küme; anahtar = `first`), `hasSpoken`, `withSpokenLine` (idempotent).
+- `EffectApplier`: `repeatKey` yoksa bugünkü davranış. Varsa: `first` daha önce söylenmemişse `first` söylenir ve
+  `spokenLines`'a eklenir; söylenmişse `then` söylenir. İkisi de `chatLog` + `DetectiveSaid` üretir.
+- `chatLog` sınırı: `GameProgress.chatLogLimit = 200` (tek sabit). `withChatEntry` sınırı aşınca en eski girişi düşürür.
+  Hiçbir oyun mantığı `chatLog`'dan okumaz (first/then bu yüzden `spokenLines` kullanır).
+- `ContentValidator`: `first` ve `then` metin anahtarları vardır; `first` anahtarları vaka içinde benzersizdir (iki
+  ayrı yerde aynı `first` kullanılırsa biri diğerinin "ilk" durumunu tüketir).
+- İçerik: `statue_body` repliği `{"first": "say_statue_body", "then": "say_statue_body_again"}` olur;
+  `text_en.json`'a kısa ikinci replik eklenir.
+- Testler: applier (ilk / sonraki, `spokenLines`, idempotentlik), `GameProgress` (sınır: 201. giriş en eskiyi düşürür),
+  codec, doğrulayıcı (yinelenen `first`).
+  **Kabul kriterleri:** Heykel gövdesine iki kez dokununca önce uzun, sonra kısa replik (kabul senaryosu 20'nin
+  mantığı); mevcut kabul testi (1–11) geçiyor.
+  **Commit:** `feat(scene_engine): add first/then lines and cap the chat log`
+
+### [ ] 1.11 Tek etki hattı
+**Amaç:** "Etkileri uygula → kaydet → olayları yayınla" akışını tek yere toplamak (ADR 0014). Tetikleyiciler, konuşma,
+geliştirici menüsü ve Aşama 5'teki bulmacalar kendi kayıt kodunu yazmayacak. **Davranış değişmez.**
+**Yapılacaklar:**
+- `scene_engine/domain/services/effect_pipeline.dart`: `EffectPipeline` (`ProgressRepository`, `GameEventBus`,
+  `EffectApplier` alır). Tek metot: (ilerleme, opsiyonel ön değişiklik (ör. yığın + ziyaret işareti), etkiler, bağlam,
+  opsiyonel baştaki olaylar (ör. `SceneEntered`)) → `Result<EffectOutcome>`. Sıra sabittir:
+  1. ön değişiklik + etkiler → tek yeni ilerleme (`EffectApplier`, saf);
+  2. tetikleyiciler (bu adımda boş bir kanca; 1.12'de dolar);
+  3. ilerleme değiştiyse **tek** `save`; başarısızsa `Failed` döner ve olay yayınlanmaz;
+  4. olaylar `GameEventBus`'a.
+- `TapHotspot` ve `EnterScene` hatta taşınır; kendi `save` / `publish` çağrıları kalkar. `MarkNoteRead` de hattı
+  kullanır (ön değişiklik = `withNoteRead`, etki yok). `StartGame` zaten `EnterScene` üzerinden yazar.
+- Mimari testi (`test/architecture`): `ProgressRepository.save` çağrısı `lib/` içinde yalnızca `EffectPipeline`'da
+  (ve repository uygulamalarının kendisinde) bulunur.
+- DI: `EffectPipeline` tek örnek olarak kaydedilir; use case'ler onu alır.
+- Testler: hat (kayıt başarısız → olay yok; değişiklik yok → kayıt yok; olay sırası: baştaki olaylar, sonra etkilerin
+  olayları). `TapHotspot`, `EnterScene`, `MarkNoteRead`, `SceneBloc` ve kabul testleri **değiştirilmeden** geçer
+  (yalnızca kurulum satırları değişebilir).
+  **Kabul kriterleri:** Oyunda gözle görülür hiçbir fark yok; mevcut testlerin beklentileri aynı; mimari testi yeni
+  kuralı zorluyor.
+  **Commit:** `refactor(scene_engine): route progress changes through one effect pipeline`
+
+### [ ] 1.12 Tetikleyiciler
+**Amaç:** "Şu koşullar ilk kez bir araya gelince bir kez çalış" kuralını tek yerde yazabilmek (ADR 0014). Koşulu
+tamamlayabilecek her hotspot'a aynı kontrolü kopyalamak sessiz hata kaynağıdır.
+**Yapılacaklar:**
+- İçerik: bölüm klasöründe opsiyonel `triggers.json` (yoksa boş sayılır).
+  ```json
+  {"formatVersion": 1, "triggers": [
+    {"id": "both_asked_about_villa",
+     "when": {"atLeast": {"count": 2, "of": [
+       {"topicAsked": "pharmacist/about_villa"}, {"topicAsked": "cafe_owner/about_villa"}]}},
+     "do": [{"say": "say_stories_do_not_match"}, {"addNote": "obs_stories_do_not_match"}]}
+  ]}
+  ```
+  (`topicAsked` 1.16'da gelir; bu adımın testleri `flag` / `visited` / `hasNote` koşullarıyla yazılır. Dilime
+  tetikleyici 1.16'da eklenir.)
+- Domain: `TriggerDefinition` (`id`, `when`, `effects`); `CaseContent.triggers` (bölüm sırası, sonra dosya sırası).
+  DTO + `ContentPaths.triggersFile`; yükleme `AssetSceneContentRepository`'de.
+- `GameProgress`: `firedTriggers` (küme), `hasFired`, `withFiredTrigger`.
+- `scene_engine/domain/services/trigger_runner.dart` (saf): ateşlenmemiş tetikleyicileri dosya sırasıyla dolaşır;
+  koşulu tutanın etkilerini `EffectApplier` ile uygular ve ID'sini `firedTriggers`'a yazar. Bir geçişte en az bir
+  tetikleyici ateşlendiyse baştan dolaşır (bir tetikleyici diğerinin koşulunu sağlayabilir); hiçbiri ateşlenmeyince
+  durur (**sabit nokta**). Geçiş sayısı sabit bir sınırı aşarsa durur ve hatayı log'a yazar (her tetikleyici en fazla
+  bir kez ateşlendiği için normalde aşılmaz; motor hatasına karşı emniyet).
+- `EffectPipeline`: 1.11'deki kanca `TriggerRunner`'ı çağırır. Tetikleyici etkileri ve olayları aynı tek kayda ve
+  aynı olay listesine girer. Bağlam: mevcut sahne, hotspot yok.
+- İzinli etkiler: `say`, `setFlag`, `addNote`, `giveItem` (+ `addNoteEntry`, 1.13'te eklenince).
+- `ContentValidator`: tetikleyici ID'leri vaka içinde benzersiz; `do` boş değil ve yalnızca izinli etkiler; koşulda
+  `usingItem` yok; referanslar ve metinler; tetikleyicilerin `setFlag`'i "set edilen bayrak" sayılır.
+- Testler: runner (bir kez çalışma, sıra, zincir: A, B'nin koşulunu sağlar; döngü sınırı), hat (dokunuş + tetikleyici
+  tek kayıt; kayıt başarısızsa `firedTriggers` de yazılmaz), DTO, doğrulayıcı.
+  **Kabul kriterleri:** Sahte içerikli testte iki bayrak set edilince tetikleyici bir kez çalışıyor, tekrar çalışmıyor;
+  `triggers.json` olmayan gerçek içerik aynen yükleniyor.
+  **Commit:** `feat(scene_engine): add one-shot triggers`
+
+### [ ] 1.13 Not satırları ve "Kişiler"
+**Amaç:** Oyun ilerledikçe güncellenen dosyalar: bir karakterin ifadesi yeni bir not değil, kişi dosyasına eklenen bir
+satırdır (ADR 0015).
+**Yapılacaklar:**
+- Kategori `suspect` → `person`: `NoteCategory`, DTO, ARB anahtarları (`notebookTabPeople`, `notebookEmptyPeople`;
+  eski anahtarlar silinir), sekme adı "People", testler. Kimin şüpheli olduğu Aşama 5.5'te `case.json`'da tanımlanır.
+- `NoteDefinition.entries` (opsiyonel katalog: `id`, `textKey`); DTO.
+  ```json
+  {"id": "person_pharmacist", "category": "person", "titleKey": "...", "bodyKey": "...",
+   "entries": [{"id": "knows_villa", "textKey": "..."}, {"id": "pills_prescribed", "textKey": "..."}]}
+  ```
+- Yeni etki `AddNoteEntry(noteId, entryId)`:
+  ```json
+  {"addNoteEntry": {"note": "person_pharmacist", "entry": "knows_villa"}}
+  ```
+- Kayıt: `CollectedNote.entries: [{entryId, addedAtUtcMs}]` (`CollectedNoteEntry`); `GameProgress.withNoteEntry`.
+- `EffectApplier`: not defterde değilse önce notu ekler (`NoteAdded`), sonra satırı; not defterdeyse satırı ekler,
+  notu **yeniden okunmamış** yapar ve `NoteUpdated(noteId, entryId)` üretir. Satır zaten ekliyse hiçbir şey olmaz.
+- `core/events`: `NoteUpdated`.
+- `addNoteEntry` tetikleyicilerin izinli etkilerine eklenir (1.12).
+- Defter arayüzü: sekmeler **Belgeler / Gözlemler / Kişiler**; notun gövdesinin altında satırlar eklenme sırasıyla;
+  güncellenen not listede okunmamış görünür, rozet yanar; son eklenen satır not açılana kadar vurgulu. `NoteUpdated`
+  gelince defter düğmesi kısa bir tepki verir (uçuş animasyonu yalnızca `NoteAdded`'da).
+- `ContentValidator`: satır ID'leri not içinde benzersiz; `textKey` var; `addNoteEntry` var olan not ve satırı gösterir.
+- Dilime içerik eklenmez (kişi notları 1.16'da); testler sahte içerikle.
+- Testler: applier (not yokken, varken, tekrar), `GameProgress`, `NotebookCubit` (güncellenen not okunmamış olur,
+  satır sırası), DTO, doğrulayıcı, widget testi (Kişiler sekmesi, satırların görünmesi).
+  **Kabul kriterleri:** Sahte içerikle: satır eklenince rozet yeniden yanıyor, not açılınca satır görünüyor ve rozet
+  sönüyor; `suspect` kelimesi `lib/`, `test/` ve `assets/` altında kalmıyor.
+  **Commit:** `feat(notebook): add note entries and the People category`
+
+### [ ] 1.14 İçerik düzeni: çoklu dosya, bölüm genişletmeleri, eksik bölüm
+**Amaç:** İçerik dosya yapısını Bölüm 1 yazılmadan kesinleştirmek (ADR 0018): büyük bölümler birden çok dosyaya
+bölünebilsin, sonraki bölüm öncekini kendi dosyasından genişletebilsin, demo yalnızca ilk bölümle derlenebilsin.
+**Yapılacaklar:**
+- **Tür başına dosya veya klasör:** bölüm klasöründe `scenes.json` **veya** `scenes/*.json`; aynısı `items`, `notes`,
+  `inspections`, `triggers` (ve 1.16'da `dialogues`) için. İkisi birden varsa hata. Klasördeki dosyalar ad sırasıyla
+  okunur ve tek dosyaymış gibi birleştirilir. Metinler dil başına tek dosya kalır (`text_xx.json`).
+- `ContentAssetSource`'a listeleme: verilen önekin altındaki asset yolları (Flutter'ın asset manifest API'si; güncel
+  dokümantasyondan uygulanır). Test paketi (`fake_asset_bundle.dart`) aynı listeyi bellekten verir. Yeni içerik
+  klasörleri `pubspec.yaml`'a eklenir (klasör girdisi alt klasörleri kapsamaz); bunu unutmak "dosya bulunamadı"
+  yerine sessiz eksik içerik üreteceği için doğrulama testi, diskteki içerik dosyalarıyla paketteki listeyi karşılaştırır.
+- **Eksik bölümün atlanması:** `case.json`'da listelenen ama pakette klasöründe **hiç** dosyası olmayan bölüm atlanır.
+  Bir kısmı eksik bölüm (ör. `scenes` var, `items` yok) hatadır. İlk bölüm eksikse hata. Kural tek yerde
+  (`CaseManifest`) uygulanır; sahne, eşya, not ve metin yükleyicileri aynı "mevcut bölümler" listesini kullanır.
+  Demo derlemesinin paketlenmesi Aşama 11'dedir.
+- **Bölüm genişletmeleri** (ilgili türün dosyasında, normal listenin yanında):
+  ```json
+  "sceneExtensions": [{"scene": "villa_hall",
+    "hotspots": [ ...yeni hotspot'lar (sona eklenir)... ],
+    "rules": [{"hotspot": "chest", "interactions": [ ...mevcut kuralların ÖNÜNE eklenir... ]}],
+    "visualVariants": [ ...mevcutların ÖNÜNE eklenir... ]}]
+  "noteExtensions": [{"note": "person_pharmacist", "entries": [ ...sona eklenir... ]}]
+  ```
+  (`dialogueExtensions` 1.16'da.) Birleştirme `data` katmanında yapılır (`scene_engine/data`, `notebook/data`);
+  `domain` birleşmiş `CaseContent` ve not kataloğunu görür; kayıt şekli değişmez. Kurallar: hedef **önceki** bir bölümde
+  olmalı; hedef sahne / hotspot / not yoksa hata; eklenen hotspot veya satır ID'si mevcutla çakışırsa hata.
+  Genişletilen sahne kendi bölümüne ait kalır. Genişletmeler oyuncunun bölümüne göre kendiliğinden açılmaz; yazar
+  koşulla kapatır ("bölüme ulaşıldı" koşulu 5.4'te).
+- **Önek doğrulaması:** içerik doğrulama testi her bölüm önekini (B1; B1–2; ...) ayrı yükleyip doğrular: erken bölüm,
+  geç bölümün ID'sine, bayrağına veya metnine bağımlı olamaz. Yükleyiciler bunun için "ilk N bölüm" ile sınırlanabilir.
+- **Uyarı düzeyi:** `ContentIssue.severity` (`error` | `warning`). Test hatalarda kırılır, uyarıları yazdırır.
+  İlk uyarı: **kullanılmayan metin anahtarı** (tam vakada; koddan kullanılan genel anahtarlar listesi doğrulayıcıya
+  verilir).
+- Testler **sahte içerikle** (`test/` altında iki bölümlü fixture): klasörden yükleme, dosya + klasör çakışması, ad
+  sırası, her genişletme türü ve hata durumları, önüne/sonuna ekleme sırası, eksik ikinci bölüm (oyun B1 ile açılır),
+  yarım bölüm (hata), önek doğrulaması (B1'in B2 bayrağını okuması yakalanır), uyarı (kullanılmayan anahtar).
+  Gerçek içerik (`ch01`) bu adımda değişmez.
+  **Kabul kriterleri:** Gerçek içerik aynen yükleniyor ve doğrulanıyor; fixture'da B2'nin `villa_hall`'e eklediği
+  hotspot ve kural birleşmiş içerikte doğru sırada; B2 klasörü silinince oyun B1 ile açılıyor.
+  **Commit:** `feat(content): support multi-file chapters, chapter extensions and missing chapters`
+
+### [ ] 1.15 Mekan geçişi: tabela, çarşı, tuzak kontrolü
+**Amaç:** Haritasız mekan geçişini (ADR 0017) içerikle ve doğrulayıcıyla kurmak; dilime ikinci bir kök mekan eklemek.
+**Yapılacaklar:**
+- `HotspotSprite.overlays` (opsiyonel; sahne görseline göre normalize `TextOverlay` listesi). Nesneyle birlikte
+  çizilir ve kaybolur; overlay katmanında (nesnelerin üstünde, noir filtrenin altında) yer alır.
+  ```json
+  {"id": "market_sign", "labelKey": "hotspot_market_sign",
+   "rect": {"x": 0.06, "y": 0.44, "width": 0.14, "height": 0.34},
+   "visibleWhen": {"hasNote": "hall_letter"},
+   "sprite": {"rect": {"x": 0.07, "y": 0.44, "width": 0.12, "height": 0.34},
+              "placeholderStyle": "sprite_market_sign",
+              "overlays": [{"type": "text", "textKey": "market_sign_text", "style": "engraved",
+                            "rect": {"x": 0.08, "y": 0.47, "width": 0.10, "height": 0.06}}]},
+   "interactions": [{"do": [{"goToScene": "market_square"}]}]}
+  ```
+  (Koordinatlar ve overlay stili placeholder çizimine göre ayarlanır; yeni stil gerekirse `core/theme`'e eklenir.)
+- `SceneStackResolver` **değişmez**: kök sahneye gidince yığın tek elemanlıdır, Geri görünmez. Bunu sabitleyen bir
+  test eklenir (kökten köke geçiş).
+- `ContentValidator`:
+  - **hata (tuzak mekan):** her kök sahneden (`parentId` yok), o sahnenin bölümünün giriş sahnesine `goToScene`
+    etkileri ve Geri (ebeveyn) üzerinden bir yol olmalı. Koşullar hesaba katılmaz (yolun *yazılmış* olduğu kanıtlanır;
+    her zaman *açık* olduğu 7.4'teki walkthrough ile).
+  - **uyarı (çapraz bağlantı):** `goToScene` hedefi mevcut sahnenin çocuğu, ebeveyni veya bir kök sahne değilse.
+  - Nesne overlay'leri: `rect` 0–1, metin anahtarı ve stil tanımlı.
+- İçerik kuralı (yazım kuralı; doğrulayıcı "iç mekan"ı bilemez): her iç mekanın merkez sahnesinde bir çıkış hotspot'u.
+- Dilim içeriği:
+  - `villa_hall`: `pill_bottle` (alınabilir nesne: `sprite` + `glint`; `giveItem` + `hideHotspot` + `say`).
+    `items.json`: `pill_bottle`.
+  - `villa_exterior`: `market_sign` (yukarıdaki; `hasNote: hall_letter` ile belirir, üstünde overlay yazı).
+  - Yeni kök sahne `market_square` (ilk girişte dedektif yorumu); içinde `villa_road` çıkışı →
+    `goToScene: villa_exterior`.
+  - Placeholder çizimler (`core/placeholders`): `market_square`, `sprite_market_sign`, `sprite_pill_bottle` ve şişenin
+    eşya ikonu. Metinler `text_en.json`'da.
+- Testler: DTO, doğrulayıcı (tuzak mekan fixture'ı, çapraz bağlantı uyarısı, bozuk nesne overlay'i), widget testi
+  (tabela mektuptan önce yok, sonra yazısıyla birlikte var; gizlenince yazısı da yok), bloc testi (çarşıda
+  `canGoBack == false`, `villa_road` ile dönüş).
+  **Kabul kriterleri:** Kabul senaryosunun 12–13. adımları (silüetler hariç) ve 20. adımın dönüşü telefonda ve
+  Windows'ta çalışıyor; mevcut 1–11 kabul testi geçiyor.
+  **Commit:** `feat(scene_engine): add sprite overlays, travel checks and the market square`
+
+### [ ] 1.16 Konuşma: domain ve içerik (arayüz yok)
+**Amaç:** Konuşma sisteminin kurallarını saf Dart ile ve testlerle kurmak (ADR 0016). Bu adımın sonunda silüetler
+sahnede durur, mantık testlerle kanıtlanmıştır; panel 1.17'de gelir.
+**Yapılacaklar:**
+- Yeni feature `features/dialogue/`. `domain/entities`: `DialogueDefinition` (`id`, `nameKey`, `portrait`
+  (`placeholderStyle`, `image?`), `greeting` (tek anahtar veya `first`/`then`), `noReactionKey`, `topics`),
+  `DialogueTopic` (`id`, `promptKey`, `answer` (satır anahtarları), `visibleWhen?`, `trigger?`, `effects`),
+  `TopicTrigger` (`showItem` | `showNote`). `DialogueCatalogRepository` (abstract).
+- İçerik: bölüm klasöründe opsiyonel `dialogues.json` (veya `dialogues/*.json`):
+  ```json
+  {"formatVersion": 1, "dialogues": [{
+    "id": "pharmacist",
+    "nameKey": "char_pharmacist_name",
+    "portrait": {"placeholderStyle": "silhouette_pharmacist"},
+    "greeting": {"first": "dlg_pharmacist_hello", "then": "dlg_pharmacist_again"},
+    "noReactionKey": "dlg_pharmacist_no_reaction",
+    "topics": [
+      {"id": "about_villa", "promptKey": "...", "answer": ["...", "..."],
+       "do": [{"addNoteEntry": {"note": "person_pharmacist", "entry": "knows_villa"}}]},
+      {"id": "ask_pills", "visibleWhen": {"hasItem": "pill_bottle"}, "promptKey": "...", "answer": ["..."],
+       "do": [{"say": "say_pills_owner_known"}]},
+      {"id": "give_pills", "trigger": {"showItem": "pill_bottle"}, "promptKey": "...", "answer": ["..."],
+       "do": [{"consumeItem": "pill_bottle"},
+              {"addNoteEntry": {"note": "person_pharmacist", "entry": "pills_prescribed"}}]},
+      {"id": "show_letter", "trigger": {"showNote": "hall_letter"}, "promptKey": "...", "answer": ["..."]}
+    ]}]}
+  ```
+- `dialogue/data`: DTO'lar + `AssetDialogueCatalogRepository`. Koşul ve etkiler `scene_engine/domain`'deki `RuleParser`
+  arayüzüyle ayrıştırılır (uygulaması `scene_engine/data`'daki codec'ler; DI ile verilir): bir feature'ın `data`
+  katmanı başka bir feature'ın `data` katmanını import edemez.
+- `dialogueExtensions` (1.14'teki düzenle; konular sona eklenir; hedef önceki bölümde; konu ID'si çakışırsa hata):
+  ```json
+  "dialogueExtensions": [{"dialogue": "pharmacist", "topics": [ ...sona eklenir... ]}]
+  ```
+- Yeni etki `{"talk": "dialogueId"}` (`Talk`): `EffectApplier` yalnızca `EffectOutcome.dialogueId`'yi doldurur;
+  ilerlemeye ve yığına dokunmaz. `TapOutcome.dialogueId`. (`SceneBloc` bu değeri 1.17'de kullanır.)
+- Yeni koşul `{"topicAsked": "dialogueId/topicId"}`; `GameProgress.askedTopics` (küme), `hasAsked`, `withAskedTopic`.
+- Saf servis `DialogueViewResolver`: **görünürlük = sorulmuş VEYA (`trigger` yok ve `visibleWhen` tutuyor)**; her
+  görünür konu için `isAsked` / `isNew`. Bir kez sorulan konu, koşulu sonradan bozulsa bile listede kalır.
+- Use case'ler (hepsi `EffectPipeline` üzerinden):
+  - `StartConversation(dialogueId)`: karşılama anahtarını döner (`first` daha önce duyulmadıysa `first`, yoksa
+    `then`) ve `first`'ü `spokenLines`'a yazar.
+  - `AskTopic(dialogueId, topicId)`: konu görünür değilse hiçbir şey yapmaz. İlk soruluşta `do` etkilerini uygular,
+    `askedTopics`'e yazar, `TopicAsked` olayı üretir; tetikleyiciler aynı kayıtta değerlendirilir. Tekrar soruluşta
+    ilerleme değişmez. Her durumda oynatılacak `answer` satırlarını döner.
+- Konu `do` izinli etkileri: `say`, `setFlag`, `addNote`, `addNoteEntry`, `giveItem`, `consumeItem`.
+  Konuşma satırları `chatLog`'a yazılmaz.
+- `ContentValidator` (konuşma kataloğunu parametre olarak alır): konuşma ID'leri vaka içinde, konu ID'leri konuşma
+  içinde benzersiz; `nameKey`, `greeting`, `noReactionKey`, `promptKey` ve boş olmayan `answer` metinleri var; portre
+  stili kodda tanımlı; `do` yalnızca izinli etkiler; koşullarda `usingItem` yok; `trigger` tam olarak bir `showItem`
+  veya `showNote` içerir ve gösterdiği eşya / not vardır; `talk` ve `topicAsked` var olan konuşmayı / konuyu gösterir;
+  bir kuralda en fazla bir `talk`, `goToScene` / `inspect` ile birlikte değil; `talk` `onFirstEnter`, tetikleyici ve
+  konu etkilerinde yok; `greeting.first` anahtarları `say` `first` anahtarlarıyla birlikte benzersiz;
+  **uyarı:** hiçbir `talk` ile açılmayan konuşma.
+- Dilim içeriği (`market_square`):
+  - `pharmacist` ve `cafe_owner` hotspot'ları: silüet `sprite` (`silhouette_pharmacist`, `silhouette_cafe_owner`;
+    basit placeholder çizimler bu adımda, cilası 1.20'de), `{"do": [{"talk": "..."}]}`.
+  - `pharmacist`: `about_villa` (+ dosyaya satır), bir sabit konu daha, `ask_pills` (`hasItem: pill_bottle`),
+    `give_pills` (`showItem: pill_bottle`). **Eczacıda `show_letter` yoktur** (kabul senaryosu 18: `noReactionKey`).
+  - `cafe_owner`: `about_villa` (+ dosyaya satır), bir sabit konu daha, `show_letter` (`showNote: hall_letter`).
+  - `notes.json`: `person_pharmacist`, `person_cafe_owner` (`person`, satırlarıyla), `obs_stories_do_not_match`
+    (`observation`). `triggers.json`: `both_asked_about_villa` (1.12'deki örnek).
+- Testler: resolver (görünürlük tablosu: sorulmuş/sorulmamış × koşul × `trigger`), `AskTopic` (ilk / tekrar,
+  görünmeyen konu, tek kayıt, tetikleyici bir kez), `StartConversation` (`first` → `then`), codec ve DTO, genişletme,
+  doğrulayıcının her yeni kuralı.
+  **Kabul kriterleri:** Kabul senaryosunun 14–16. ve 19. adımlarının mantığı use case testleriyle doğrulanmış (arayüz
+  yok); içerik doğrulama testi yeşil; `dialogue/domain`'de Flutter import'u yok.
+  **Commit:** `feat(dialogue): add dialogue domain, content format and talk effect`
+
+### [ ] 1.17 Konuşma paneli
+**Amaç:** Konuşmayı oynanır hale getirmek: silüete dokun, soruyu seç, cevabı satır satır oku.
+**Yapılacaklar:**
+- `SceneBloc`: `activeDialogueId` (arayüz durumu; kayda girmez), `DialogueClosed` olayı. `talk` sonucu doldurur.
+  Panel açıkken hotspot dokunuşları yok sayılır; `BackPressed` önce paneli kapatır, yığına dokunmaz. Paneller üst
+  üste binmez: konuşma açıkken `InspectionRequested` (eşyaya uzun basma) yok sayılır.
+- `dialogue/presentation`: `DialogueCubit` (konuşma + ilerleme akışı → görünür konular; durum: karşılama veya cevap
+  satırları oynuyor / soru listesi). `advance()`: yazılan satır tamamlanmamışsa tamamlar, tamamlanmışsa sonraki
+  satıra geçer; son satırdan sonra soru listesine döner. Açılışta `StartConversation`, konu seçilince `AskTopic`.
+- `DialoguePanel`: karakterin adı, portresi (placeholder silüet), satır alanı (daktilo efekti; süreler `core/theme`)
+  ve soru listesi. Sorulmamış görünür konu **"yeni"** etiketi, sorulmuş konu işaret taşır (metinler ARB'den).
+  Sahnedeki silüette işaret yoktur.
+- **4 soru kaydırmasız:** en küçük hedef telefon yüksekliğinde (360 dp yükseklik, yatay) dört soru kaydırmadan
+  görünür; fazlası kaydırılır. Ölçüler `core/theme`'de (`DialogueLayout`); widget testi 640×360'ta dördüncü sorunun
+  görünür ve dokunulabilir olduğunu doğrular.
+- Yerleşim (`app/` katmanı birleştirir): panel sahne alanının üstünde açılır; eşya panelini ve mesaj barının alt
+  şeridini kapatmaz (dedektifin `say` yorumu konuşma sırasında barda görünür). Güvenli alanlara uyar.
+- Geri sırası: not defteri / mesaj geçmişi → konuşma paneli → sahne. Sistem geri tuşu ve `Esc` aynı.
+- Fare tıklaması dokunmayla aynı çalışır; hover'a bağlı hiçbir şey yok.
+- Testler: `DialogueCubit` (`bloc_test`: açılış karşılaması, satır ilerletme, tamamla-sonra-geç, listeye dönüş, yeni /
+  sorulmuş, tekrar sorma), `SceneBloc` (panel açıkken dokunuş yok sayılır, Geri paneli kapatır), widget testleri
+  (4 soru, etiketler, panel açıkken sahneye dokunulamaması).
+  **Kabul kriterleri:** Kabul senaryosunun 14–16. ve 19. adımları telefonda ve Windows'ta çalışıyor.
+  **Commit:** `feat(dialogue): add dialogue panel`
+
+### [ ] 1.18 Eşya verme ve kanıt gösterme
+**Amaç:** Toplananların sorguda da işe yaraması: doğru şeyi doğru kişiye göster (ADR 0016).
+**Yapılacaklar:**
+- `InteractionResolver` (tek yeni kural): eşya seçiliyken önce bugünkü gibi `usingItem` adaylarına bakılır. Hiçbiri
+  tutmuyorsa eşyasız dokunuşta çalışacak kural bulunur; o kural `talk` içeriyorsa etkileri döner ve
+  `ResolvedInteraction.shownItemId` dolar (genel tepki verilmez, `ItemUsed` üretilmez). `talk` içermiyorsa eskisi
+  gibi yalnızca genel tepki. Hotspot'a eşya başına `usingItem` kuralı yazılmaz.
+- Use case `ShowToCharacter(dialogueId, item | note)` (`dialogue/domain`, hat üzerinden): oyuncu eşyayı / notu
+  taşımıyorsa hiçbir şey yapmaz. `trigger`'ı eşleşen ve (varsa) `visibleWhen` koşulu tutan **ilk** konuyu bulur:
+  sorulmamışsa `AskTopic` gibi oynatır (`do` çalışır, `askedTopics`'e yazılır; vermek = `consumeItem`); sorulmuşsa
+  yalnızca cevabı yeniden oynatır. Eşleşme yoksa `noReactionKey` satırını döner; ilerleme değişmez, ceza ve işaret yok.
+- Sahneden gösterme: `SceneBloc` paneli gösterilecek eşyayla açar; `DialogueCubit` karşılamadan sonra tepkiyi oynatır.
+- Panel açıkken: sağ paneldeki eşyaya **tek dokunuş = göster** (seçim yapılmaz). `GameScreen` yönlendirir; `inventory`
+  konuşmayı bilmez.
+- Not gösterme: panelde **"Kanıt göster"** düğmesi defteri **seçim modunda** açar; açık notta **"Göster"** düğmesi
+  (ARB). Seçilince defter kapanır ve tepki oynar. Konuşma açıkken HUD'daki defter düğmesi de defteri seçim modunda
+  açar. Not yalnızca kişilere gösterilir; `usingNote` koşulu yoktur.
+- Gösterilerek oynayan konu sonra listede `promptKey` ile, sorulmuş olarak görünür.
+- Testler: resolver (eşya + `talk` kuralı; açık `usingItem` kuralı önce gelir; `talk` yoksa genel tepki),
+  `ShowToCharacter` (eşleşme, tekrar gösterme, koşulu tutmayan, eşleşmeyen → `noReactionKey`, taşınmayan eşya),
+  `NotebookCubit` (seçim modu), widget testleri (panel açıkken eşya dokunuşu, "Kanıt göster" akışı).
+  **Kabul kriterleri:** Kabul senaryosunun 17–18. adımları telefonda ve Windows'ta çalışıyor; şişe verildikten sonra
+  "İlacı sor" listede kalıyor.
+  **Commit:** `feat(dialogue): show evidence and give items to characters`
+
+### [ ] 1.19 Geliştirici menüsü (yalnızca dev)
+**Amaç:** 50 sahnelik bir bölümde belirli bir duruma saniyeler içinde gelebilmek; her denemede baştan oynamamak.
+**Yapılacaklar:**
+- `lib/app/dev/`: yalnızca geliştirici araçları açıkken (`AppConfig.showDebugOverlay`) görünen menü; mevcut hotspot
+  düğmesinin yanından açılır. Prod'da erişilemez (widget testiyle doğrulanır).
+- İşlevler: sahne listesinden atlama; eşya / not / bayrak ekleme; ilerlemeyi sıfırlama; adlandırılmış durum yükleme.
+  Hepsi etki hattından geçer (atlama = `EnterScene`; ekleme = `giveItem` / `addNote` / `setFlag` etkileri; sıfırlama
+  ve preset = yeni bir `GameProgress` + giriş).
+- `assets/dev/presets.json`:
+  ```json
+  {"formatVersion": 1, "presets": [
+    {"id": "market_with_pills", "scene": "market_square",
+     "items": ["pill_bottle"], "notes": ["hall_letter"], "flags": ["front_door_open"]}
+  ]}
+  ```
+- İçerik doğrulama testi preset'lerdeki her sahne, eşya, not ve bayrağın içerikte var olduğunu kontrol eder.
+- Menü metinleri ARB'de (kodda kullanıcıya görünen literal olmaz).
+- Kaydı JSON olarak panoya verme / alma bu adımda **yok**; 2.2'de eklenir (kayıt DTO'su orada doğar).
+- Testler: preset ayrıştırma ve doğrulama; menü işlevleri (atla, ekle, sıfırla, preset) için widget testleri.
+  **Kabul kriterleri:** Dev'de `market_with_pills` yüklenince oyun çarşıda, şişe panelde, mektup defterde açılıyor;
+  prod ve staging'de menü yok.
+  **Commit:** `feat(app): add developer menu`
+
+### [ ] 1.20 Çarşı demosunun kabul testi ve cila
+**Amaç:** Aşama 1b'yi sağlam kapatmak: genişleyen kabul senaryosu (1–20) otomatik ve cihazda çalışsın.
+**Yapılacaklar:**
+- Paylaşılan senaryo fonksiyonu (`test/helpers/acceptance_scenario.dart`) 12–20. adımlarla genişler; iki yerden
+  çalışır: CI widget testi (telefon boyutu dokunma + fare, 1280×720 pencere, 4:3) ve `integration_test` (telefon,
+  Windows).
+- Kenar durumları (`edge_cases_test.dart`): satır yazılırken hızlı çift dokunma, panel açıkken sistem geri tuşu ve
+  `Esc`, panel açıkken arka plana alıp dönme, seçim modundaki defterde Geri, eşya seçiliyken silüete dokunma.
+- Placeholder çizimlerin cilası: çarşı, iki silüet ve portreleri, tabela, ilaç şişesi (noir, anlaşılır).
+- Telefonda manuel kontrol listesi ve `flutter run --profile` ölçümü (panel açılışı ve daktilo efekti 60 fps'i
+  bozmuyor); sonuç devlog'a.
+- README: Features'a konuşma, kanıt gösterme, tetikleyiciler ve geliştirici menüsü; içerik düzeni ve örnek
+  `dialogues.json`; ekran görüntüleri yenilenir (`tool/render_screenshots_test.dart`).
+- Devlog: `docs/devlog/asama-1.md`'de 1b özeti.
+  **Kabul kriterleri:** Kabul senaryosunun tamamı (1–20) CI'da ve Windows'ta geçiyor; telefonda manuel doğrulandı
+  (cihaz yoksa kullanıcıya bırakılan maddeler Notlar'a yazılır); CI yeşil.
+  **Commit:** `test: extend the acceptance scenario with the market demo`
+  **Aşama sonu:** `phase-1b` etiketi.
+
 ---
 
 ## Aşama 2 — Kalıcı kayıt (Drift, internetsiz)
@@ -531,6 +952,10 @@ yerine tek arka plan + küçük bir nesne görseli (ADR 0012). Gerçek görselle
 ### [ ] 2.2 Sürümlü payload ve migration zinciri
 **Yapılacaklar:**
 - `GameProgressDto` (JSON), payload `schemaVersion = 1`. Kayıtta metin değil sadece ID'ler, bayraklar ve anahtarlar tutulur.
+  Kayıt şekli Aşama 1b'nin alanlarını **ilk sürümden** içerir: `askedTopics`, `firedTriggers`, `spokenLines`, notlarda
+  `entries` (`[{entryId, addedAtUtcMs}]`); `chatLog` en fazla 200 giriş.
+- Geliştirici menüsüne (1.19) **kaydı JSON olarak panoya verme / panodan alma** eklenir (aynı DTO ve `SaveMigrator`
+  ile; hata bildirimlerinde durumu paylaşmak ve yeniden üretmek için). Yalnızca dev.
 - `SaveMigrator`: `v1 → v2 → ...` zinciri (saf Dart fonksiyonları).
 - Kayıt sürümü desteklenenden yeniyse `SaveTooNewFailure`: kayıt okunmaz, **üzerine yazılmaz**,
   kullanıcıya "Oyunu güncelle" mesajı.
@@ -545,7 +970,8 @@ yerine tek arka plan + küçük bir nesne görseli (ADR 0012). Gerçek görselle
 - Otomatik kayıt: her ilerleme değişikliğinde (yakın değişiklikler ~500 ms içinde birleştirilir);
   `AppLifecycleState.paused`'da anında yazım. Her yazışta `localRevision++`, `isDirty = true`, `updatedAtUtcMs`.
 - `playTimeSeconds` sadece uygulama ön plandayken sayar.
-- Açılışta kayıt varsa sahne yığını, eşyalar, notlar, bayraklar, gizlenen hotspot'lar ve chat geçmişi geri yüklenir.
+- Açılışta kayıt varsa sahne yığını, eşyalar, notlar (satırlarıyla), bayraklar, gizlenen hotspot'lar, sorulan konular,
+  ateşlenen tetikleyiciler, söylenen replikler ve chat geçmişi geri yüklenir.
   **Commit:** `feat(progress): persist game progress with autosave`
 
 ### [ ] 2.4 Testler
@@ -664,10 +1090,20 @@ parçalar işaretlidir; ilgili aşama gelince bağlanır.
 - [ ] 5.4 Bölüm akışı: `case.json`'da bölüm bitiş koşulları, gerilimli bölüm sonu ekranı,
   bölüm kilidi için `EntitlementRepository` arayüzü (dev'de hepsi açık; mobil satın alma Aşama 8'de,
   Steam sahipliği Aşama 11'de). Bölüm 1 sonundaki hesap bağlama önerisi Aşama 3 gelince bağlanır (3.3).
+  **"Bölüme ulaşıldı" koşulu** (yeni koşul türü; ADR ile) ve bölüm genişletmelerinin (1.14: `sceneExtensions`,
+  `dialogueExtensions`, `noteExtensions`) oyuncunun bölümüne göre açılması: sonraki bölümün eklediği içerik, oyuncu o
+  bölüme ulaşmadan görünmez.
 - [ ] 5.5 Suçlama: 7 şüpheli; isim + 2–3 kanıt (not defterinden); doğru cevap ve geçerli kanıtlar `case.json`'da;
   2 hak; sonra "Vakayı baştan oyna" / "Cevabı gör"; paylaşılabilir sonuç ekranı (deneme sayısı, süre, ipucu sayısı).
 - [ ] 5.6 İpucu sistemi: ilerlemeye göre bağlamsal, kademeli ipuçları (yön → net → cevap); uzun hareketsizlikte
   dedektifin kendiliğinden yönlendirmesi. İpucu tanımları JSON'da, koşullarla.
+  **"Dokunulabilir yerleri göster" yardımı:** sahnedeki hotspot'ları kısa süre işaretler. İşaretin türü (geçiş, alınacak
+  nesne, kişi, incelenecek yer) hotspot'un o an çalışacak kuralının etkilerinden türetilir (`goToScene`, `giveItem` /
+  `addNote`, `talk`, `inspect`); JSON'a yeni alan eklenmez.
+- [ ] 5.7 Eşya birleştirme ve eşyanın içini açma: `items.json`'da eşyaya opsiyonel `interactions` (aynı kural dili,
+  aynı `InteractionResolver`). **Aç:** inceleme kartında düğme; eşyanın eşyasız kuralını çalıştırır (zarfın içinden
+  mektup çıkar). **Birleştir:** A seçiliyken paneldeki B'ye dokunma; iki yön de denenir (B'nin `usingItem: A` kuralı,
+  yoksa A'nın `usingItem: B` kuralı), hiçbiri tutmazsa genel tepki. Etkiler etki hattından geçer.
 
 ## Aşama 6 — Oyun hissi ve uygulama kabuğu
 *(Başlarken: açık kararları sor, adımları detaylandır, onay al.)*
@@ -709,7 +1145,12 @@ hikaye değişikliği gerekiyorsa önce o yapılır.
   Her görsel için üretim kaydı (araç, model, tarih, prompt, elle yapılan düzenlemeler): `docs/art/ai-usage.md`
   (Steam AI açıklamasının kaynağı, bkz. 11.5).
 - [ ] 7.4 Bölüm 1 içeriği (sahne sayısı hikayeyle belirlenir; tahmin ~40–50, inceleme pencereleri yakın plan
-  ihtiyacını azaltır) ve **10–15 kişiyle oyun testi**; yön bulma (harita / mekan listesi) kararı.
+  ihtiyacını azaltır) ve **10–15 kişiyle oyun testi**. Yön bulma kararı verildi (harita yok, ADR 0017); testte yalnızca
+  mekanlar arası yolların uzun gelip gelmediğine bakılır (çözüm yeni bir geçiş noktasıdır).
+  **Bölüm başına `walkthrough.json`:** bölümü baştan sona bitiren adım listesi (hotspot'a dokun, eşyayla dokun, konu
+  sor, eşya / not göster). CI'da arayüz olmadan **motor üzerinde** oynatılır (use case'ler + etki hattı) ve bölümün
+  bitirilebildiği kanıtlanır; içerik değişikliği bölümü kilitlerse test kırılır. Spoiler içerdiği için 7.0'dan sonra
+  repoya girer.
   Test sürümü dağıtılmadan önce 9.1 (çökme raporlama) tamamlanmış olmalıdır.
 - [ ] 7.5 Bölüm 2–4 içeriği. *(Aşama 6'dan sonra yapılır.)*
 
@@ -964,3 +1405,65 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   (`tool/render_screenshots_test.dart` → `docs/screenshots/*.jpg`; gren yüzünden PNG'ler 1 MB'ı geçtiği için JPEG).
   **Yapılamayan (cihaz bağlı değildi), kullanıcıda:** telefonda kabul senaryosu ve manuel kontrol listesi, telefonda
   profil modu ölçümü, mesaj barının telefondaki görünümünün onayı (karar 3). Komutlar `docs/devlog/asama-1.md`'de.
+- 2026-11-14 (motor incelemesi → Aşama 1b): Bölüm 1 yazılmadan önce motor, 40–50 sahnelik bir bölümün ihtiyaçlarıyla
+  karşılaştırıldı. Kararların hepsi kullanıcı onaylı (yeni koşul / etki türleri ve oyun tasarımı değişiklikleri dahil).
+  Bu commit yalnızca belgedir (`plan.md`, `CLAUDE.md`, `docs/game_design.md`, ADR 0013–0018); kod 1.9'dan itibaren.
+  - **Eklenenler:** koşullar `not` / `atLeast` / `visited` / `inScene` / `topicAsked`; `say` `first/then` +
+    `spokenLines`; `chatLog` sınırı 200 (ADR 0013). Tek etki hattı ve tetikleyiciler (ADR 0014). Not satırları,
+    `suspect` → `person` (ADR 0015). Konuşma sistemi, `talk` etkisi, kanıt gösterme ve eşya verme (ADR 0016). Haritasız
+    mekan geçişi, `sprite.overlays`, tuzak mekan kontrolü (ADR 0017). Tür başına çoklu dosya, bölüm genişletmeleri,
+    eksik bölümün atlanması, önek doğrulaması, uyarı düzeyi (ADR 0018). Geliştirici menüsü.
+  - **Plan:** Aşama 1'e 1.9–1.20 adımları ("Aşama 1b") ve kabul senaryosunun 12–20. adımları eklendi; çalışma sırasında
+    Aşama 2'den önce. 2.2 (kayıt şekli + kayıt dışa/içe aktarma), 5.4 ("bölüme ulaşıldı"), 5.6 ("dokunulabilir yerleri
+    göster"), yeni 5.7 (eşya birleştirme / açma), 7.4 (`walkthrough.json`) güncellendi. Yön bulma açık kararı kapandı.
+  - **Oyun tasarımı değişti:** "karakterler görünmez" kuralı kalktı (`docs/game_design.md` değişiklik geçmişi).
+  - **Bölüm genişletmeleri (`extends`) neden şimdi:** `sceneExtensions` / `dialogueExtensions` / `noteExtensions`
+    kayıt şeklini değil, **içerik dosya yapısını** etkiler. Kayıt şekli sonradan migration ile taşınabilir (2.2); ama
+    içerik düzeni Bölüm 1 yazıldıktan sonra değişirse yazılmış 40–50 sahnelik dosyalar elle yeniden düzenlenir ve
+    Bölüm 2, ücretsiz Bölüm 1'in dosyalarını düzenlemek zorunda kalırdı (ücretli içerik demoya sızar, B1 B2'ye bağımlı
+    olur). Bu yüzden Aşama 7'yi beklemeden, tek bölüm varken ve sahte iki bölümlü fixture ile kurulur (1.14).
+  - **Mevcut kodla çelişen / kodda karşılığı olmayan noktalar** (uydurulmadı; ilgili adımda böyle ele alınacak):
+    1. **Katman kuralı × konuşma DTO'su (1.16):** koşul / etki codec'leri `scene_engine/data`'da; `dialogue/data` onları
+       import edemez (feature yalnızca başka feature'ın `domain`'ini import eder; mimari testi kırılır). Plan:
+       `scene_engine/domain`'de `RuleParser` arayüzü, uygulaması `scene_engine/data`, DI ile `dialogue/data`'ya verilir.
+       Aşama 5.7'deki eşya `interactions`'ı da aynı yolu kullanır. **Kullanıcı onayı bekliyor** (alternatif:
+       konuşma DTO'larını `scene_engine/data`'da tutmak).
+    2. **Dosya listeleme (1.14):** `ContentAssetSource` yalnızca bilinen yolu okuyor, listeleme yok; `pubspec.yaml` her
+       içerik klasörünü tek tek sayıyor (klasör girdisi alt klasörü kapsamaz). `scenes/*.json` için hem manifest'ten
+       listeleme hem her yeni klasörün `pubspec.yaml`'a eklenmesi gerekir.
+    3. **Eksik bölüm (1.14):** bugün eksik dosya `ContentFailure`'dır ve üç yükleyici (sahne, eşya, not) + metin servisi
+       `case.json`'ı ayrı ayrı dolaşır. "Atla" kuralı tek yerde (`CaseManifest`) uygulanacak. Yorumum: bölüm "eksik" =
+       klasöründe **hiç** dosya yok; yarım bölüm ve eksik ilk bölüm hatadır.
+    4. **`talk` kayda girmez × `greeting.first/then`:** ikinci karşılamanın farklı olması kalıcı durum ister. Yorumum:
+       `talk` etkisi hiçbir şey kaydetmez; panel açılınca `StartConversation` karşılamanın `first` anahtarını
+       `spokenLines`'a yazar (ayrı bir kayıt alanı açılmadı).
+    5. **`MarkNoteRead` doğrudan `save` çağırıyor.** "İlerlemeyi değiştiren her use case hattı kullanır" kuralına
+       uyması için hatta taşınacak (1.11). Sonuç: `notebook/domain` → `scene_engine/domain` import'u doğar;
+       `scene_engine/domain` zaten `notebook/domain`'i import ediyor (doğrulayıcı). Kurallar buna izin veriyor
+       (domain → başka feature'ın domain'i) ama iki yönlü bağımlılıktır.
+    6. **`EnterScene` her zaman, `TapHotspot` yalnızca değişiklik varsa kaydediyor.** Hat "değişiklik varsa kaydet"
+       kuralını kullanacak; sahneye giriş yığını her zaman değiştirdiği için davranış aynı kalır.
+    7. **A4'teki örnek JSON × kabul senaryosu 18:** örnekte `show_letter` eczacıdadır; senaryoda mektuba kahveci cevap
+       verir, eczacı `noReactionKey` söyler. Örnek biçim örneği olarak korundu; dilim içeriğinde `show_letter`
+       `cafe_owner`'dadır.
+    8. **`assets/dev/presets.json` (1.19):** `pubspec.yaml`'daki asset'ler flavor'a göre ayrılmıyor (Windows'ta flavor
+       yok); dosya prod paketine de girer. Küçük ve zararsız ama sahne / eşya ID'leri içerir; hariç tutma yolu 1.19'da
+       değerlendirilecek.
+  - **Benim yorumlarım** (kararlarda açık yazmıyordu; itiraz edilirse ilgili adım başlamadan düzeltilir):
+    - `inScene` = yığının tepesindeki sahne (alttaki ata sahneler sayılmaz).
+    - Çoklu dosya bütün türlere uygulanır (`items`, `notes`, `inspections` dahil); `dialogues` ve `triggers`
+      opsiyoneldir; metinler dil başına tek dosya kalır; klasördeki dosyalar ad sırasıyla okunur.
+    - Genişletmeler ilgili türün dosyasında üst düzey anahtardır ve yalnızca **önceki** bir bölümü hedefler.
+    - Tuzak mekan kontrolü kök sahnenin **kendi** bölümünün girişine bakar ve koşulları hesaba katmaz.
+    - Not defterde değilken `addNoteEntry` yalnızca `NoteAdded` üretir; `NoteUpdated` yalnızca var olan nota satır
+      eklenince. Satırlar eklenme sırasıyla gösterilir.
+    - Tetikleyicilerde `consumeItem` yok (izinli listede sayılmadı); `usingItem` tetikleyici ve konu koşullarında yasak.
+    - Sahneden eşya gösterilince önce karşılama, sonra tepki oynar; `ItemUsed` üretilmez.
+    - Gösterilerek açılmış bir konu yeniden gösterilirse yalnızca cevabı tekrar oynar. Aynı `trigger`'a birden çok konu
+      yazılabilir; koşulu tutan ilki oynar.
+    - Paneller üst üste binmez: konuşma açıkken eşyaya uzun basma (inceleme kartı) yok sayılır. Konuşma açıkken HUD'daki
+      defter düğmesi de defteri seçim modunda açar.
+    - Uyarılar testi kırmaz, yazdırılır; kullanılmayan metin anahtarı yalnızca tam vakada aranır.
+    - Yeni olaylar: `NoteUpdated` (istenen) ve `TopicAsked` (benim eklemem; arayüz tepkisi ve 9.2 analitiği için).
+    - Aşama 5'in yeni adımı 5.7 olarak numaralandı. 1b için ayrı devlog dosyası açılmaz; `asama-1.md` sürer.
+    - "En küçük hedef telefon yüksekliği" = 360 dp (1.7'deki ölçüyle aynı).

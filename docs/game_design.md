@@ -25,16 +25,21 @@ mekanları keşfedip eşya ve belge topladığı, bulmacalar çözdüğü ve son
 - Oyuncu dedektifi yönetir. Bakış birinci şahıstır; dedektif ekranda görünmez.
 - **Dedektifin iç sesi**, ekranın altındaki mesaj barından oyuncuya konuşur: gördüğüne yorum yapar,
   bulduğunu değerlendirir, oyuncu takıldığında ipucu verir.
-- İç ses **tek yönlüdür**: oyuncu cevap yazmaz ve seçim yapmaz.
-- Diğer karakterler görünmez. Şüpheliler not defterindeki dosyalarla (isim, fotoğraf veya silüet, notlar) tanınır.
-  Gerekirse çok nadiren silüet kullanılır.
+- İç ses **tek yönlüdür**: oyuncu cevap yazmaz. İç ses oyuncuya soru sormaz, oyuncu da ona bir şey söylemez.
+- **Diğer karakterler sahnede silüet olarak görünür ve onlarla konuşulur** (bkz. 5.9). Yüzleri seçilmez; noir
+  bir gölge, bir duruş. Her karakterin not defterinde bir dosyası olur (isim, silüet, öğrenilenler).
+- Konuşmada oyuncu yalnızca **önceden yazılmış soruları seçer**; serbest metin yazmaz. Hikaye dallanmaz: sorular
+  yalnızca bilgi ortaya çıkarır, hiçbir soru bir yolu kapatmaz (ilke 2).
+- Dedektifin karakterlere söylediği cümleler ekranda soru olarak görünür; duyduğu şey hakkındaki düşüncesi yine iç
+  sesle, mesaj barından gelir.
 
 ## 4. Temel döngü
 
-**Keşfet → Topla → Çöz → İlerle**; her bölüm gerilimli bir kapanışla, vaka ise **Suçlama** ile biter.
+**Keşfet → Topla → Sorgula → Çöz → İlerle**; her bölüm gerilimli bir kapanışla, vaka ise **Suçlama** ile biter.
 
-- **Keşfet:** Mekanlara gir, yakın planlara bak.
+- **Keşfet:** Mekanlara gir, yakın planlara bak; mekanlar arasındaki yolu sahnede bul (5.11).
 - **Topla:** Eşyalar (kullanılır) ve belgeler/gözlemler (okunur, kanıt olur).
+- **Sorgula:** Karakterlere soru sor, kanıt göster, eşya ver (5.9, 5.10). Söyledikleri kişi dosyalarına işlenir.
 - **Çöz:** Eşyayı doğru yerde kullan, şifreyi kır, kaydı incele.
 - **İlerle:** Yeni mekanlar ve yeni bölümler açılır.
 
@@ -57,8 +62,11 @@ mekanları keşfedip eşya ve belge topladığı, bulmacalar çözdüğü ve son
 - Okunan şeyler üç bölümde toplanır:
     - **Belgeler:** mektup, gazete kupürü, fiş, fotoğraf.
     - **Gözlemler:** dedektifin çıkarımları ("Saat 23:40'ta ışıklar söndü").
-    - **Şüpheliler:** her şüphelinin dosyası.
-- HUD'daki defter düğmesiyle açılır; yeni not geldiğinde rozet görünür.
+    - **Kişiler:** şüphelilerin ve tanıkların dosyaları. Kimin şüpheli olduğunu defter söylemez; o, finalde
+      ortaya çıkar (5.6).
+- **Dosyalar oyun ilerledikçe güncellenir:** bir karakterin söylediği önemli şey, dosyasına yeni bir satır olarak
+  eklenir. Satır eklenen dosya yeniden "okunmamış" olur.
+- HUD'daki defter düğmesiyle açılır; yeni not geldiğinde veya bir dosya güncellendiğinde rozet görünür.
 - Bulmacaların cevapları çoğu zaman buradadır; finalde kanıtlar buradan seçilir.
 
 ### 5.4 Bulmacalar
@@ -100,6 +108,42 @@ mekanları keşfedip eşya ve belge topladığı, bulmacalar çözdüğü ve son
   yerler (çekmece, kasa) yakın plan sahnesi olarak kalır.
 - İnceleme tek başına bir şey toplamaz. Gerekirse aynı dokunuşla bir not da eklenir (mektubu oku + belgelere ekle).
 - Envanterdeki bir eşyaya uzun basınca açılan kart da aynı penceredir.
+
+### 5.9 Konuşma
+- Karakter sahnede bir silüettir. Dokununca konuşma paneli **doğrudan** açılır; arada "Konuş" adımı yoktur.
+- Panelde karakterin adı, silüeti, karşılama cümlesi ve **soru listesi** bulunur. İlk karşılaşmada ve sonraki
+  gelişlerde karşılama cümlesi farklıdır.
+- Soruya dokununca karakter cevap verir. Cevap satır satır, daktilo efektiyle gelir: dokunuş yazılan satırı hemen
+  tamamlar, bir dokunuş daha sonraki satıra geçer; son satırdan sonra soru listesine dönülür.
+- Sorulmuş soru işaretlenir ve **yeniden okunabilir**; ikinci kez sorunca yalnızca cevap tekrar okunur, oyunda
+  başka bir şey değişmez. Henüz sorulmamış soru "yeni" etiketi taşır.
+- Bazı sorular baştan görünmez; bir şey bulunduğunda veya öğrenildiğinde belirir (ilaç şişesi eldeyken "İlacı sor").
+  **Bir kez sorulan soru, onu açan koşul sonradan bozulsa bile listede kalır.**
+- Sahnedeki silüette "yeni soru var" işareti **yoktur**: kime neyi soracağını düşünmek oyunun parçasıdır.
+- Önemli cevaplar karakterin dosyasına satır olarak işlenir (5.3). Konuşmanın dökümü mesaj geçmişine yazılmaz;
+  orası yalnızca dedektifin iç sesidir.
+- Panel açıkken sahneye dokunulamaz; Geri (sistem geri tuşu ve `Esc` dahil) önce paneli kapatır.
+- Telefonda dört soru kaydırmadan görünür; fazlası kaydırılır.
+
+### 5.10 Kanıt gösterme ve eşya verme
+- Karakterlere **eşya** ve **not** gösterilebilir. Doğru şeyi doğru kişiye göstermek yeni bir cevap açar; o cevap
+  sonra soru listesinde sorulmuş olarak kalır ve yeniden okunabilir.
+- **Eşya göstermek:** sahnede eşyayı seçip karaktere dokun (panel açılır ve eşya gösterilir) ya da panel açıkken
+  sağ paneldeki eşyaya bir kez dokun.
+- **Not göstermek:** paneldeki "Kanıt göster" düğmesi defteri seçim modunda açar; nottaki "Göster" düğmesiyle seçilir.
+  Notlar yalnızca kişilere gösterilir; sahnedeki nesnelerde not kullanılmaz.
+- **Vermek**, göstermenin bir sonucudur: karakter eşyayı alırsa eşya panelden düşer (ilaç şişesi eczacıda kalır).
+- İlgisiz bir şey gösterilince karakter kısa, ilgisiz bir cevap verir. **Ceza yoktur**; yanlış deneme kaydedilmez.
+
+### 5.11 Mekanlar arası geçiş
+- **Harita ve mekan listesi yoktur.** Bir mekandan diğerine yalnızca sahnedeki geçiş noktalarıyla gidilir: yol
+  tabelası, bahçe kapısı, çıkış. Yolu bulmak keşfin parçasıdır.
+- Yeni mekanlar hikayeyle açılır: mektup okununca villanın önünde çarşıyı gösteren tabela belirir.
+- Bir mekana varıldığında Geri butonu görünmez (mekanın ana sahnesi bir yakın plan değildir); geri dönmek için
+  sahnedeki dönüş noktası kullanılır. Yakın planlarda Geri her zaman bir üst sahneye döner.
+- Oyuncu hiçbir mekanda mahsur kalmaz: her mekandan bölümün başladığı yere dönen bir yol vardır; her iç mekanın
+  ana sahnesinde bir çıkış bulunur.
+- Tabela ve yön yazıları oyun tarafından çizilir (bkz. 9, "Yazı ve sayılar"), bu yüzden çevrilebilir.
 
 ## 6. Yapı ve süre
 
@@ -177,13 +221,15 @@ Aynı oyun ve aynı içerik her platformda çalışır; yalnızca satış biçim
 |---|---|
 | Kayıt inceleme biçimi: kare dizisi mi, video mu? | Bulmaca aşaması |
 | İsim doğru ama kanıt yetersizse hak düşer mi? (Öneri: düşer; polis "kanıtlar zayıf" der.) | Bulmaca aşaması |
-| 50+ sahnede yön bulma: harita veya mekan listesi gerekli mi? | İçerik aşaması |
 | İpucu/reklam modeli ve mobil fiyat | Para kazanma aşaması |
 | Steam fiyatı; başarımlar olacak mı? | Steam aşaması |
 | PC'de imleç hotspot üzerinde değişsin mi? | Steam aşaması |
 | Steam Deck (kontrolcü) ve macOS desteği | Steam çıkışından sonra |
 | Vaka 2 dağıtımı: uygulama güncellemesi mi, sonradan indirilen içerik mi? | Yayın sonrası |
 | Şehir, dönem, dedektifin kimliği, kurban, şüpheliler | Hikaye yazımı |
+
+**Kapanan sorular:** 50+ sahnede yön bulma → harita ve mekan listesi yok; mekanlara sahnedeki geçiş noktalarıyla
+gidilir (5.11, 2026-11-14). Oyun testinde (Bölüm 1) yollar uzun gelirse çözüm yeni bir geçiş noktasıdır, harita değil.
 
 ## Değişiklik geçmişi
 
@@ -201,3 +247,18 @@ Aynı oyun ve aynı içerik her platformda çalışır; yalnızca satış biçim
   alınan her nesne için ikinci bir tam sahne görseli üretmek (n nesnede 2ⁿ görsel) sanat bütçesini katlıyordu ve AI
   ile üretilen görsellerde tutarlılığı bozuyordu. (ADR 0012)
 - 2026-11-14: `Esc` = Geri (5.7) Steam aşamasını beklemeden Aşama 1'de eklendi; menü kısayolu Steam aşamasında.
+- 2026-11-14 (motor incelemesi, kullanıcı onaylı):
+  - **Karakterler artık görünür ve onlarla konuşulur** (3, 5.9). Önceki kural "diğer karakterler görünmez" idi.
+    Gerekçe: Bölüm 1 planlanırken, kimseyi sorgulamayan bir dedektifin her şeyi kağıttan öğrenmesi hem inandırıcı
+    değildi hem de oyunu tekdüze yapıyordu. İç ses tek yönlü kalır; oyuncu yalnızca önceden yazılmış soruları seçer,
+    hikaye dallanmaz. (ADR 0016)
+  - **Kanıt gösterme ve eşya verme** (5.10): karakterlere eşya ve not gösterilir; yanlış denemenin cezası yoktur.
+    Gerekçe: toplanan şeylerin sorguda da işe yaraması; "doğru şeyi doğru kişiye göster" yeni bir bulmaca türüdür ve
+    yeni arayüz öğretmez (eşya paneli ve defter aynen kullanılır). (ADR 0016)
+  - **"Şüpheliler" sekmesi "Kişiler" oldu; dosyalar güncellenir** (5.3). Gerekçe: tanıkların da dosyası olur; bir
+    dosyaya "şüpheli" etiketi koymak oyuncuya kimin önemli olduğunu söylerdi. İfadeler dosyaya satır olarak eklenir.
+    (ADR 0015)
+  - **Mekanlar arası geçiş: harita yok** (5.11); 10'daki yön bulma sorusu kapandı. Gerekçe: harita, sahne yığınının
+    yanında ikinci bir gezinme modeli, ayrı görsel ve kilit kuralı demekti; yolu sahnede bulmak keşfi güçlendirir.
+    (ADR 0017)
+  - Temel döngüye **Sorgula** eklendi (4).

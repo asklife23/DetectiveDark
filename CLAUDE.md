@@ -35,7 +35,7 @@ Kullanıcı terminalde şu tür komutlar yazar (yazım farklılıklarını aynı
 | Komut | Ne yaparsın |
 |---|---|
 | `Aşama 1.2'yi yap` / `aşama 1 kısım 2` | Sadece o adımı uygula, sonra dur. |
-| `Aşama 1'i yap` | O aşamanın tamamlanmamış adımlarını sırayla uygula. Her adım ayrı commit. Aşama bitince dur. |
+| `Aşama 1'i yap` | O aşamanın tamamlanmamış adımlarını sırayla uygula. Her adım ayrı commit. Aşama bitince dur. (`Aşama 1b'yi yap` = adım 1.9–1.20; devlog `asama-1.md`'ye devam eder.) |
 | `Sıradaki adım` | `plan.md`'deki **"Çalışma sırası"na** göre ilk işaretlenmemiş adımı uygula (dosyadaki ilk kutu değil). |
 | `Durum` | Biten adımlar, sıradaki adım, açık kararlar. Kod yazma. |
 | `Açıkla 1.3` | O adımda ne yapıldığını ve nedenini tekrar anlat. Kod yazma. |
@@ -83,7 +83,8 @@ lib/
     scene_engine/      # sahneler, hotspot'lar, koşul + etki sistemi, gezinme yığını, geçişler,
                        # inceleme penceresi, overlay yazılar, noir filtre
     inventory/         # eşya kataloğu, sağ panel, eşya seçimi ve kullanımı
-    notebook/          # not defteri: belgeler, gözlemler, şüpheliler
+    notebook/          # not defteri: belgeler, gözlemler, kişiler; güncellenen dosyalar (not satırları)
+    dialogue/          # karakterlerle konuşma: konular, kanıt gösterme, eşya verme, konuşma paneli
     detective_chat/    # dedektifin iç sesi, mesaj geçmişi
     progress/          # GameProgress, kayıt (Aşama 1: bellekte, Aşama 2: Drift)
     auth/              # Aşama 3
@@ -108,11 +109,19 @@ Her feature içinde:
 - `app/` katmanı, feature'ların `presentation` katmanlarını birleştirebilen **tek** yerdir (ör. `GameScreen`:
   sahne + eşya paneli + not defteri + mesaj barı). Seçili eşyayı sahneye ileten de odur.
 - Feature'lar arası olaylar `core/events` içindeki `GameEventBus` üzerinden akar
-  (`SceneEntered`, `ItemObtained`, `ItemUsed`, `NoteAdded`, `DetectiveSaid`...).
+  (`SceneEntered`, `ItemObtained`, `ItemUsed`, `NoteAdded`, `NoteUpdated`, `DetectiveSaid`, `TopicAsked`...). Olaylar arayüz tepkisi içindir; kalıcı durum her zaman ilerlemeden okunur.
 - DTO (`data/models`) ile entity (`domain/entities`) ayrıdır; dönüşüm `data` katmanında yapılır.
 - Hata yönetimi: `data` katmanı exception'ları yakalar, `domain`'e `Result<T>` (`Success` / `Failed`; `Failed` bir `Failure` taşır) döner.
   UI'a exception sızmaz.
-- İlerlemenin tek doğruluk kaynağı `ProgressRepository`'dir. Sahne, eşya paneli, not defteri ve chat bu kaynaktan okur.
+- İlerlemenin tek doğruluk kaynağı `ProgressRepository`'dir. Sahne, eşya paneli, not defteri, konuşma paneli ve chat
+  bu kaynaktan okur.
+- **Tek etki hattı (ADR 0014):** İlerlemeyi değiştiren her use case (hotspot dokunuşu, sahneye giriş, konuşma konusu,
+  kanıt gösterme, notu okundu işaretleme, geliştirici menüsü, ileride bulmaca `onSolved`) `EffectPipeline`'ı kullanır:
+  etkiler (`EffectApplier`, saf) → tetikleyiciler (sabit noktaya kadar) → **tek** atomik `save` → olaylar (yalnızca
+  kayıt başarılıysa). `ProgressRepository.save` hattın dışında hiçbir yerden çağrılmaz (mimari testi denetler).
+  Yeni bir yazma yolu eklemek yerine hatta yeni bir çağıran eklenir.
+- Koşul ve etkileri JSON'dan ayrıştıran kod `scene_engine/data`'dadır. Başka bir feature'ın `data` katmanı
+  (ör. `dialogue`) buna `scene_engine/domain`'deki `RuleParser` arayüzü üzerinden ulaşır; `data` → `data` import'u yoktur.
 - **Platforma özel servisler** (satın alma / sahiplik, hesap, bulut kaydı) domain arayüzleri arkasındadır
   (`EntitlementRepository`, `AuthRepository`, `CloudSaveRepository`...). Hangi uygulamanın kullanılacağı DI'da
   derleme hedefine göre seçilir: mobil (mağaza + Supabase) veya Steam (Steam sahipliği + Steam Cloud).
@@ -169,36 +178,101 @@ sorunu, denediklerini ve önerini kullanıcıya anlat.
 
 Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kurallardır.
 
-- **Veri odaklı içerik:** Sahneler, hotspot'lar, eşyalar, notlar ve bulmacalar `assets/content/` altındaki JSON'dan
-  yüklenir (`cases/<vaka>/chapters/<bölüm>/`). Kodda sahne metni, eşya/not metni, koordinat veya bulmaca çözümü yazılmaz.
-  Sahne sayısı koda bağlı değildir: yeni sahne = yeni JSON + görsel.
+- **Veri odaklı içerik:** Sahneler, hotspot'lar, eşyalar, notlar, konuşmalar, tetikleyiciler ve bulmacalar
+  `assets/content/` altındaki JSON'dan yüklenir (`cases/<vaka>/chapters/<bölüm>/`). Kodda sahne metni, eşya/not metni,
+  konuşma metni, koordinat veya bulmaca çözümü yazılmaz. Sahne sayısı koda bağlı değildir: yeni sahne = yeni JSON + görsel.
+- **İçerik dosya düzeni (ADR 0018):**
+  - Bölüm klasöründe her tür tek dosya (`scenes.json`) **veya** klasör (`scenes/*.json`) olabilir: `scenes`, `items`,
+    `notes`, `inspections`, `dialogues`, `triggers`. İkisi birden hatadır. Dosyalar asset manifest'inden listelenir ve
+    ad sırasıyla okunur; yeni içerik klasörü `pubspec.yaml`'a eklenir. `dialogues` ve `triggers` opsiyoneldir.
+    Metinler dil başına tek dosyadır (`text_xx.json`).
+  - **Sonraki bölüm önceki bölümün içeriğini kendi dosyasında genişletir:** `sceneExtensions` (yeni hotspot'lar sona;
+    `rules` ve `visualVariants` mevcutların **önüne**), `dialogueExtensions` (konular sona), `noteExtensions` (satırlar
+    sona). Önceki bölümün dosyası sonraki bölüm için düzenlenmez. Birleştirme `data` katmanındadır; `domain` birleşmiş
+    `CaseContent` görür; kayıt şekli değişmez. Genişletmeler oyuncunun bölümüne göre kendiliğinden açılmaz; yazar
+    koşulla kapatır.
+  - `case.json`'da listelenen ama pakette hiç dosyası olmayan bölüm atlanır (demo derlemesi); yarım bölüm hatadır.
 - **Hiyerarşi:** Sahneler Parent → Child yapısındadır. Gezinme bir yığındır: `[villa_exterior, statue_closeup]`.
 - **Koşul + etki sistemi:** Hotspot'ların türü yoktur; her hotspot sıralı `interactions` kuralları taşır.
   - Kural = `when` (opsiyonel koşul) + `do` (etki listesi). Yukarıdan aşağı, koşulu tutan **ilk** kural çalışır.
-  - Koşullar (`sealed class Condition`): `flag`, `notFlag`, `hasItem`, `usingItem`, `hasNote`, `all`, `any`.
-  - Etkiler (`sealed class Effect`): `goToScene`, `giveItem`, `consumeItem`, `addNote`, `setFlag`, `hideHotspot`, `say`,
-    `inspect`; Aşama 5'te `openPuzzle`, `playMedia`.
+  - Koşullar (`sealed class Condition`): `flag`, `notFlag`, `hasItem`, `usingItem`, `hasNote`, `all`, `any`, `not`,
+    `atLeast` (`{"count": 2, "of": [...]}`), `visited`, `inScene` (yığının tepesindeki sahne), `topicAsked`
+    (`"dialogueId/topicId"`) (ADR 0013, 0016). `usingItem` yalnızca hotspot kuralının `when`'inde anlamlıdır; `not` ve
+    `atLeast` içinde, tetikleyici ve konuşma konusu koşullarında kullanılamaz. `usingNote` koşulu yoktur.
+  - Etkiler (`sealed class Effect`): `goToScene`, `giveItem`, `consumeItem`, `addNote`, `addNoteEntry`, `setFlag`,
+    `hideHotspot`, `say`, `inspect`, `talk`; Aşama 5'te `openPuzzle`, `playMedia`.
+  - **Etki nerede kullanılabilir:** hotspot kuralı: hepsi. `onFirstEnter`: `say`, `setFlag`, `addNote`, `giveItem`.
+    Tetikleyici: `say`, `setFlag`, `addNote`, `addNoteEntry`, `giveItem`. Konuşma konusu: `say`, `setFlag`, `addNote`,
+    `addNoteEntry`, `giveItem`, `consumeItem`.
+  - **`say` iki biçim alır (ADR 0013):** `{"say": "key"}` ve `{"say": {"first": "key_long", "then": "key_short"}}`
+    (ilk seferde `first`, sonra hep `then`). Söylenenler kayıtta `spokenLines` kümesindedir (anahtar: `first`); `first`
+    anahtarları vaka içinde benzersizdir. `chatLog` son 200 girişle sınırlıdır (tek sabit) ve **hiçbir oyun mantığı
+    `chatLog`'dan okumaz**.
+  - **Tetikleyiciler (ADR 0014):** `triggers.json`'daki kurallar (`id`, `when`, `do`) koşulu ilk tuttuğunda **bir kez**
+    çalışır; ateşlenenler `firedTriggers`'a yazılır. Etki hattının içinde, dosya sırasıyla, sabit noktaya kadar
+    (döngü sınırıyla) değerlendirilir. "Her ikisi de soruldu" gibi birleşik koşullar her kurala kopyalanmaz, tek
+    tetikleyici olarak yazılır.
   - **`inspect`** (ADR 0010): sahneyi ve gezinme yığınını değiştirmeden sahnenin üstünde küçük bir inceleme penceresi
     açar (görsel + metin). İçerik bölümün `inspections.json` kataloğundan ID ile gelir. Pencere açıkken sahneye
     dokunulamaz; dışına dokunmak, kapat düğmesi veya Geri (Android sistem geri dahil) yalnızca pencereyi kapatır.
     İlerlemeye kaydedilmez (arayüz durumudur); kalıcı olması gereken şey aynı kuralda ayrı etkiyle eklenir (`addNote`).
     Bir kuralda en fazla bir `inspect` olur ve `goToScene` ile birlikte kullanılmaz. Eşyaya uzun basınca açılan
     inceleme kartı da aynı pencereyi kullanır.
+  - **`talk`** (ADR 0016): konuşma panelini açar. `inspect` gibi arayüz durumudur: yığını değiştirmez, kayda girmez.
+    Bir kuralda en fazla bir `talk` olur; `goToScene` veya `inspect` ile birlikte kullanılmaz.
   - Seçili eşyayla dokunulduysa ve hiçbir kural o eşyayı karşılamıyorsa yalnızca genel tepki verilir
     (`generic_item_no_effect`); yanlış eşya normal etkileşimi tetiklemez. Dokunuştan sonra seçim temizlenir.
+    **Tek istisna:** eşyasız dokunuşta çalışacak kural `talk` içeriyorsa panel açılır ve eşya karaktere gösterilir
+    (resolver'da tek kural; hotspot'a eşya başına `usingItem` kuralı yazılmaz). Hotspot'taki açık bir `usingItem`
+    kuralı yine önce gelir.
   - Hotspot'lar `visibleWhen` ile koşullu görünür; `hideHotspot` ile kalıcı gizlenir (alınan nesne bir daha görünmez).
   - **Nesne katmanı (ADR 0012):** Hotspot'un opsiyonel `sprite` alanı sahnede duran nesnenin görselidir: normalize
     `rect` (sahne görseline göre, dokunma alanından bağımsız), `placeholderStyle` ve opsiyonel `image` (şeffaf arka
     planlı görsel; boşsa placeholder painter çizer). Nesne yalnızca hotspot'u görünürken çizilir; `hideHotspot`
     veya `visibleWhen` ile gizlenince görseli de kaybolur. Alınan nesne için bayrak + görünüm varyantı yazılmaz.
+    `sprite` opsiyonel `overlays` taşıyabilir (sahne görseline göre normalize; nesneyle birlikte görünür/kaybolur):
+    koşullu beliren tabelanın yazısı gibi (ADR 0017). Karakterler de silüet `sprite`'lı sıradan hotspot'lardır.
   - Sahneler `visualVariants` ile duruma göre görünüm değiştirir (kapı açık/kapalı). Varyant sahnenin kendisi
     değiştiğinde kullanılır; sahnede duran, alınabilen nesneler için `sprite` kullanılır.
   - Bu sistemin çözümleyicisi (`InteractionResolver`) saf Dart'tır ve kapsamlı unit testlerle korunur.
     Yeni bir etki/koşul türü eklemek mimari bir karardır: önce sor, sonra ADR yaz.
 - **Toplananlar iki türlüdür:** **Eşyalar** (sağ panelde, kullanılır, `consumeItem` ile tükenebilir) ve
-  **notlar** (not defterinde: `document` / `observation` / `suspect`; okunur, finalde kanıt olarak seçilir).
+  **notlar** (not defterinde: `document` / `observation` / `person`; okunur, finalde kanıt olarak seçilir).
+  `person` = "Kişiler" sekmesi: şüpheli ve tanık dosyaları; kimin şüpheli olduğu `case.json`'dadır (Aşama 5.5).
+- **Not satırları (ADR 0015):** Nota opsiyonel `entries` kataloğu (`id`, `textKey`); `addNoteEntry`
+  (`{"note": ..., "entry": ...}`) bir satırı açar. Kayıtta `CollectedNote.entries: [{entryId, addedAtUtcMs}]`. Satır
+  eklenince not yeniden okunmamış olur ve `NoteUpdated` çıkar; not defterde değilse etki önce notu ekler (`NoteAdded`).
+  Karakter ifadeleri kişi dosyasına satır olarak girer; ifade başına ayrı not açılmaz.
 - **Eşya kullanımı:** Panelde eşyaya dokun → seçili olur → sahnede hedefe dokun. Uzun bas → inceleme kartı.
 - **Dedektifin iç sesi:** Tek yönlüdür; oyuncu cevap vermez. Tüm mesajlar `say` etkisi ve `DetectiveSaid` olayıyla gelir.
+  Karakterlerin konuşmaları iç ses değildir: ayrı konuşma panelinden gelir ve `chatLog`'a yazılmaz. Dedektifin bir
+  cevaba yorumu, konunun `do` listesindeki `say` ile yine mesaj barından gelir.
+- **Konuşma (ADR 0016; `features/dialogue/`, içerik `dialogues.json`):**
+  - Karakter sahnede silüet `sprite`'lı hotspot'tur; dokununca panel **doğrudan** açılır ("Konuş" ara adımı yok).
+    Sahnedeki silüette "yeni soru" işareti yoktur.
+  - Konuşma: `id`, `nameKey`, `portrait`, `greeting` (`say` gibi tek anahtar veya `first`/`then`; aynı `spokenLines`),
+    `noReactionKey`, `topics`. Konu: `id`, `promptKey`, `answer` (karakterin satırları), opsiyonel `visibleWhen`,
+    `trigger`, `do`.
+  - Satırlar tek tek, daktilo efektiyle gelir: dokunuş yazılan satırı tamamlar, bir dokunuş daha sonraki satıra geçer;
+    son satırdan sonra soru listesine dönülür.
+  - `do` yalnızca konu **ilk kez** sorulduğunda (etki hattından) çalışır; tekrar sorunca yalnızca cevap okunur.
+    Sorulanlar kayıttadır: `askedTopics` (`dialogueId/topicId`).
+  - **Görünürlük = sorulmuş VEYA (`trigger` yok ve `visibleWhen` tutuyor).** Bir kez sorulan konu, koşulu sonradan
+    bozulsa bile listede kalır. Görünür ama sorulmamış konu "yeni" etiketi, sorulmuş konu işaret taşır.
+  - Panel en küçük hedef telefon yüksekliğinde **4 soruyu kaydırmadan** gösterir; fazlası kaydırılır.
+  - Konu etkilerinde gezinme, `inspect`, `talk`, `hideHotspot` yoktur; karakterin gitmesi bayrak + hotspot
+    `visibleWhen` ile yazılır.
+  - Oyuncu yalnızca önceden yazılmış soruları seçer; hikaye dallanmaz, sorular yalnızca bilgi ortaya çıkarır.
+- **Kanıt gösterme ve eşya verme (ADR 0016):**
+  - `trigger` (`{"showItem": id}` veya `{"showNote": id}`) taşıyan konu listede baştan görünmez; eşya/not gösterilince
+    oynar, sonra `promptKey` ile sorulmuş olarak kalır. Vermek = `do` içinde `consumeItem`.
+  - Eşya: sahnede eşya seçiliyken karaktere dokunmak (yukarıdaki resolver kuralı) veya panel açıkken sağ paneldeki
+    eşyaya tek dokunuş. Not: panelde "Kanıt göster" defteri seçim modunda açar; notta "Göster" düğmesi.
+  - Not yalnızca kişilere gösterilir; sahne nesnelerinde `hasNote` kullanılır.
+  - Eşleşen konu yoksa veya koşulu tutmuyorsa karakter `noReactionKey` repliğini söyler; ceza, işaret ve kayıt yoktur.
+- **Mekanlar arası geçiş (ADR 0017): harita yok.** Mekanlara yalnızca sahnedeki geçiş hotspot'larıyla gidilir (tabela,
+  çıkış). Geri her zaman `parentId` zincirindeki üst sahneye döner; kök mekana gidince yığın tek elemanlıdır (Geri
+  görünmez). Her iç mekanın merkez sahnesinde bir çıkış hotspot'u bulunur; hiçbir mekan tuzak olamaz (doğrulayıcı).
 - **Koordinatlar:** 0.0–1.0 arası normalize `x, y, width, height`, **sahne görseline göre** (ekrana göre değil).
   Sahne, sabit 16:9 oranlı bir `SceneViewport` içinde çizilir; hotspot katmanı da bu viewport'un içinde
   olduğu için her ekranda görselle birlikte ölçeklenir.
@@ -235,7 +309,14 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
 - **Mesaj barı sahnenin üstüne biner ama hiçbir hotspot'u kapatmaz:** bar (ve mesaj okununca küçüldüğü düğme) yalnızca
   sahnenin alt şeridine yerleşir. Şeridin yüksekliği tek sabittir (`SceneLayout.chatStripHeight`, `core/theme`);
   içerikte hiçbir hotspot bu şeride giremez (içerik doğrulama testi reddeder).
+- **Konuşma paneli:** sahne alanının üstünde açılır; eşya panelini (eşya göstermek için dokunulur) ve mesaj barının
+  alt şeridini (dedektifin yorumu orada görünür) kapatmaz. Açıkken sahneye dokunulamaz. Paneller üst üste binmez:
+  konuşma açıkken inceleme penceresi açılmaz.
+- **Geri sırası:** önce en üstteki katman kapanır (not defteri / mesaj geçmişi → konuşma paneli veya inceleme
+  penceresi), hiçbiri açık değilse üst sahneye dönülür. Sistem geri tuşu ve `Esc` aynı sırayı izler.
 - Klavye: `Esc` = Geri (açık pencereyi kapatır, yoksa üst sahneye döner; ana sahnede etkisizdir).
+- **Geliştirici menüsü (yalnızca dev):** sahneye atlama, eşya/not/bayrak ekleme, ilerlemeyi sıfırlama,
+  `assets/dev/presets.json`'dan adlandırılmış durum yükleme. Değişiklikler etki hattından geçer.
 - Sahne viewport'u panelin solunda kalan alana sığdırılır; hotspot'lar asla panelin altında kalmaz.
 - HUD güvenli alanlara (çentik, kamera deliği) uyar.
 
@@ -300,13 +381,29 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
 - `test/` klasörü `lib/` yapısını aynalar.
 - **İçerik doğrulama testi** her zaman çalışır ve 50+ sahneli bölümlerde güvenlik ağıdır:
   - Tüm JSON'lar yüklenir; bilinmeyen koşul/etki anahtarı yoktur.
-  - Referans verilen her sahne, eşya, not ve inceleme ID'si vardır.
+  - Referans verilen her sahne, eşya, not, not satırı, inceleme, konuşma ve konu (`dialogueId/topicId`) ID'si vardır.
   - Her metin anahtarı **desteklenen tüm dillerin** dosyalarında bulunur (şimdilik sadece `en`).
-  - Koordinatlar (hotspot, nesne ve overlay) 0–1 aralığındadır; nesne placeholder stilleri kodda tanımlıdır.
-  - Bir kuralda en fazla bir `inspect` vardır ve `goToScene` ile birlikte kullanılmaz.
+  - Koordinatlar (hotspot, nesne, overlay ve nesne overlay'i) 0–1 aralığındadır; nesne ve portre placeholder stilleri
+    kodda tanımlıdır.
+  - Bir kuralda en fazla bir `inspect` ve en fazla bir `talk` vardır; `inspect`, `talk` ve `goToScene` aynı kuralda
+    birlikte kullanılmaz.
+  - Her etki yalnızca izinli olduğu yerde kullanılır (`onFirstEnter`, tetikleyici, konuşma konusu listeleri: bölüm 6).
+  - `usingItem`, `not` / `atLeast` içinde, tetikleyici ve konu koşullarında yoktur; `atLeast.count` 1 ile koşul sayısı
+    arasındadır.
+  - `say` ve `greeting` `first` anahtarları, tetikleyici ID'leri ve konuşma ID'leri vaka içinde; konu ID'leri konuşma
+    içinde; satır ID'leri not içinde benzersizdir.
+  - Konu `trigger`'ı tam olarak bir `showItem` veya `showNote` içerir.
   - Hiçbir hotspot mesaj barının alt şeridine (`SceneLayout.chatStripHeight`) girmez.
   - Okunan (`flag`, `notFlag`) her bayrak bir yerde `setFlag` ile set edilir (yazım hatası yakalanır).
   - Her sahne, bölümün giriş sahnesinden ulaşılabilirdir (graf taraması; kopuk sahne yakalanır).
+  - **Tuzak mekan yok:** her kök sahneden, o sahnenin bölümünün giriş sahnesine dönen bir yol vardır.
+  - Genişletmeler (`sceneExtensions`, `dialogueExtensions`, `noteExtensions`) yalnızca önceki bir bölümün var olan
+    içeriğini hedefler; ekledikleri ID'ler mevcutlarla çakışmaz.
+  - **Bölüm önekleri ayrı doğrulanır** (B1; B1–2; ...): erken bölüm, geç bölümün ID'sine, bayrağına veya metnine
+    bağımlı olamaz (demo derlemesi yalnızca ilk bölümle çalışır).
+  - **Uyarılar** testi kırmaz, raporlanır: kullanılmayan metin anahtarı; hedefi mevcut sahnenin çocuğu, ebeveyni veya
+    bir kök sahne olmayan `goToScene`; hiçbir `talk` ile açılmayan konuşma.
+  - `assets/dev/presets.json`'daki her sahne, eşya, not ve bayrak içerikte vardır.
 
 ### Karar kayıtları (ADR)
 `docs/adr/NNNN-kebab-title.md`, İngilizce, kısa: **Context / Decision / Consequences**.

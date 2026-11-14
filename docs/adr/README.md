@@ -18,6 +18,12 @@ costs. A new decision gets a new file; an outdated one is not deleted — its st
 | [0010](0010-inspect-effect.md) | Inspect effect | Accepted |
 | [0011](0011-overlay-text-noir-filter-and-ai-art.md) | Overlay text, shared noir filter and AI-assisted art | Accepted |
 | [0012](0012-object-layer.md) | Object layer: hotspot sprites | Accepted |
+| [0013](0013-rule-language-additions.md) | Rule language additions: conditions, first/then lines, chat log cap | Accepted |
+| [0014](0014-single-effect-pipeline-and-triggers.md) | Single effect pipeline and triggers | Accepted |
+| [0015](0015-note-entries-and-people.md) | Note entries and the People category | Accepted |
+| [0016](0016-dialogue-showing-evidence-giving-items.md) | Dialogue system, showing evidence and giving items | Accepted |
+| [0017](0017-travel-without-a-map.md) | Travel between locations without a map | Accepted |
+| [0018](0018-content-files-extensions-and-demo-builds.md) | Content files: multiple files per chapter, chapter extensions, demo builds | Accepted |
 
 ## Template
 
