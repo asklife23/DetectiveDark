@@ -21,8 +21,13 @@ class GameProgress extends Equatable {
     this.hiddenHotspots = const {},
     this.visitedSceneIds = const {},
     this.chatLog = const [],
+    this.spokenLines = const {},
     this.playTimeSeconds = 0,
   });
+
+  /// The chat log keeps only its newest entries, so a long playthrough
+  /// cannot grow the save without bound (ADR 0013). The one constant.
+  static const chatLogLimit = 200;
 
   final String caseId;
   final String chapterId;
@@ -43,8 +48,13 @@ class GameProgress extends Equatable {
 
   final Set<String> visitedSceneIds;
 
-  /// The messages of the detective, oldest first.
+  /// The messages of the detective, oldest first; at most [chatLogLimit].
+  /// It is a history for the player: **no game logic reads it**.
   final List<ChatLogEntry> chatLog;
+
+  /// The `first` keys of two-form lines (`say` first/then, greetings) that
+  /// have been spoken once. This, not [chatLog], decides which form plays.
+  final Set<String> spokenLines;
 
   final int playTimeSeconds;
 
@@ -65,6 +75,8 @@ class GameProgress extends Equatable {
   bool hasFlag(String flag) => flags.contains(flag);
 
   bool hasVisited(String sceneId) => visitedSceneIds.contains(sceneId);
+
+  bool hasSpoken(String lineKey) => spokenLines.contains(lineKey);
 
   bool isHotspotHidden(String sceneId, String hotspotId) =>
       hiddenHotspots.contains(hotspotKey(sceneId, hotspotId));
@@ -111,9 +123,21 @@ class GameProgress extends Equatable {
       : _copy(visitedSceneIds: {...visitedSceneIds, sceneId});
 
   /// Appends a message. Unlike the other changes this is not idempotent:
-  /// the detective may say the same line twice.
-  GameProgress withChatEntry(ChatLogEntry entry) =>
-      _copy(chatLog: [...chatLog, entry]);
+  /// the detective may say the same line twice. Beyond [chatLogLimit] the
+  /// oldest entries are dropped.
+  GameProgress withChatEntry(ChatLogEntry entry) {
+    final log = [...chatLog, entry];
+    return _copy(
+      chatLog: log.length > chatLogLimit
+          ? log.sublist(log.length - chatLogLimit)
+          : log,
+    );
+  }
+
+  /// Remembers that the two-form line [lineKey] was spoken. No change if it
+  /// already was.
+  GameProgress withSpokenLine(String lineKey) =>
+      hasSpoken(lineKey) ? this : _copy(spokenLines: {...spokenLines, lineKey});
 
   GameProgress _copy({
     List<String>? sceneStack,
@@ -123,6 +147,7 @@ class GameProgress extends Equatable {
     Set<String>? hiddenHotspots,
     Set<String>? visitedSceneIds,
     List<ChatLogEntry>? chatLog,
+    Set<String>? spokenLines,
   }) {
     return GameProgress(
       caseId: caseId,
@@ -134,6 +159,7 @@ class GameProgress extends Equatable {
       hiddenHotspots: hiddenHotspots ?? this.hiddenHotspots,
       visitedSceneIds: visitedSceneIds ?? this.visitedSceneIds,
       chatLog: chatLog ?? this.chatLog,
+      spokenLines: spokenLines ?? this.spokenLines,
       playTimeSeconds: playTimeSeconds,
     );
   }
@@ -149,6 +175,7 @@ class GameProgress extends Equatable {
     hiddenHotspots,
     visitedSceneIds,
     chatLog,
+    spokenLines,
     playTimeSeconds,
   ];
 }

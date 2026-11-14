@@ -115,11 +115,16 @@ class EffectApplier {
           if (hotspotId != null) {
             next = next.withHiddenHotspot(context.sceneId, hotspotId);
           }
-        case Say(:final messageKey):
+        case Say(:final messageKey, :final repeatKey):
+          // A two-form line plays `first` once, then `then` (ADR 0013).
+          final lineKey = repeatKey != null && next.hasSpoken(messageKey)
+              ? repeatKey
+              : messageKey;
+          if (repeatKey != null) next = next.withSpokenLine(messageKey);
           next = next.withChatEntry(
-            ChatLogEntry(textKey: messageKey, sentAtUtcMs: context.nowUtcMs),
+            ChatLogEntry(textKey: lineKey, sentAtUtcMs: context.nowUtcMs),
           );
-          events.add(DetectiveSaid(messageKey));
+          events.add(DetectiveSaid(lineKey));
         case GoToScene():
           navigation = effect;
         case Inspect(inspectionId: final id):

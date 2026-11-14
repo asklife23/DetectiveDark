@@ -125,4 +125,25 @@ void main() {
     // The first remark was made once, not on every visit to the villa.
     expect(chat().where((key) => key == 'say_villa_first_look'), hasLength(1));
   });
+
+  test('the statue: a long line the first time, a short one afterwards '
+      '(scenario step 20)', () async {
+    final game = GameHarness();
+    final bloc = game.createBloc();
+    addTearDown(bloc.close);
+    addTearDown(game.dispose);
+
+    await bloc.start();
+    await bloc.tap('statue');
+    await bloc.tap('statue_body');
+    await bloc.tap('statue_body');
+    await bloc.tap('statue_body');
+
+    expect(game.events.whereType<DetectiveSaid>().skip(1), const [
+      DetectiveSaid('say_statue_body'),
+      DetectiveSaid('say_statue_body_again'),
+      DetectiveSaid('say_statue_body_again'),
+    ]);
+    expect(bloc.state.progress!.spokenLines, {'say_statue_body'});
+  });
 }

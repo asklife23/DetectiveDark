@@ -574,4 +574,63 @@ void main() {
       expect(issues, _reports('unknown note "map"'));
     });
   });
+
+  group('say with first / then', () {
+    const line = Say('say_locked', repeatKey: 'label');
+
+    test('both texts must exist', () {
+      final issues = _validate(
+        yardHotspots: [
+          _hotspot('door', const [GoToScene('shed')]),
+          _hotspot('gate', const [Say('say_long', repeatKey: 'say_short')]),
+        ],
+      );
+
+      expect(issues, _reports('missing text "say_long" (en)'));
+      expect(issues, _reports('missing text "say_short" (en)'));
+    });
+
+    test('a first key used in one place is fine', () {
+      expect(
+        _validate(
+          yardHotspots: [
+            _hotspot('door', const [GoToScene('shed')]),
+            _hotspot('gate', const [line]),
+          ],
+        ),
+        isEmpty,
+      );
+    });
+
+    test('the same first key in two places is reported', () {
+      final issues = _validate(
+        yardHotspots: [
+          _hotspot('door', const [GoToScene('shed')]),
+          _hotspot('gate', const [line]),
+        ],
+        yardOnFirstEnter: const [line],
+      );
+
+      expect(
+        issues,
+        _reports(
+          'first line "say_locked" is already used at scene yard / '
+          'onFirstEnter',
+        ),
+      );
+    });
+
+    test('a plain line may repeat anywhere', () {
+      expect(
+        _validate(
+          yardHotspots: [
+            _hotspot('door', const [GoToScene('shed')]),
+            _hotspot('gate', const [Say('say_locked')]),
+            _hotspot('wall', const [Say('say_locked')]),
+          ],
+        ),
+        isEmpty,
+      );
+    });
+  });
 }

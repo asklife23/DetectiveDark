@@ -48,7 +48,7 @@ abstract final class EffectCodec {
       'addNote' => AddNote(_id(key, value)),
       'setFlag' => SetFlag(_id(key, value)),
       'hideHotspot' => _hideHotspot(value),
-      'say' => Say(_id(key, value)),
+      'say' => _say(value),
       'inspect' => Inspect(_id(key, value)),
       _ => throw FormatException(
         'Unknown effect "$key". Known: ${knownKeys.join(', ')}.',
@@ -62,6 +62,13 @@ abstract final class EffectCodec {
   static String _id(String key, Object? value) {
     if (value is String && value.isNotEmpty) return value;
     throw FormatException('Effect "$key" needs a non-empty string.');
+  }
+
+  /// `"key"` or `{"first": "key_long", "then": "key_short"}`.
+  static Say _say(Object? value) {
+    if (value is String) return Say(_id('say', value));
+    final (first, then) = LineCodec.firstThen('say', value);
+    return Say(first, repeatKey: then);
   }
 
   static HideHotspot _hideHotspot(Object? value) {
@@ -114,5 +121,36 @@ abstract final class EffectCodec {
     if (value == null) return null;
     if (value is int && value >= 0) return Duration(milliseconds: value);
     throw FormatException('"goToScene.$key" must be a whole number >= 0.');
+  }
+}
+
+/// Reads the two-form line `{"first": ..., "then": ...}` shared by the `say`
+/// effect and (later) dialogue greetings.
+abstract final class LineCodec {
+  static const _keys = {'first', 'then'};
+
+  /// Throws a [FormatException] unless [value] is an object with exactly
+  /// the non-empty strings `first` and `then`.
+  static (String first, String then) firstThen(String owner, Object? value) {
+    if (value is! Map<String, dynamic>) {
+      throw FormatException(
+        '"$owner" needs a text key or an object with "first" and "then".',
+      );
+    }
+    final unknown = value.keys.where((key) => !_keys.contains(key));
+    if (unknown.isNotEmpty) {
+      throw FormatException(
+        'Unknown "$owner" keys: ${unknown.join(', ')}. '
+        'Known: ${_keys.join(', ')}.',
+      );
+    }
+    final first = value['first'];
+    final then = value['then'];
+    if (first is! String || first.isEmpty || then is! String || then.isEmpty) {
+      throw FormatException(
+        '"$owner" needs both "first" and "then" as non-empty strings.',
+      );
+    }
+    return (first, then);
   }
 }

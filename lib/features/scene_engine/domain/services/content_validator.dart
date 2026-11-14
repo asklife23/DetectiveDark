@@ -125,6 +125,7 @@ class _Run {
   final issues = <ContentIssue>[];
   final _flagsRead = <String, String>{};
   final _flagsSet = <String>{};
+  final _firstLines = <String, String>{};
 
   void add(String where, String message) =>
       issues.add(ContentIssue(where, message));
@@ -313,14 +314,30 @@ class _Run {
         if (!notes.containsKey(noteId)) add(where, 'unknown note "$noteId"');
       case SetFlag(:final flag):
         _flagsSet.add(flag);
-      case Say(:final messageKey):
+      case Say(:final messageKey, :final repeatKey):
         text(where, messageKey);
+        if (repeatKey != null) {
+          text(where, repeatKey);
+          firstLine(where, messageKey);
+        }
       case Inspect(:final inspectionId):
         if (!content.inspections.containsKey(inspectionId)) {
           add(where, 'unknown inspection "$inspectionId"');
         }
       case HideHotspot():
         break;
+    }
+  }
+
+  /// The `first` key of a two-form line must be unique in the case: it is
+  /// the key under which "already said" is saved, so a second use would
+  /// start out as already spoken.
+  void firstLine(String where, String key) {
+    final earlier = _firstLines[key];
+    if (earlier == null) {
+      _firstLines[key] = where;
+    } else {
+      add(where, 'first line "$key" is already used at $earlier');
     }
   }
 

@@ -278,3 +278,28 @@
   anında yakalanıyor. İkinci ders: `usingItem` koşulunu `not` ve `atLeast` içinde yasakladık. "Anahtar dışında bir
   şeyle dokunulduysa" gibi bir kural oyunda yok; izin verseydik resolver'ın "bu kural hangi eşyayı istiyor" sorusu
   belirsizleşirdi. Kuralı dar tutmak, motoru basit tutmanın yoludur.
+
+### Adım 1.10 — `say` `first/then`, `spokenLines` ve `chatLog` sınırı (2026-11-14)
+- **Ne yaptık:** `say` etkisi artık iki biçim alıyor: düz anahtar (`{"say": "key"}`) ve iki aşamalı replik
+  (`{"say": {"first": "uzun", "then": "kısa"}}`). İlk dokunuşta `first`, sonraki her dokunuşta `then` söylenir.
+  "Daha önce söylendi mi" bilgisi kayıtta yeni bir kümede durur: `spokenLines` (anahtar = `first`). Ayrıca mesaj
+  geçmişi (`chatLog`) son 200 girişle sınırlandı: 201. mesaj en eskisini düşürür. Heykel gövdesinin repliği dilimde
+  `first/then` oldu. Doğrulayıcı `then` metninin varlığını ve `first` anahtarlarının vaka içinde benzersiz olduğunu
+  kontrol ediyor.
+- **Neden:** Oyuncu aynı nesneye on kez dokunur; her seferinde aynı uzun cümleyi okumak yorar. Bunu bayrakla çözmek
+  (`statue_seen` + iki kural) her nesne için iki satır fazladan içerik ve unutulabilir bir bayrak demekti. Sınırın
+  nedeni kayıt boyutu: `chatLog` her dokunuşta büyür; sınırsız bırakılırsa Aşama 2'de her kayıtta yazılan JSON ve
+  Aşama 4'te buluta giden veri oyun süresiyle birlikte şişer.
+- **Önemli dosyalar:** `scene_engine/domain/entities/effect.dart` (`Say.repeatKey`),
+  `scene_engine/data/models/effect_codec.dart` (`LineCodec`), `progress/domain/entities/game_progress.dart`
+  (`spokenLines`, `chatLogLimit`), `scene_engine/domain/services/effect_applier.dart`, `content_validator.dart`,
+  `assets/content/cases/case01/chapters/ch01/scenes.json`.
+- **Telefonda nasıl test edilir:** `flutter run --flavor dev -t lib/main_dev.dart --dart-define-from-file=env/dev.json`
+  → Heykel → heykelin gövdesine iki kez dokun: önce "Marble, cold and patient...", sonra "Still marble. Still
+  watching."
+- **Öğrenme notu:** Burada önemli bir tasarım kuralı var: **hiçbir oyun mantığı `chatLog`'dan okumaz.** İlk akla gelen
+  çözüm "geçmişte bu mesaj var mı diye bak" olurdu; ama `chatLog` artık sınırlı bir listedir, 200 mesaj sonra eski
+  giriş düşer ve oyun uzun repliği "ilk kez" sanıp yeniden söylerdi. Bu yüzden iki veri ayrıldı: `chatLog` oyuncuya
+  gösterilen **geçmiş** (kesilebilir), `spokenLines` oyunun **hafızası** (kesilmez, küçük bir kümedir). Bir veriyi iki
+  farklı amaç için kullanmak, amaçlardan biri değişince diğerini bozar. `first` anahtarlarının benzersiz olma kuralı
+  da buradan gelir: iki ayrı yer aynı `first`'ü kullansaydı biri diğerinin "ilk" hakkını tüketirdi.

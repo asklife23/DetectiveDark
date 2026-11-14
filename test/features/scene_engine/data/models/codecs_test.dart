@@ -265,6 +265,47 @@ void main() {
       );
     });
 
+    test('say with first / then', () {
+      expect(
+        EffectCodec.parse({
+          'say': {'first': 'statue_long', 'then': 'statue_short'},
+        }),
+        const Say('statue_long', repeatKey: 'statue_short'),
+      );
+    });
+
+    test('say rejects malformed objects', () {
+      expect(
+        () => EffectCodec.parse({
+          'say': {'first': 'a'},
+        }),
+        _formatError('both "first" and "then"'),
+      );
+      expect(
+        () => EffectCodec.parse({
+          'say': {'then': 'b'},
+        }),
+        _formatError('both "first" and "then"'),
+      );
+      expect(
+        () => EffectCodec.parse({
+          'say': {'first': 'a', 'then': ''},
+        }),
+        _formatError('both "first" and "then"'),
+      );
+      expect(
+        () => EffectCodec.parse({
+          'say': {'first': 'a', 'then': 'b', 'third': 'c'},
+        }),
+        _formatError('Unknown "say" keys: third'),
+      );
+      expect(
+        () => EffectCodec.parse({'say': 3}),
+        _formatError('a text key or an object'),
+      );
+      expect(() => EffectCodec.parse({'say': ''}), _formatError('"say"'));
+    });
+
     test('hideHotspot accepts only true', () {
       expect(
         () => EffectCodec.parse({'hideHotspot': 'statue_key'}),

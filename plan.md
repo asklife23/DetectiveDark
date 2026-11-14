@@ -574,7 +574,7 @@ buradayım" diyebilecek hale getirmek (ADR 0013). Tetikleyiciler (1.12) ve konu�
   geçiyor; içerik doğrulama testi yeşil.
   **Commit:** `feat(scene_engine): add not, atLeast, visited and inScene conditions`
 
-### [ ] 1.10 `say` `first/then`, `spokenLines` ve `chatLog` sınırı
+### [x] 1.10 `say` `first/then`, `spokenLines` ve `chatLog` sınırı
 **Amaç:** Aynı yere ikinci dokunuşta uzun repliğin tekrarlanmasını bayrak yazmadan önlemek; kayıt boyutunu sınırlamak
 (ADR 0013).
 **Yapılacaklar:**

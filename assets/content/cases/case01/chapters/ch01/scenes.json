@@ -98,7 +98,7 @@
           "rect": {"x": 0.36, "y": 0.10, "width": 0.28, "height": 0.62},
           "labelKey": "hotspot_statue_body",
           "interactions": [
-            {"do": [{"say": "say_statue_body"}]}
+            {"do": [{"say": {"first": "say_statue_body", "then": "say_statue_body_again"}}]}
           ]
         },
         {

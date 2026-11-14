@@ -1,5 +1,6 @@
 import 'package:detective_dark/features/progress/domain/entities/chat_log_entry.dart';
 import 'package:detective_dark/features/progress/domain/entities/collected_note.dart';
+import 'package:detective_dark/features/progress/domain/entities/game_progress.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../helpers/slice_fixtures.dart';
@@ -124,5 +125,43 @@ void main() {
       newGame.withItem('brass_key').withFlag('x'),
     );
     expect(newGame.withItem('brass_key'), isNot(newGame));
+  });
+
+  group('spoken lines', () {
+    test('are remembered once', () {
+      final progress = newGame.withSpokenLine('say_statue_body');
+
+      expect(progress.hasSpoken('say_statue_body'), isTrue);
+      expect(progress.hasSpoken('other'), isFalse);
+      expect(progress.withSpokenLine('say_statue_body'), same(progress));
+      expect(progress, isNot(newGame));
+    });
+  });
+
+  group('the chat log limit', () {
+    ChatLogEntry entry(int index) =>
+        ChatLogEntry(textKey: 'line_$index', sentAtUtcMs: index);
+
+    test('up to the limit nothing is dropped', () {
+      var progress = newGame;
+      for (var i = 0; i < GameProgress.chatLogLimit; i++) {
+        progress = progress.withChatEntry(entry(i));
+      }
+
+      expect(progress.chatLog, hasLength(GameProgress.chatLogLimit));
+      expect(progress.chatLog.first.textKey, 'line_0');
+    });
+
+    test('entry 201 drops the oldest one', () {
+      var progress = newGame;
+      for (var i = 0; i <= GameProgress.chatLogLimit; i++) {
+        progress = progress.withChatEntry(entry(i));
+      }
+
+      expect(GameProgress.chatLogLimit, 200);
+      expect(progress.chatLog, hasLength(200));
+      expect(progress.chatLog.first.textKey, 'line_1');
+      expect(progress.chatLog.last.textKey, 'line_200');
+    });
   });
 }

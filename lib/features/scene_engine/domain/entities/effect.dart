@@ -70,13 +70,21 @@ final class HideHotspot extends Effect {
 }
 
 /// Makes the detective say a line through the inner voice.
+///
+/// With a [repeatKey] the line has two forms (ADR 0013): [messageKey] is
+/// said the first time, [repeatKey] every time after that. "Already said"
+/// is remembered in the save (`spokenLines`), under [messageKey].
 final class Say extends Effect {
-  const Say(this.messageKey);
+  const Say(this.messageKey, {this.repeatKey});
 
+  /// The line; with a [repeatKey], the line of the first time (`first`).
   final String messageKey;
 
+  /// The shorter line of every later time (`then`). Null for a plain line.
+  final String? repeatKey;
+
   @override
-  List<Object?> get props => [messageKey];
+  List<Object?> get props => [messageKey, repeatKey];
 }
 
 /// Opens the inspection panel above the scene without leaving it (ADR 0010).

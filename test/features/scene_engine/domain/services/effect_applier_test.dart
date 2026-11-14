@@ -173,4 +173,54 @@ void main() {
     expect(outcome.navigation, isNull);
     expect(outcome.inspectionId, isNull);
   });
+
+  group('say with first / then', () {
+    const line = Say('statue_long', repeatKey: 'statue_short');
+
+    test('the first time says the long line and remembers it', () {
+      final outcome = applier.apply(newGame, const [line], atStatueKey);
+
+      expect(outcome.events, const [DetectiveSaid('statue_long')]);
+      expect(outcome.progress.chatLog.single.textKey, 'statue_long');
+      expect(outcome.progress.spokenLines, {'statue_long'});
+    });
+
+    test('every later time says the short line', () {
+      final once = applier.apply(newGame, const [line], atStatueKey).progress;
+
+      final again = applier.apply(once, const [line], atStatueKey);
+      final third = applier.apply(again.progress, const [line], atStatueKey);
+
+      expect(again.events, const [DetectiveSaid('statue_short')]);
+      expect(third.events, const [DetectiveSaid('statue_short')]);
+      expect(third.progress.chatLog.map((entry) => entry.textKey), [
+        'statue_long',
+        'statue_short',
+        'statue_short',
+      ]);
+      expect(third.progress.spokenLines, {'statue_long'});
+    });
+
+    test('twice in one rule: long, then short', () {
+      final outcome = applier.apply(newGame, const [line, line], atStatueKey);
+
+      expect(outcome.events, const [
+        DetectiveSaid('statue_long'),
+        DetectiveSaid('statue_short'),
+      ]);
+    });
+
+    test('a plain line never touches spokenLines', () {
+      final outcome = applier.apply(newGame, const [
+        Say('statue_long'),
+        Say('statue_long'),
+      ], atStatueKey);
+
+      expect(outcome.progress.spokenLines, isEmpty);
+      expect(outcome.events, const [
+        DetectiveSaid('statue_long'),
+        DetectiveSaid('statue_long'),
+      ]);
+    });
+  });
 }
