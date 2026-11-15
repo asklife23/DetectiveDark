@@ -198,6 +198,12 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
     koşulla kapatır.
   - `case.json`'da listelenen ama pakette hiç dosyası olmayan bölüm atlanır (demo derlemesi); yarım bölüm hatadır.
 - **Hiyerarşi:** Sahneler Parent → Child yapısındadır. Gezinme bir yığındır: `[villa_exterior, statue_closeup]`.
+- **İçerik kuralı (gerçek içerik, Aşama 7):** dokunulan her şey ayrı bir sahnedir (`goToScene`), yalnızca bakılan
+  ayrıntı bile. İstisnalar: toplanan nesneler, geçiş noktaları ve karakterler. **Gerçek içerikte hotspot'tan `inspect`
+  kullanılmaz;** inceleme penceresi yalnızca eşyaya uzun basınca açılan kart içindir. Bu bir yazım kuralıdır: motor,
+  doğrulayıcı ve dikey dilim (heykel plaketi) değişmez; `inspect` etkisi silinmez.
+- **Zaman mekaniği yoktur:** içerikte hiçbir şey süreye veya oyun içi saate bağlanmaz; durum yalnızca oyuncunun
+  yaptıklarıyla (bayrak, eşya, not, bölüm) değişir.
 - **Koşul + etki sistemi:** Hotspot'ların türü yoktur; her hotspot sıralı `interactions` kuralları taşır.
   - Kural = `when` (opsiyonel koşul) + `do` (etki listesi). Yukarıdan aşağı, koşulu tutan **ilk** kural çalışır.
   - Koşullar (`sealed class Condition`): `flag`, `notFlag`, `hasItem`, `usingItem`, `hasNote`, `all`, `any`, `not`,
@@ -254,7 +260,13 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
   cevaba yorumu, konunun `do` listesindeki `say` ile yine mesaj barından gelir.
 - **Konuşma (ADR 0016; `features/dialogue/`, içerik `dialogues.json`):**
   - Karakter sahnede silüet `sprite`'lı hotspot'tur; dokununca panel **doğrudan** açılır ("Konuş" ara adımı yok).
-    Sahnedeki silüette "yeni soru" işareti yoktur.
+    Sahnedeki silüette "yeni soru" işareti yoktur. Gerçek içerikte silüetler yalnızca çarşı mekanlarındadır; villada
+    karakter hotspot'u yoktur.
+  - **Portre:** `portrait` = `placeholderStyle` + opsiyonel `image` (çizilmiş portre; doluysa panelde o çizilir,
+    yüklenemezse placeholder). Sahnede karakter silüet kalır; portre yalnızca konuşma kutusunda ve kişi dosyasındadır
+    (kişi dosyasındaki gösterim 7.3'te eklenir).
+  - **Telefon:** telefonla konuşma, telefon hotspot'unda sıradan bir `talk` kuralıdır (silüet `sprite`'ı gerekmez);
+    numara çevirme arayüzü yoktur.
   - Konuşma: `id`, `nameKey`, `portrait`, `greeting` (`say` gibi tek anahtar veya `first`/`then`; aynı `spokenLines`),
     `noReactionKey`, `topics`. Konu: `id`, `promptKey`, `answer` (karakterin satırları), opsiyonel `visibleWhen`,
     `trigger`, `do`.

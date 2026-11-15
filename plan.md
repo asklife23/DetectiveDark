@@ -37,11 +37,19 @@ Aşamalar numara sırasıyla değil, bu sırayla yapılır. Numaralar değişmez
   sürümü hemen bir migration gerektirirdi.
 - **Aşama 1b → Aşama 7:** İçerik dosya düzeni ve bölüm genişletmeleri (1.14) Bölüm 1 yazılmadan önce kesinleşir;
   sonradan değiştirmek yazılmış bölüm dosyalarını yeniden yazmak demektir.
-- **Aşama 5 → Aşama 2:** Bulmaca durumu, bölüm ve suçlama hakları ilerlemeye eklenir. Kayıt şekli değişirse payload
-  sürümü artar ve 2.2'deki migration zinciriyle taşınır (eski kayıt bozulmaz).
-- **Aşama 5 → Aşama 3:** Bölüm 1 sonundaki hesap bağlama önerisi 5.4'ten 3.3'e taşındı. 5.4 bölüm sonu ekranını
-  hesapsız kurar; öneri Aşama 3 gelince o ekrana eklenir.
-- **Aşama 5 → Aşama 6:** 5.3'teki kayıt inceleme sessiz kurulur; sesi 6.1'de bağlanır (geçişlerdeki `sfx` gibi).
+- **Aşama 5 → Aşama 2:** Aşama 5 kayda şu alanları ekler:
+  - **bölüm ilerlemesi:** tamamlanan bölümler ve tamamlanma zamanları;
+  - **bulmaca durumu:** çözülen bulmacalar ve yarım bırakılan ayarlar (ör. yön bulmacasında nesnelerin o anki yönü);
+  - **suçlama:** kalan haklar ve yapılan denemeler;
+  - **ipucu:** kullanılan ipucu sayacı ve açılan kademeler.
+
+  Kayıt şekli değişince payload sürümü artar ve 2.2'deki migration zinciriyle taşınır (eski kayıt bozulmaz).
+  **Satın alma kilidi kayda girmez** (CLAUDE.md §8: satın alma ve kilit durumuna yerel kayıttan güvenilmez; sahiplik
+  `EntitlementRepository`'den sorulur). **Bölüm başı kayıt kopyası yoktur; tek kayıt yuvası kalır.**
+- **Aşama 5 → Aşama 3:** Bölüm 1 sonundaki hesap bağlama önerisi 5.4'ten 3.3'e taşındı. 5.4, Bölüm 1 sonu ekranını
+  (satın alma / demo sonu) hesapsız kurar; öneri Aşama 3 gelince mobildeki o ekrana eklenir.
+- **Aşama 5 → Aşama 6:** 5.3'teki kayıt inceleme (yapılırsa) sessiz kurulur; sesi 6.1'de bağlanır (geçişlerdeki
+  `sfx` gibi).
 - **Aşama 7 (Bölüm 1) → Aşama 5:** Hikaye ve bulmaca zinciri 5'te hazırlanan bulmaca türleriyle kurulur.
   Yeni bir bulmaca türü gerekirse önce Aşama 5'e adım olarak eklenir.
 - **Oyun testi (7.4) Aşama 3, 4 ve 6'dan önce:** Kayıt yereldir (Aşama 2), hesap veya bulut gerekmez. Ses, ana menü ve
@@ -94,29 +102,38 @@ Aşamalar numara sırasıyla değil, bu sırayla yapılır. Numaralar değişmez
 | Oyuncu | Dedektifi yönetir; dedektif görünmez, iç sesiyle tek yönlü konuşur |
 | Toplananlar | **Eşyalar** (sağ panel, kullanılır) ve **notlar** (not defteri: belgeler, gözlemler, kişiler). Kişi dosyaları oyun ilerledikçe satır satır güncellenir (ADR 0015) |
 | Eşya kullanımı | Dokun-seç → hedefe dokun; yanlış yerde cezasız genel tepki |
-| Bulmacalar | Eşya kullanma, şifre/kilit, kayıt inceleme; zincirleme |
+| Ortam | 1950'ler, kurgusal küçük kasaba; oyun hep gece. **Saat / zaman mekaniği yok:** hiçbir şey süreye bağlı değil, dükkanlar kapanmaz, karakterler yer değiştirmez; yeni kişiler ve mekanlar bölümle açılır |
+| Sahne kuralı | Dokunulan her şey ayrı sahnedir (yalnızca bakılan ayrıntı da). İstisnalar: toplanan nesneler, geçiş noktaları, karakterler |
+| Mekanlar | Villa (giriş holü, 4 oda kapısı, bodrum, üst kat, çatı katı, bahçe; içinde kimse yok) ve çarşı (sokak, iki yanda dükkanlar, dipte yetimhane; karakterler dükkanların içinde); suçlama karakolda |
+| Bulmacalar | Eşya kullanma, eşya birleştirme, rakamlı tuş takımı, sembol eşleştirme (içerikle), karanlık sahnede ışık kaynağı, yön bulmacası, sürüklemesiz delikli kağıt, çelişki yakalama; zincirleme. Diğer kilitler ve kayıt inceleme yalnızca hikaye isterse |
+| Çelişki yakalama | Yeni arayüz yok: çelişen kanıt konuşmada "Kanıt göster" ile gösterilir; cevap + dedektifin gözlem notu kayda geçirir, not finalde kanıt olabilir |
+| Belgeler | Mektup, gazete kupürü, çok sayfalı günlük, fotoğraf arkası; hepsi deftere not olarak girer |
 | Hikaye | Tek yol; dallanma yok |
-| Karakterler | Sahnede silüet; dokununca konuşma paneli doğrudan açılır; oyuncu yalnızca önceden yazılmış soruları seçer; sorular bilgi ortaya çıkarır (ADR 0016) |
+| Karakterler | Sahnede silüet (yalnızca çarşı mekanlarında; villada kimse yok); konuşma kutusunda ve kişi dosyasında çizilmiş portre; dokununca konuşma paneli doğrudan açılır; oyuncu yalnızca önceden yazılmış soruları seçer; sorular bilgi ortaya çıkarır (ADR 0016). Telefona dokunmak da paneli açar; numara çevirme yok |
 | Kanıt ve eşya | Karakterlere eşya ve not gösterilir, eşya verilir; ilgisiz gösterimde cezasız kısa tepki (ADR 0016) |
 | Yön bulma | **Harita ve mekan listesi yok.** Mekanlara sahnedeki geçiş noktalarıyla gidilir; keşif oyunun parçası (ADR 0017) |
 | Yapı | Tek vaka, 4 bölüm (B1 30–45 dk, B2–B4 45–60 dk); Vaka 2 ileride |
-| Para (mobil) | Bölüm 1 ücretsiz; devamı ücretli; Vaka 2 ayrı ücretli |
+| Bölüm geçişi | Oyun durmaz; üstte kısa bildirim ("Bölüm 1 tamamlandı — <ad>"). Tek istisna Bölüm 1'in sonu: mobilde Bölüm 2–4 için tek satın alım ekranı, Steam demosunda demo sonu ekranı |
+| Yardım | Kademeli ipucu sınırsız ve ücretsiz; iki ipucu arasında kısa bekleme; ilk kademe "dokunulabilir yerleri göster"; kullanılan ipucu sayısı sonuç ekranında |
+| Para (mobil) | Bölüm 1 ücretsiz; Bölüm 2–4 tek satın alım; Vaka 2 ayrı ücretli; **reklam yok**, ipucu satılmaz |
 | Para (Steam) | Bölüm 1 ücretsiz demo; Vaka 1 peşin ücretli; Vaka 2 DLC; reklam yok |
 | Platformlar arası | İlerleme ve satın alımlar taşınmaz; mobil: Supabase hesabı, Steam: Steam Cloud |
-| Final | 7 şüpheli; isim + 2–3 kanıt; 2 hak; sonra "Baştan oyna" / "Cevabı gör" |
-| İnceleme | Sahneyi değiştirmeden küçük görsel + metin penceresi (`inspect` etkisi, ADR 0010) |
+| Final | Karakolda; 9 şüpheli (tanıkların dosyası olur ama suçlama ekranında görünmez); isim + 2–3 kanıt; 2 hak; sonra "Baştan oyna" / "Çözümü gör". Önemli her kanıt ilerlemek için zorunlu; kaçırılabilen kanıt yok |
+| İnceleme | Sahneyi değiştirmeden küçük görsel + metin penceresi (`inspect` etkisi, ADR 0010). Gerçek içerikte yalnızca eşyaya uzun basınca açılan kart için; motor ve dikey dilim değişmez |
+| Ses | Mekan başına ambiyans döngüsü (yağmur, rüzgar, barda uzaktan caz); kapı / adım / gıcırtı efektleri; müzik az |
 | Görseller | AI destekli; kritik yazı/sayılar görsele gömülmez, oyun üstüne çizer (overlay); ortak noir filtre (ADR 0011) |
-| Sahne sayısı | Kesin değil; hikaye yazılırken belirlenir (tahmin: Bölüm 1 ~40–50) |
+| Sahne sayısı | Kesin değil; hikaye yazılırken belirlenir (eski tahmin: Bölüm 1 ~40–50; sahne kuralıyla artabilir) |
 
 ## Açık kararlar (ilgili aşamanın başında sorulacak)
 
 | Aşama | Konu | Öneri |
 |---|---|---|
-| 5 | Kayıt inceleme biçimi | Kare dizisi + ses (ucuz, hafif); sanat yönüne göre video |
+| 5 | Kayıt inceleme gerekecek mi; biçimi | Hikaye istemezse ertelenir. Gerekirse makaralı ses bandı veya film şeridi (güvenlik kamerası yok) |
 | 5 | İsim doğru, kanıt yetersizse hak düşer mi | Düşer; polis "kanıtlar zayıf" der |
+| 5 | İki ipucu arasındaki bekleme süresi | 60 sn; oyun testiyle ayarlanır |
 | 6 | Ses kütüphanesi | `flutter_soloud` (düşük gecikme, oyun odaklı) veya `audioplayers` |
 | 7 | Görsel üretim aracı (AI) ve ticari kullanım koşulları | Ticari kullanıma açık lisanslı araç; seçim stil denemeleriyle |
-| 8 | Satın alma biçimi, fiyat, ipucu/reklam | Vaka 1'in kalanı tek satın alım; ipucu modeli test sonrası |
+| 8 | Mobil fiyat; satın alma altyapısı | Fiyat benzer oyunlara göre; RevenueCat. (Biçim kapandı: Bölüm 2–4 tek satın alım. İpucu / reklam kapandı: ücretsiz ipucu, reklam yok) |
 | 9 | Çökme raporlama / analitik | Sentry veya Firebase Crashlytics; minimal analitik. Çökme raporlama kararı 9.1 başlarken (7.4'teki oyun testinden önce) sorulur |
 | 10 | iOS derleme yolu | Mac veya bulut CI (Codemagic / GitHub Actions macOS) |
 | 11 | Steam fiyatı, başarımlar | Fiyat benzer oyunlara göre; başarımlar sona bırakılır |
@@ -1072,8 +1089,8 @@ Bu aşamadaki kod platform servisi arayüzlerinin arkasında kalır.
   Supabase Google sağlayıcı ayarı. Apple tarafı Apple Developer hesabı ister: kod hazırlanır, iOS testi Aşama 10'da.
 - Geçici hesap ekranı (Aşama 6'da ayarlarla birleşir): durum (Misafir / Google ile bağlı), "İlerlemeni güvenceye al",
   "Hesabım var", "Hesabı sil".
-- **Bölüm 1 sonunda hesap bağlama önerisi** (5.4'ten taşındı): 5.4'te kurulan bölüm sonu ekranına, anonim oyuncu için
-  "İlerlemeni güvenceye al" önerisi eklenir. Reddedilebilir; oyunu bekletmez.
+- **Bölüm 1 sonunda hesap bağlama önerisi** (5.4'ten taşındı): 5.4'te kurulan Bölüm 1 sonu satın alma ekranına,
+  anonim oyuncu için "İlerlemeni güvenceye al" önerisi eklenir. Reddedilebilir; oyunu bekletmez.
 - **Hesap silme** (iki mağazada da zorunlu): Supabase Edge Function `delete-account` (secret anahtar sadece
   fonksiyon ortamında) → kullanıcı ve kayıtları silinir; yerel veriler temizlenir.
   **Commit:** `feat(auth): link Google and Apple identities and add account deletion`
@@ -1132,32 +1149,56 @@ Bu aşamadaki kod platform servisi arayüzlerinin arkasında kalır.
 parçalar işaretlidir; ilgili aşama gelince bağlanır.
 
 - [ ] 5.1 Bulmaca altyapısı: `OpenPuzzle` etkisi, `PuzzleDefinition` (tür, çözüm, `onSolved` etkileri), ortak bulmaca çerçevesi (aç, dene, kapat).
-- [ ] 5.2 Kilit bulmacaları: rakamlı tuş takımı, döner kombinasyon kilidi, saat kadranı, harf kilidi. Hepsi JSON'dan.
-- [ ] 5.3 Kayıt inceleme (`PlayMedia`): oynat / durdur / kare kare, ekranda zaman damgası; biçim kararı (kare dizisi veya video).
-  Ses Aşama 6 gelince bağlanır (6.1); bu adımda medya sessiz oynar.
-- [ ] 5.4 Bölüm akışı: `case.json`'da bölüm bitiş koşulları, gerilimli bölüm sonu ekranı,
-  bölüm kilidi için `EntitlementRepository` arayüzü (dev'de hepsi açık; mobil satın alma Aşama 8'de,
-  Steam sahipliği Aşama 11'de). Bölüm 1 sonundaki hesap bağlama önerisi Aşama 3 gelince bağlanır (3.3).
+- [ ] 5.2 Kilit bulmacaları: **ilk tür rakamlı tuş takımı.** Diğer kilitler (döner kombinasyon kilidi, saat kadranı,
+  harf kilidi) yalnızca hikaye isterse eklenir. Hepsi JSON'dan.
+- [ ] 5.3 Kayıt inceleme (`PlayMedia`) — **hikaye istemezse ertelenir.** Döneme uyar (1950'ler): güvenlik kamerası
+  yok; gerekirse makaralı ses bandı (dinle / durdur / geri sar) veya film şeridi (kare kare). Biçim, hikaye iskeleti
+  hangi kaydı istiyorsa ona göre seçilir. Ses Aşama 6 gelince bağlanır (6.1); bu adımda medya sessiz oynar.
+- [ ] 5.4 Bölüm akışı: `case.json`'da bölüm bitiş koşulları ve bölüm adı.
+  **Bölüm geçişinde oyun durmaz:** üstte kısa bir bildirim çıkar ("Bölüm 1 tamamlandı — <ad>"; metin l10n'den) ve
+  oyun sürer. Ayrı bir "bölüm sonu ekranı" yoktur.
+  **Tek istisna Bölüm 1'in sonu:** mobilde Bölüm 2–4 için tek satın alım ekranı, Steam demosunda demo sonu ekranı.
+  Hangisinin çıkacağını oyun kodu bilmez; `EntitlementRepository` ve derleme hedefine göre DI belirler.
+  Bölüm kilidi için `EntitlementRepository` arayüzü (dev'de hepsi açık; mobil satın alma Aşama 8'de,
+  Steam sahipliği Aşama 11'de). Bölüm 1 sonundaki hesap bağlama önerisi Aşama 3 gelince satın alma ekranına
+  bağlanır (3.3).
   **"Bölüme ulaşıldı" koşulu** (yeni koşul türü; ADR ile) ve bölüm genişletmelerinin (1.14: `sceneExtensions`,
   `dialogueExtensions`, `noteExtensions`) oyuncunun bölümüne göre açılması: sonraki bölümün eklediği içerik, oyuncu o
   bölüme ulaşmadan görünmez.
-- [ ] 5.5 Suçlama: 7 şüpheli; isim + 2–3 kanıt (not defterinden); doğru cevap ve geçerli kanıtlar `case.json`'da;
-  2 hak; sonra "Vakayı baştan oyna" / "Cevabı gör"; paylaşılabilir sonuç ekranı (deneme sayısı, süre, ipucu sayısı).
-- [ ] 5.6 İpucu sistemi: ilerlemeye göre bağlamsal, kademeli ipuçları (yön → net → cevap); uzun hareketsizlikte
-  dedektifin kendiliğinden yönlendirmesi. İpucu tanımları JSON'da, koşullarla.
-  **"Dokunulabilir yerleri göster" yardımı:** sahnedeki hotspot'ları kısa süre işaretler. İşaretin türü (geçiş, alınacak
+- [ ] 5.5 Suçlama: **karakolda**; **9 şüpheli** (kimin şüpheli olduğu `case.json`'da; tanıkların da dosyası olur ama
+  suçlama ekranında yalnızca şüpheliler görünür); isim + 2–3 kanıt (not defterinden); doğru cevap ve geçerli kanıtlar
+  `case.json`'da; 2 hak; sonra "Baştan oyna" / "Çözümü gör"; paylaşılabilir sonuç ekranı (deneme sayısı, süre, ipucu
+  sayısı). Önemli her kanıt ilerlemek için zorunludur; kaçırılabilen kanıt yoktur (7.4'teki `walkthrough.json`
+  bölümün bitirilebildiğini kanıtlar).
+- [ ] 5.6 İpucu sistemi: ilerlemeye göre bağlamsal, kademeli ipuçları (**dokunulabilir yerleri göster** → yön → net →
+  cevap); uzun hareketsizlikte dedektifin kendiliğinden yönlendirmesi. İpucu tanımları JSON'da, koşullarla.
+  **İpuçları sınırsız ve ücretsizdir;** iki ipucu arasında kısa bir bekleme vardır (öneri 60 sn; tek sabit). Kullanılan
+  ipucu sayısı ve açılan kademeler kayda yazılır; sayı sonuç ekranında görünür (5.5). Reklam ve ücretli ipucu yoktur.
+  **"Dokunulabilir yerleri göster" (ilk kademe):** sahnedeki hotspot'ları kısa süre işaretler. İşaretin türü (geçiş, alınacak
   nesne, kişi, incelenecek yer) hotspot'un o an çalışacak kuralının etkilerinden türetilir (`goToScene`, `giveItem` /
   `addNote`, `talk`, `inspect`); JSON'a yeni alan eklenmez.
 - [ ] 5.7 Eşya birleştirme ve eşyanın içini açma: `items.json`'da eşyaya opsiyonel `interactions` (aynı kural dili,
   aynı `InteractionResolver`). **Aç:** inceleme kartında düğme; eşyanın eşyasız kuralını çalıştırır (zarfın içinden
   mektup çıkar). **Birleştir:** A seçiliyken paneldeki B'ye dokunma; iki yön de denenir (B'nin `usingItem: A` kuralı,
   yoksa A'nın `usingItem: B` kuralı), hiçbiri tutmazsa genel tepki. Etkiler etki hattından geçer.
+- [ ] 5.8 Yön bulmacası (orta): birkaç nesnenin yönünü bir metindeki tarife göre ayarlama. Dokunuşla çevrilir
+  (sürükleme yok); yarım ayar kayıtta tutulur; tümü doğru olunca `onSolved` etkileri çalışır. Yeni bulmaca türü olduğu
+  için ADR'si bu adım başlarken yazılır.
+- [ ] 5.9 Sayfalı not (küçük): çok sayfalı belgeler (günlük) defterde sayfa sayfa çevrilir. `notes.json`'da nota
+  opsiyonel sayfa listesi; kayıt şekli değişmez.
+
+**Yeni adım gerektirmeyen bulmaca türleri** (mevcut kural diliyle, içerik olarak kurulur; Aşama 5 detaylandırılırken
+eksik çıkarsa adım eklenir): sembol eşleştirme; karanlık sahnede ışık kaynağı (eşya kullanma + görünüm varyantı);
+delikli kağıt (şablon eşyası seçilip hedefe dokunulur; yalnızca deliklerin altındaki yazı overlay olarak okunur);
+çelişki yakalama (konuşmada "Kanıt göster" + konunun `do` listesinde gözlem notu, 1.18).
+**Plan dışı:** delikli kağıdın sürüklemeli sürümü (şablonu yazının üstünde gezdirme).
 
 ## Aşama 6 — Oyun hissi ve uygulama kabuğu
 *(Başlarken: açık kararları sor, adımları detaylandır, onay al.)*
 
-- [ ] 6.1 Ses: ambiyans döngüsü, efektler, geçişlerde `sfx` + `holdMs` (karanlık ses bitene kadar uzayabilir), kayıt
-  incelemenin (5.3) sesi, ses ayarları, arka planda susma.
+- [ ] 6.1 Ses: **mekan başına ambiyans döngüsü** (yağmur, rüzgar, barda uzaktan caz), kapı / adım / gıcırtı
+  efektleri; müzik az. Geçişlerde `sfx` + `holdMs` (karanlık ses bitene kadar uzayabilir), kayıt incelemenin (5.3,
+  yapılırsa) sesi, ses ayarları, arka planda susma.
 - [ ] 6.2 Dokunsal geri bildirim ve mikro animasyonlar.
 - [ ] 6.3 Uygulama ikonu, açılış ekranı (native splash), ana menü (Devam / Yeni Oyun / Ayarlar), yeni oyun onayı.
 - [ ] 6.4 Ayarlar: ses, dil (birden fazla dil desteklendiğinde), hesap ve eşitleme durumu, gizlilik politikası bağlantısı, sürüm bilgisi.
@@ -1179,8 +1220,12 @@ hikaye değişikliği gerekiyorsa önce o yapılır.
   makineleri kotadan daha hızlı düşer); gerekirse CI'ı sadece `main` push'larında çalıştır (`pull_request`
   tetikleyicisini kaldır). README'deki CI rozeti private repoda herkese görünmez; portföy görünürlüğü
   (ör. içeriksiz açık bir vitrin reposu) bu adım başlarken konuşulur.
-- [ ] 7.1 Vaka 1 kurgusu (kullanıcıyla birlikte): olay, kurban, 7 şüpheli, gerçek çözüm, bulmaca zinciri, bölüm kapanışları.
-  Sonuç `docs/story/` altında.
+- [ ] 7.1 Vaka 1 kurgusu: **hikaye iskeleti kullanıcıdadır** (olay, kişiler, 9 şüpheli, çözüm, bölüm kapanışları);
+  kullanıcı getirir, birlikte bulmaca zincirine ve sahne listesine dökülür. Sonuç `docs/story/` altında (7.0'dan
+  sonra; repo public iken hikaye, çözüm ve bulmaca cevabı hiçbir belgeye yazılmaz).
+  **İçerik kuralı:** dokunulan her şey ayrı sahnedir (yalnızca bakılan ayrıntı da); istisnalar toplanan nesneler,
+  geçiş noktaları ve karakterler. Gerçek içerikte hotspot'tan `inspect` kullanılmaz. Villada karakter yoktur;
+  silüetler yalnızca çarşı mekanlarındadır.
 - [ ] 7.2 Dev flavor'da hotspot ve overlay editörü: hotspot ve yazı (overlay) dikdörtgenlerini sürükleyip koordinatları
   JSON'a kopyalayan mini araç (çok sahneli bölümler için şart).
 - [ ] 7.3 Sanat yönü ve **AI destekli** üretim hattı (ADR 0011): araç seçimi ve ticari kullanım koşulları; stil rehberi
@@ -1190,10 +1235,13 @@ hikaye değişikliği gerekiyorsa önce o yapılır.
   **Alınabilen nesneler (ADR 0012) arka plana çizilmez:** arka plan nesnesiz üretilir; nesne ayrı, **şeffaf arka
   planlı** (alfa kanallı WebP/PNG) bir görsel olarak üretilir ve hotspot'un `sprite` alanına bağlanır. Nesnenin ışığı
   ve perspektifi arka planla uyumlu olmalı; gölgesi nesne görseline dahil edilir.
+  **Portreler:** her karakter için çizilmiş bir portre üretilir; konuşma kutusunda (`dialogues.json` → `portrait.image`)
+  ve kişi dosyasında kullanılır. Sahnede karakter silüet kalır. Kişi dosyasında portre gösterimi henüz yoktur
+  (`NoteDefinition.imageAsset` verisi var, defter çizmiyor); bu adımda eklenir.
   Her görsel için üretim kaydı (araç, model, tarih, prompt, elle yapılan düzenlemeler): `docs/art/ai-usage.md`
   (Steam AI açıklamasının kaynağı, bkz. 11.5).
-- [ ] 7.4 Bölüm 1 içeriği (sahne sayısı hikayeyle belirlenir; tahmin ~40–50, inceleme pencereleri yakın plan
-  ihtiyacını azaltır) ve **10–15 kişiyle oyun testi**. Yön bulma kararı verildi (harita yok, ADR 0017); testte yalnızca
+- [ ] 7.4 Bölüm 1 içeriği (sahne sayısı hikayeyle belirlenir; eski tahmin ~40–50, "her dokunulabilir şey sahne"
+  kuralıyla artabilir) ve **10–15 kişiyle oyun testi**. Yön bulma kararı verildi (harita yok, ADR 0017); testte yalnızca
   mekanlar arası yolların uzun gelip gelmediğine bakılır (çözüm yeni bir geçiş noktasıdır).
   **Bölüm başına `walkthrough.json`:** bölümü baştan sona bitiren adım listesi (hotspot'a dokun, eşyayla dokun, konu
   sor, eşya / not göster). CI'da arayüz olmadan **motor üzerinde** oynatılır (use case'ler + etki hattı) ve bölümün
@@ -1205,9 +1253,12 @@ hikaye değişikliği gerekiyorsa önce o yapılır.
 ## Aşama 8 — Para kazanma (mobil)
 *(Başlarken: açık kararları sor, ADR yaz.)*
 
-- [ ] 8.1 Model ayrıntıları: Vaka 1'in kalanı için satın alma biçimi, fiyat, ipucu/reklam kararı; ADR.
+**Kapanan kararlar:** Bölüm 2–4 tek satın alım; ipuçları ücretsiz; **reklam yok** (gelir yalnızca bölüm satışından).
+
+- [ ] 8.1 Model ayrıntıları: fiyat; ADR. (Satın alma biçimi ve ipucu / reklam kararı kapandı.)
 - [ ] 8.2 Satın alma altyapısı (RevenueCat önerisi): ürünler, yetkiler, "Satın alımları geri yükle" (iOS zorunlu).
-- [ ] 8.3 (Seçilirse) Ödüllü reklam + GDPR/KVKK onay formu + iOS izleme izni.
+  5.4'te kurulan Bölüm 1 sonu satın alma ekranı gerçek satın almaya bağlanır.
+- ~~8.3 Ödüllü reklam~~ — kaldırıldı (2026-11-15: reklam yok). Numara yeniden kullanılmaz.
 - [ ] 8.4 `EntitlementRepository`'nin mobil uygulaması: yetki mağazadan doğrulanır; yerel kayıt sadece önbellek.
 
 ## Aşama 9 — Kalite ve gözlem
@@ -1607,3 +1658,32 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   durumu; konuşma kapanınca sıfırlanır). (f) Yeni ARB metinleri: `dialogueShowEvidence`, `notebookShowButton`,
   `notebookPickEvidenceHint`. **Telefonda doğrulanacak (kullanıcı):** kabul senaryosunun 17–18. adımları ve devlog'daki
   "bakılacak yerler"; CI widget testleri (telefon boyutu, dokunma) geçti.
+- 2026-11-15 (tasarım kararları, kullanıcı onaylı): Bu commit yalnızca belgedir (`docs/game_design.md`, `plan.md`,
+  `CLAUDE.md`); kod, test ve içerik değişmedi. Repo public olduğu için yalnızca mekanik kararlar yazıldı (7.0).
+  - **Kararlar** (ayrıntı ve gerekçe: `docs/game_design.md` değişiklik geçmişi): 1950'ler küçük kasaba, hep gece,
+    zaman mekaniği yok; dokunulan her şey ayrı sahne (`inspect` gerçek içerikte yalnızca eşya kartı); villada kimse yok,
+    silüetler yalnızca çarşıda, panelde ve dosyada çizilmiş portre, telefonla konuşma; villa ve çarşı düzeni; durmayan
+    bölüm geçişi + Bölüm 1 sonu satın alma / demo sonu ekranı; suçlama karakolda, 9 şüpheli, kaçırılabilen kanıt yok;
+    çelişki yakalama "Kanıt göster" ile; bulmaca türleri; belgeler; ücretsiz sınırsız ipucu, reklam yok; ses.
+  - **Plan:** 5.2–5.6 güncellendi; yeni adımlar 5.8 (yön bulmacası) ve 5.9 (sayfalı not); delikli kağıdın sürüklemeli
+    sürümü plan dışı. "Aşama 5 → Aşama 2" bağımlılığına kayda eklenecek alanlar yazıldı (satın alma kilidi kayda
+    girmez; bölüm başı kayıt kopyası yok). 6.1, 7.1, 7.3, 7.4 güncellendi; 8.3 (reklam) kaldırıldı. ADR yazılmadı
+    (yeni teknik karar yok; yön bulmacasının ADR'si 5.8'de).
+  - **Koddan doğrulanan:** konuşma `portrait` alanı gerçek görsel kabul ediyor (`DialoguePortrait.image` → `PortraitDto`
+    → `DialoguePanel`'de `Image.asset`, görsel yüklenemezse placeholder). **Eksik:** kişi dosyasında portre henüz
+    çizilmiyor (`NoteDefinition.imageAsset` yalnızca veride); 7.3'e iş olarak yazıldı, `CLAUDE.md`'ye "var" diye
+    yazılmadı.
+  - **Benim yorumlarım** (kararlarda açık yazmıyordu; itiraz edilirse düzeltilir):
+    - İpucu kademeleri dört oldu: dokunulabilir yerleri göster → yön → net → cevap.
+    - "Zaman mekaniği yok" oyun dünyası içindir; ipuçları arasındaki bekleme ve uzun hareketsizlikte dedektifin
+      kendiliğinden yönlendirmesi (5.6) arayüz davranışı olarak kaldı.
+    - Ayrı bölüm sonu ekranı kalktığı için hesap bağlama önerisi (3.3) mobildeki Bölüm 1 sonu satın alma ekranına
+      eklenir.
+    - Sembol eşleştirme, ışık kaynağı ve sürüklemesiz delikli kağıt için adım açılmadı (yalnızca yön bulmacası ve
+      sayfalı not istendi); mevcut kural diliyle içerik olarak kurulacakları varsayıldı, Aşama 5 detaylandırılırken
+      doğrulanır.
+    - Telefon, `talk` etkili sıradan bir hotspot'tur (silüet `sprite`'ı olmadan); yeni etki gerekmez.
+    - 5.6'daki işaret türlerinde `inspect` (incelenecek yer) motor yeteneği olarak kaldı; gerçek içerikte karşılığı
+      olmayacak.
+    - Karakolun hangi mekanda ve hangi bölümde açıldığı yazılmadı (hikaye).
+    - Yeni Aşama 5 adımları 5.8 ve 5.9 olarak numaralandı; 8.3 silinmedi, üstü çizildi (numaralar değişmez).
