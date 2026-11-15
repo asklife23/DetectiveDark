@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:detective_dark/app/dev_menu_builder.dart';
 import 'package:detective_dark/app/game/game_screen.dart';
 import 'package:detective_dark/core/config/app_config.dart';
 import 'package:detective_dark/core/config/build_target.dart';
@@ -75,15 +76,34 @@ extension GameTester on WidgetTester {
   }
 
   /// Shows the game screen and waits until the first scene is up.
-  Future<void> pumpGame({bool showDebugTools = false}) async {
+  ///
+  /// [devMenu] is the developer menu, as `main_dev.dart` would pass it.
+  Future<void> pumpGame({
+    bool showDebugTools = false,
+    DevMenuBuilder? devMenu,
+  }) async {
     await pumpWidget(
       MaterialApp(
         theme: AppTheme.dark(),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: GameScreen(showDebugTools: showDebugTools),
+        home: GameScreen(showDebugTools: showDebugTools, devMenu: devMenu),
       ),
     );
+    await pumpFor();
+  }
+
+  /// Lets the scene bloc finish starting again (`SceneStarted` while a game
+  /// is already running, as the developer menu does after a jump).
+  ///
+  /// The bloc first cancels its progress subscription and waits for that.
+  /// The future of a cancelled subscription completes outside the fake
+  /// clock of a widget test, so pumping frames alone would wait forever;
+  /// one turn of the real event loop lets it through. On a device there is
+  /// only the real loop, so the game itself needs nothing like this.
+  Future<void> pumpSceneRestart() async {
+    await pumpFor();
+    await runAsync(() => Future<void>.delayed(Duration.zero));
     await pumpFor();
   }
 

@@ -1,0 +1,12 @@
+{
+  "formatVersion": 1,
+  "presets": [
+    {
+      "id": "market_with_pills",
+      "scene": "market_square",
+      "items": ["pill_bottle"],
+      "notes": ["hall_letter"],
+      "flags": ["front_door_open"]
+    }
+  ]
+}

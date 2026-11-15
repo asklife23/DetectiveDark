@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:detective_dark/app/dev_menu_builder.dart';
 import 'package:detective_dark/app/game/back_shortcut.dart';
 import 'package:detective_dark/app/game/hud_side_panel.dart';
 import 'package:detective_dark/app/game/pickup_flights.dart';
@@ -40,14 +41,18 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 ///   character and the notebook opens to pick a note as evidence.
 ///
 /// It also owns Back from outside the scene: the Android system back
-/// button and the Esc key first close what is open (notebook or message
-/// history, then the dialogue or inspection panel), then leave the
+/// button and the Esc key first close what is open (the developer menu,
+/// notebook or message history, then the dialogue or inspection panel),
+/// then leave the
 /// close-up. In a main scene a second press of the system button exits the
 /// app; Esc does nothing there.
 class GameHud extends StatefulWidget {
-  const GameHud({this.showDebugTools = false, super.key});
+  const GameHud({this.showDebugTools = false, this.devMenu, super.key});
 
   final bool showDebugTools;
+
+  /// The developer menu (dev builds only). It is drawn on top of the game.
+  final DevMenuBuilder? devMenu;
 
   @override
   State<GameHud> createState() => _GameHudState();
@@ -56,6 +61,7 @@ class GameHud extends StatefulWidget {
 class _GameHudState extends State<GameHud> {
   late final PickupFlights _flights;
   bool _showHotspots = false;
+  bool _isDevMenuOpen = false;
   Timer? _exitTimer;
 
   @override
@@ -98,6 +104,10 @@ class _GameHudState extends State<GameHud> {
   /// Closes the topmost open thing or leaves the close-up. Returns false
   /// when there was nothing to go back from (a main scene, nothing open).
   bool _goBack() {
+    if (_isDevMenuOpen) {
+      _setDevMenuOpen(isOpen: false);
+      return true;
+    }
     final notebook = context.read<NotebookCubit>();
     if (notebook.state.isOpen) {
       notebook.closeNotebook();
@@ -118,6 +128,10 @@ class _GameHudState extends State<GameHud> {
         state.transitionPhase != TransitionPhase.idle;
     if (hasSomethingToClose) bloc.add(const BackPressed());
     return hasSomethingToClose;
+  }
+
+  void _setDevMenuOpen({required bool isOpen}) {
+    if (mounted) setState(() => _isDevMenuOpen = isOpen);
   }
 
   /// Android system back (button or gesture).
@@ -173,6 +187,9 @@ class _GameHudState extends State<GameHud> {
                           showHotspots: _showHotspots,
                           onToggleHotspots: () =>
                               setState(() => _showHotspots = !_showHotspots),
+                          onOpenDevMenu: widget.devMenu == null
+                              ? null
+                              : () => _setDevMenuOpen(isOpen: true),
                         ),
                         const SceneDialogueArea(),
                       ],
@@ -193,6 +210,8 @@ class _GameHudState extends State<GameHud> {
                     isOpen ? const ChatHistorySheet() : const SizedBox.shrink(),
               ),
               FlightLayer(key: _flights.layerKey),
+              if (widget.devMenu case final devMenu? when _isDevMenuOpen)
+                devMenu(context, () => _setDevMenuOpen(isOpen: false)),
             ],
           ),
         ),

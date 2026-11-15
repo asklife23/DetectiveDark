@@ -13,6 +13,9 @@ void registerCore(GetIt getIt, {required AssetBundle assetBundle}) {
       GameEventBus(),
       dispose: (bus) => bus.dispose(),
     )
+    // Also registered by itself, for the few readers of files that are not
+    // game content (the presets of the developer menu).
+    ..registerSingleton<AssetBundle>(assetBundle)
     ..registerSingleton<ContentAssetSource>(ContentAssetSource(assetBundle))
     ..registerLazySingleton<ContentTextLoader>(
       () => ContentTextLoader(getIt<ContentAssetSource>()),

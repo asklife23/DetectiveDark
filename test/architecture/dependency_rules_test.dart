@@ -119,6 +119,48 @@ void main() {
     expect(violations, isEmpty);
   });
 
+  group('developer menu (dev builds only)', () {
+    const devFolder = 'package:detective_dark/app/dev/';
+
+    /// Files under `lib/`, outside the menu's own folder, that import it.
+    List<String> importersOfDevMenu() => [
+      for (final entity in Directory('lib').listSync(recursive: true))
+        if (entity is File &&
+            entity.path.endsWith('.dart') &&
+            !entity.path.replaceAll(r'\', '/').startsWith('lib/app/dev/') &&
+            entity.readAsLinesSync().any(
+              (line) =>
+                  importPattern
+                      .firstMatch(line)
+                      ?.group(1)
+                      ?.startsWith(
+                        devFolder,
+                      ) ??
+                  false,
+            ))
+          entity.path.replaceAll(r'\', '/'),
+    ];
+
+    // The menu reaches the app only through this one import. Staging, prod
+    // and Steam builds start from other files, so the compiler never sees
+    // the menu code and no environment value can bring it back.
+    test('only lib/main_dev.dart imports lib/app/dev/', () {
+      expect(importersOfDevMenu(), ['lib/main_dev.dart']);
+    });
+
+    test('the other entry points hand no menu to bootstrap', () {
+      for (final name in ['staging', 'prod', 'steam']) {
+        final source = File('lib/main_$name.dart').readAsStringSync();
+        expect(source, isNot(contains('devMenu')), reason: 'main_$name.dart');
+        expect(source, contains('bootstrap('), reason: 'main_$name.dart');
+      }
+      expect(
+        File('lib/main_dev.dart').readAsStringSync(),
+        contains('devMenu: buildDevMenu'),
+      );
+    });
+  });
+
   group('one write path (ADR 0014)', () {
     /// Every Dart file under `lib/` with its source.
     Map<String, String> sources() => {
@@ -155,10 +197,15 @@ void main() {
             '    .save(fresh);\n',
       });
 
-      expect(violations, [
-        'lib/features/dialogue/domain/usecases/ask_topic.dart:3',
-        'lib/app/dev/dev_menu.dart:3',
-      ]);
+      // Both files exist for real; here their sources are replaced, so the
+      // order follows the real file list, which is not the point.
+      expect(
+        violations,
+        unorderedEquals([
+          'lib/features/dialogue/domain/usecases/ask_topic.dart:3',
+          'lib/app/dev/dev_menu.dart:3',
+        ]),
+      );
     });
   });
 

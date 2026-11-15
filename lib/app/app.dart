@@ -1,3 +1,4 @@
+import 'package:detective_dark/app/dev_menu_builder.dart';
 import 'package:detective_dark/app/flavor_badge.dart';
 import 'package:detective_dark/app/router/app_router.dart';
 import 'package:detective_dark/core/config/app_config.dart';
@@ -11,9 +12,12 @@ import 'package:go_router/go_router.dart';
 /// It is stateful so the router is created once and disposed with the app,
 /// instead of being rebuilt (and losing navigation state) on every build.
 class App extends StatefulWidget {
-  const App({required this.config, super.key});
+  const App({required this.config, this.devMenu, super.key});
 
   final AppConfig config;
+
+  /// The developer menu, when the entry point provides one (dev only).
+  final DevMenuBuilder? devMenu;
 
   @override
   State<App> createState() => _AppState();
@@ -22,6 +26,7 @@ class App extends StatefulWidget {
 class _AppState extends State<App> {
   late final GoRouter _router = createAppRouter(
     showDebugTools: widget.config.showDebugOverlay,
+    devMenu: widget.devMenu,
   );
 
   @override

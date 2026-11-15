@@ -1,5 +1,6 @@
 import 'package:detective_dark/app/app.dart';
 import 'package:detective_dark/app/app_bloc_observer.dart';
+import 'package:detective_dark/app/dev_menu_builder.dart';
 import 'package:detective_dark/app/font_licenses.dart';
 import 'package:detective_dark/app/system_ui.dart';
 import 'package:detective_dark/core/config/app_config.dart';
@@ -15,7 +16,9 @@ import 'package:get_it/get_it.dart';
 ///
 /// Order matters: error handlers first, so nothing that fails during
 /// start-up goes unnoticed; then system UI and dependencies; then the app.
-Future<void> bootstrap(AppConfig config) async {
+///
+/// [devMenu] is the developer menu. Only `main_dev.dart` passes one.
+Future<void> bootstrap(AppConfig config, {DevMenuBuilder? devMenu}) async {
   WidgetsFlutterBinding.ensureInitialized();
 
   const logger = AppLogger('app');
@@ -30,7 +33,7 @@ Future<void> bootstrap(AppConfig config) async {
   await configureSystemUi();
   await configureDependencies(GetIt.instance, config);
 
-  runApp(App(config: config));
+  runApp(App(config: config, devMenu: devMenu));
 }
 
 /// Routes every uncaught error to [logger].

@@ -103,5 +103,45 @@
   "debugHotspotsTooltip": "Show hotspots",
   "@debugHotspotsTooltip": {
     "description": "Developer tool, visible only in dev builds: toggles the outlines of the tappable areas."
+  },
+  "devMenuTooltip": "Developer menu",
+  "@devMenuTooltip": {
+    "description": "Developer tool, dev builds only: label of the button that opens the developer menu."
+  },
+  "devMenuTitle": "Developer menu",
+  "@devMenuTitle": {
+    "description": "Developer menu: title."
+  },
+  "devMenuTabScenes": "Scenes",
+  "@devMenuTabScenes": {
+    "description": "Developer menu: tab that lists the scenes to jump to."
+  },
+  "devMenuTabItems": "Items",
+  "@devMenuTabItems": {
+    "description": "Developer menu: tab that lists the items that can be added to the inventory."
+  },
+  "devMenuTabNotes": "Notes",
+  "@devMenuTabNotes": {
+    "description": "Developer menu: tab that lists the notes that can be added to the notebook."
+  },
+  "devMenuTabFlags": "Flags",
+  "@devMenuTabFlags": {
+    "description": "Developer menu: tab that lists the story flags that can be set."
+  },
+  "devMenuTabPresets": "Presets",
+  "@devMenuTabPresets": {
+    "description": "Developer menu: tab that lists the named game states that can be loaded."
+  },
+  "devMenuReset": "Reset progress",
+  "@devMenuReset": {
+    "description": "Developer menu: button that starts the case again from the beginning."
+  },
+  "devMenuNoPresets": "This build contains no presets.",
+  "@devMenuNoPresets": {
+    "description": "Developer menu: shown on the presets tab when the preset file is not part of the build (e.g. on Windows)."
+  },
+  "devMenuActionFailed": "That did not work. See the log.",
+  "@devMenuActionFailed": {
+    "description": "Developer menu: shown when an action (jump, add, reset, preset) failed."
   }
 }

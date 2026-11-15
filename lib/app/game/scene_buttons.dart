@@ -11,12 +11,17 @@ class SceneButtons extends StatelessWidget {
     required this.showDebugTools,
     required this.showHotspots,
     required this.onToggleHotspots,
+    this.onOpenDevMenu,
     super.key,
   });
 
   final bool showDebugTools;
   final bool showHotspots;
   final VoidCallback onToggleHotspots;
+
+  /// Opens the developer menu. Null when the build has no menu: then the
+  /// button is not drawn. It does not depend on [showDebugTools].
+  final VoidCallback? onOpenDevMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -42,17 +47,29 @@ class SceneButtons extends StatelessWidget {
                     : const SizedBox.shrink(),
               ),
             ),
-            if (showDebugTools)
-              Align(
-                // Bottom left belongs to the message bar, top center to the
-                // flavor badge.
-                alignment: Alignment.topRight,
-                child: HudIconButton(
-                  icon: showHotspots ? Icons.grid_off : Icons.grid_on,
-                  tooltip: l10n.debugHotspotsTooltip,
-                  onPressed: onToggleHotspots,
-                ),
+            Align(
+              // Bottom left belongs to the message bar, top center to the
+              // flavor badge.
+              alignment: Alignment.topRight,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                spacing: AppSpacing.sm,
+                children: [
+                  if (onOpenDevMenu case final onOpenDevMenu?)
+                    HudIconButton(
+                      icon: Icons.build,
+                      tooltip: l10n.devMenuTooltip,
+                      onPressed: onOpenDevMenu,
+                    ),
+                  if (showDebugTools)
+                    HudIconButton(
+                      icon: showHotspots ? Icons.grid_off : Icons.grid_on,
+                      tooltip: l10n.debugHotspotsTooltip,
+                      onPressed: onToggleHotspots,
+                    ),
+                ],
               ),
+            ),
           ],
         ),
       ),

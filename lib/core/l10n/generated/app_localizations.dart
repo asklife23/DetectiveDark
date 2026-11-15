@@ -249,6 +249,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show hotspots'**
   String get debugHotspotsTooltip;
+
+  /// Developer tool, dev builds only: label of the button that opens the developer menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer menu'**
+  String get devMenuTooltip;
+
+  /// Developer menu: title.
+  ///
+  /// In en, this message translates to:
+  /// **'Developer menu'**
+  String get devMenuTitle;
+
+  /// Developer menu: tab that lists the scenes to jump to.
+  ///
+  /// In en, this message translates to:
+  /// **'Scenes'**
+  String get devMenuTabScenes;
+
+  /// Developer menu: tab that lists the items that can be added to the inventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Items'**
+  String get devMenuTabItems;
+
+  /// Developer menu: tab that lists the notes that can be added to the notebook.
+  ///
+  /// In en, this message translates to:
+  /// **'Notes'**
+  String get devMenuTabNotes;
+
+  /// Developer menu: tab that lists the story flags that can be set.
+  ///
+  /// In en, this message translates to:
+  /// **'Flags'**
+  String get devMenuTabFlags;
+
+  /// Developer menu: tab that lists the named game states that can be loaded.
+  ///
+  /// In en, this message translates to:
+  /// **'Presets'**
+  String get devMenuTabPresets;
+
+  /// Developer menu: button that starts the case again from the beginning.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset progress'**
+  String get devMenuReset;
+
+  /// Developer menu: shown on the presets tab when the preset file is not part of the build (e.g. on Windows).
+  ///
+  /// In en, this message translates to:
+  /// **'This build contains no presets.'**
+  String get devMenuNoPresets;
+
+  /// Developer menu: shown when an action (jump, add, reset, preset) failed.
+  ///
+  /// In en, this message translates to:
+  /// **'That did not work. See the log.'**
+  String get devMenuActionFailed;
 }
 
 class _AppLocalizationsDelegate

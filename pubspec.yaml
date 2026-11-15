@@ -51,6 +51,13 @@ flutter:
     - assets/content/common/
     - assets/content/cases/case01/
     - assets/content/cases/case01/chapters/ch01/
+    # Developer menu presets (named game states). Bundled ONLY in the `dev`
+    # flavor: staging and prod packages do not contain the file. Windows has
+    # no flavors, so it is never bundled there; the menu then shows an empty
+    # preset list.
+    - path: assets/dev/
+      flavors:
+        - dev
 
   # Fonts are bundled (no runtime download): the game must work offline.
   # Both cover Latin Extended, so new languages need no new fonts.

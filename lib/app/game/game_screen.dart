@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:detective_dark/app/dev_menu_builder.dart';
 import 'package:detective_dark/app/game/game_hud.dart';
 import 'package:detective_dark/app/game/game_status_views.dart';
 import 'package:detective_dark/app/game/game_texts_cubit.dart';
@@ -21,10 +22,14 @@ import 'package:get_it/get_it.dart';
 /// It creates the blocs, waits until content and texts are loaded, and
 /// then shows the game.
 class GameScreen extends StatelessWidget {
-  const GameScreen({this.showDebugTools = false, super.key});
+  const GameScreen({this.showDebugTools = false, this.devMenu, super.key});
 
-  /// Shows developer tools such as the hotspot outlines (dev builds).
+  /// Shows the button for the hotspot outlines (dev builds).
   final bool showDebugTools;
+
+  /// The developer menu. Null in every build except dev: then there is no
+  /// button and no menu.
+  final DevMenuBuilder? devMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -71,16 +76,19 @@ class GameScreen extends StatelessWidget {
           },
         ),
       ],
-      child: Scaffold(body: _GameGate(showDebugTools: showDebugTools)),
+      child: Scaffold(
+        body: _GameGate(showDebugTools: showDebugTools, devMenu: devMenu),
+      ),
     );
   }
 }
 
 /// Decides between loading, error and the running game.
 class _GameGate extends StatelessWidget {
-  const _GameGate({required this.showDebugTools});
+  const _GameGate({required this.showDebugTools, required this.devMenu});
 
   final bool showDebugTools;
+  final DevMenuBuilder? devMenu;
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +112,7 @@ class _GameGate extends StatelessWidget {
     }
     return ContentTextScope(
       texts: texts,
-      child: GameHud(showDebugTools: showDebugTools),
+      child: GameHud(showDebugTools: showDebugTools, devMenu: devMenu),
     );
   }
 }

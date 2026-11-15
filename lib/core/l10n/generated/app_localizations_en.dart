@@ -87,4 +87,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get debugHotspotsTooltip => 'Show hotspots';
+
+  @override
+  String get devMenuTooltip => 'Developer menu';
+
+  @override
+  String get devMenuTitle => 'Developer menu';
+
+  @override
+  String get devMenuTabScenes => 'Scenes';
+
+  @override
+  String get devMenuTabItems => 'Items';
+
+  @override
+  String get devMenuTabNotes => 'Notes';
+
+  @override
+  String get devMenuTabFlags => 'Flags';
+
+  @override
+  String get devMenuTabPresets => 'Presets';
+
+  @override
+  String get devMenuReset => 'Reset progress';
+
+  @override
+  String get devMenuNoPresets => 'This build contains no presets.';
+
+  @override
+  String get devMenuActionFailed => 'That did not work. See the log.';
 }

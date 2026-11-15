@@ -1,5 +1,8 @@
 import 'dart:io';
 
+import 'package:detective_dark/app/dev/dev_catalog.dart';
+import 'package:detective_dark/app/dev/dev_preset.dart';
+import 'package:detective_dark/app/dev/dev_preset_source.dart';
 import 'package:detective_dark/core/content/content_asset_source.dart';
 import 'package:detective_dark/core/content/content_paths.dart';
 import 'package:detective_dark/core/content/content_texts.dart';
@@ -118,6 +121,47 @@ void main() {
     );
 
     expect(problems, isEmpty, reason: problems.join('\n'));
+  });
+
+  group('developer menu presets (assets/dev/presets.json)', () {
+    // Read from disk: the file is bundled only in the dev flavor, and
+    // `flutter test` builds without a flavor.
+    Future<DevCatalog> catalog() async {
+      final loaded = await loadCaseForValidation(source, caseId);
+      return DevCatalog.fromContent(
+        content: loaded.content,
+        itemIds: loaded.items.keys,
+        noteIds: loaded.notes.keys,
+        dialogues: loaded.dialogues.values,
+      );
+    }
+
+    test('every scene, item, note and flag of a preset exists', () async {
+      final presets = parseDevPresets(
+        File(DevPresetSource.path).readAsStringSync(),
+      );
+      final known = await catalog();
+
+      expect(presets, isNotEmpty);
+      expect([
+        for (final preset in presets) ...known.problemsOf(preset),
+      ], isEmpty);
+      expect(
+        {for (final preset in presets) preset.id},
+        hasLength(presets.length),
+        reason: 'preset IDs must be unique',
+      );
+    });
+
+    test('a preset that names a missing item is caught', () async {
+      const broken = DevPreset(
+        id: 'broken',
+        sceneId: 'market_square',
+        itemIds: ['no_such_item'],
+      );
+
+      expect((await catalog()).problemsOf(broken), hasLength(1));
+    });
   });
 
   group('the checks fire on the real content', () {

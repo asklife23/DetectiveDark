@@ -927,7 +927,7 @@ sahnede durur, mantık testlerle kanıtlanmıştır; panel 1.17'de gelir.
   "İlacı sor" listede kalıyor.
   **Commit:** `feat(dialogue): show evidence and give items to characters`
 
-### [ ] 1.19 Geliştirici menüsü (yalnızca dev)
+### [x] 1.19 Geliştirici menüsü (yalnızca dev)
 **Amaç:** 50 sahnelik bir bölümde belirli bir duruma saniyeler içinde gelebilmek; her denemede baştan oynamamak.
 **Yapılacaklar:**
 - `lib/app/dev/`: geliştirici menüsü; mevcut hotspot düğmesinin yanından açılır.
