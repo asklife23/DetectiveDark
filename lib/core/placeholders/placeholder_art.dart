@@ -1,6 +1,7 @@
 import 'package:detective_dark/core/placeholders/market_painters.dart';
 import 'package:detective_dark/core/placeholders/placeholder_brush.dart';
 import 'package:detective_dark/core/placeholders/placeholder_styles.dart';
+import 'package:detective_dark/core/placeholders/portrait_painters.dart';
 import 'package:detective_dark/core/placeholders/silhouette_painters.dart';
 import 'package:detective_dark/core/placeholders/statue_painters.dart';
 import 'package:detective_dark/core/placeholders/villa_painters.dart';
@@ -36,6 +37,12 @@ class PlaceholderArt extends StatelessWidget {
       SilhouetteKind.pharmacist,
     ),
     PlaceholderStyles.silhouetteCafeOwner => const SilhouettePainter(
+      SilhouetteKind.cafeOwner,
+    ),
+    PlaceholderStyles.portraitPharmacist => const PortraitPainter(
+      SilhouetteKind.pharmacist,
+    ),
+    PlaceholderStyles.portraitCafeOwner => const PortraitPainter(
       SilhouetteKind.cafeOwner,
     ),
     _ => const UnknownPlaceholderPainter(),

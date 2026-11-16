@@ -209,6 +209,37 @@ void main() {
     });
   });
 
+  group('one write path: what counts as a save', () {
+    test('a save without arguments is a Canvas, not the repository', () {
+      expect(
+        saveCallViolations({
+          'lib/core/placeholders/painter.dart':
+              'void paint(Canvas canvas) {\n'
+              '  canvas.save();\n'
+              '  canvas\n'
+              '    ..save()\n'
+              '    ..restore();\n'
+              '}\n',
+        }),
+        isEmpty,
+      );
+    });
+
+    test('a save with an argument is reported, also when the argument '
+        'starts on the next line', () {
+      expect(
+        saveCallViolations({
+          'lib/app/game/cheat.dart':
+              'void a() => repository.save(progress);\n'
+              'void b() => repository.save(\n'
+              '  progress,\n'
+              ');\n',
+        }),
+        ['lib/app/game/cheat.dart:1', 'lib/app/game/cheat.dart:2'],
+      );
+    });
+  });
+
   group('no cycles between features', () {
     test('the feature graph has no cycle', () {
       expect(featureCycle(importsByFile()), isEmpty);

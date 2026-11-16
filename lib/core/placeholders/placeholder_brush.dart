@@ -145,3 +145,25 @@ class PlaceholderBrush {
     circle(moon, 0.05, PlaceholderPalette.moon);
   }
 }
+
+/// Builds a [Path] from points given as fractions (0–1) of [area], so a
+/// figure can be described once and drawn into a box of any size.
+class FractionPath {
+  FractionPath(this.area);
+
+  final Rect area;
+  final Path path = Path();
+
+  double _x(double x) => area.left + x * area.width;
+  double _y(double y) => area.top + y * area.height;
+
+  void move(double x, double y) => path.moveTo(_x(x), _y(y));
+
+  void line(double x, double y) => path.lineTo(_x(x), _y(y));
+
+  /// A curve to ([x], [y]) that bends towards ([controlX], [controlY]).
+  void curve(double controlX, double controlY, double x, double y) =>
+      path.quadraticBezierTo(_x(controlX), _y(controlY), _x(x), _y(y));
+
+  void close() => path.close();
+}

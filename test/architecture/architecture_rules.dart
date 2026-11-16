@@ -13,9 +13,15 @@ const saveCallers = [
   'lib/features/notebook/domain/usecases/mark_note_read.dart',
 ];
 
-final _saveCall = RegExp(r'\.\s*save\s*\(');
+/// A call of a method named `save` that is given something to save.
+///
+/// A call without arguments (`canvas.save()`, which only remembers the
+/// drawing state of a `Canvas`) cannot be `ProgressRepository.save`, which
+/// always takes the progress, so it is not reported. A call whose argument
+/// starts on the next line still is.
+final _saveCall = RegExp(r'\.\s*save\s*\((?!\s*\))');
 
-/// Every `.save(` call outside the allowed files, as `path:line`.
+/// Every `.save(...)` call outside the allowed files, as `path:line`.
 List<String> saveCallViolations(Map<String, String> sourcesByPath) {
   final violations = <String>[];
   sourcesByPath.forEach((path, source) {

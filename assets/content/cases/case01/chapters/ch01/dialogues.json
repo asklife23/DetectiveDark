@@ -4,7 +4,7 @@
     {
       "id": "pharmacist",
       "nameKey": "char_pharmacist_name",
-      "portrait": {"placeholderStyle": "silhouette_pharmacist"},
+      "portrait": {"placeholderStyle": "portrait_pharmacist"},
       "greeting": {"first": "dlg_pharmacist_hello", "then": "dlg_pharmacist_again"},
       "noReactionKey": "dlg_pharmacist_no_reaction",
       "topics": [
@@ -45,7 +45,7 @@
     {
       "id": "cafe_owner",
       "nameKey": "char_cafe_owner_name",
-      "portrait": {"placeholderStyle": "silhouette_cafe_owner"},
+      "portrait": {"placeholderStyle": "portrait_cafe_owner"},
       "greeting": {"first": "dlg_cafe_owner_hello", "then": "dlg_cafe_owner_again"},
       "noReactionKey": "dlg_cafe_owner_no_reaction",
       "topics": [
