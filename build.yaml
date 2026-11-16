@@ -15,3 +15,14 @@ targets:
           disallow_unrecognized_keys: true
           # Content is only read, never written back.
           create_to_json: false
+      drift_dev:
+        # Only the local database is generated; scanning fewer files keeps
+        # the build fast.
+        generate_for:
+          - lib/features/**/data/datasources/local/**.dart
+        options:
+          # Used by `dart run drift_dev make-migrations`: it dumps the schema
+          # of every listed database to `drift_schemas/` and generates the
+          # migration tests under `test/drift/`.
+          databases:
+            app_database: lib/features/progress/data/datasources/local/app_database.dart

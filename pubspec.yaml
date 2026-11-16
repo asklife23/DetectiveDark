@@ -10,6 +10,11 @@ environment:
   sdk: ^3.12.2
 
 dependencies:
+  # Pinned to the version of `drift_dev`: its command line tool
+  # (`make-migrations`) does not compile against a newer drift. Raise both
+  # together (plan.md, notes of step 2.1).
+  drift: 2.34.0
+  drift_flutter: ^0.3.1
   equatable: ^3.0.0
   flutter:
     sdk: flutter
@@ -21,10 +26,14 @@ dependencies:
   # The version is pinned by flutter_localizations.
   intl: any
   json_annotation: ^4.12.0
+  path_provider: ^2.1.6
+  shared_preferences: ^2.5.6
+  uuid: ^4.6.0
 
 dev_dependencies:
   bloc_test: ^10.0.0
   build_runner: ^2.15.1
+  drift_dev: ^2.34.0
   flutter_test:
     sdk: flutter
   integration_test:

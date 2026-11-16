@@ -1,6 +1,7 @@
 import 'package:detective_dark/app/game/game_texts_cubit.dart';
 import 'package:detective_dark/core/config/app_config.dart';
 import 'package:detective_dark/core/config/flavor.dart';
+import 'package:detective_dark/core/device/device_id_provider.dart';
 import 'package:detective_dark/core/di/injection.dart';
 import 'package:detective_dark/core/events/game_event_bus.dart';
 import 'package:detective_dark/features/progress/domain/repositories/progress_repository.dart';
@@ -9,23 +10,34 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 
 import '../../helpers/fake_asset_bundle.dart';
+import '../../helpers/in_memory_key_value_store.dart';
 
 void main() {
   late GetIt getIt;
   final config = AppConfig.fromEnvironment(Flavor.dev);
+  late InMemoryKeyValueStore keyValueStore;
 
   setUp(() async {
     getIt = GetIt.asNewInstance();
+    keyValueStore = InMemoryKeyValueStore();
     await configureDependencies(
       getIt,
       config,
       assetBundle: minimalCaseBundle(),
+      keyValueStore: keyValueStore,
     );
   });
   tearDown(() => getIt.reset());
 
   test('registers the AppConfig', () {
     expect(getIt<AppConfig>(), same(config));
+  });
+
+  test('the device ID is created during start-up', () async {
+    final stored = keyValueStore.values[DeviceIdProvider.storageKey];
+
+    expect(stored, isNotEmpty);
+    expect((await getIt<DeviceIdProvider>().get()).valueOrNull, stored);
   });
 
   test('shared services are singletons', () {

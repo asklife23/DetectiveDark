@@ -1000,7 +1000,7 @@ sahnede durur, mantık testlerle kanıtlanmıştır; panel 1.17'de gelir.
 
 **Neden:** Oyuncu uygulamayı kapatıp açtığında kaldığı yerden devam etmeli. Bu aşamada internet hiç kullanılmaz.
 
-### [ ] 2.1 Drift kurulumu ve save_slots tablosu
+### [x] 2.1 Drift kurulumu ve save_slots tablosu
 **Yapılacaklar:**
 - Paketler: `drift`, `drift_flutter`, `shared_preferences`, `uuid`; dev: `drift_dev`.
 - `progress/data/datasources/local`: `AppDatabase`, `SaveSlots` tablosu, `SaveSlotsDao`, `GameProgressConverter`.
@@ -1704,3 +1704,20 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   senaryo "Pick the note to show." ipucunu beklemez. **Yapılamayan (cihaz bağlı değildi), kullanıcıda:** telefonda
   kabul senaryosunun 12–20. adımları ve 1.20 kontrol listesi, telefonda profil modu ölçümü (panel açılışı ve daktilo
   efekti), 1.15–1.19'dan devreden telefon doğrulamaları. Komutlar `docs/devlog/asama-1.md`'de (Adım 1.20).
+- 2026-11-16 (2.1): `drift` **2.34.0'a sabitlendi** (`^` yok). Flutter 3.44.8'in sabitlediği `test` paketi `analyzer`'ı
+  12.x'te tutuyor; `drift_dev` 2.35 `analyzer` 13 istediği için çözülebilen son sürüm `drift_dev` 2.34.0. Bu sürümün
+  komut satırı aracı (`make-migrations`, `schema generate`) `drift` 2.34.1+ ile **derlenmiyor**; kod üretimi çalışsa da
+  şema dökümü alınamıyor. Flutter yükselince ikisi birlikte güncellenir.
+- 2026-11-16 (2.1): Plandaki listeye **`path_provider`** eklendi (doğrudan bağımlılık). `drift_flutter` onu zaten
+  getiriyordu; veritabanını planın istediği uygulama destek klasöründe açmak için `getApplicationSupportDirectory`'yi
+  kendi kodumuzdan çağırmak gerekiyor (`drift_flutter`'ın varsayılanı belgeler klasörü).
+- 2026-11-16 (2.1): Şemaya plandaki `save_slots`'a ek olarak **`save_backups`** tablosu girdi (okunamayan kaydın
+  yedeği; 2.2'deki "bozuk kayıt silinmez, yedeklenir" kuralının yeri). Henüz yayın yokken ilk şema sürümüne koymak,
+  2.3'te şema sürümü 2'ye migration yazmaktan ucuz. `GameProgressDto` 2.2'den 2.1'e çekildi (dönüştürücü onsuz
+  yazılamıyor); 2.2 ona sürüm numarasını, `SaveMigrator`'ı ve hata türlerini ekler.
+- 2026-11-16 (2.1): Tek sürüm varken `make-migrations` yalnızca şema dökümünü yazar; migration testini 2. sürümde
+  üretir. Bu yüzden test altyapısı elle kuruldu: `drift_dev schema generate` çıktısı (`test/drift/app_database/
+  generated/`) + `schema_test.dart` (kodun oluşturduğu tablolar dökümle aynı mı; eski sürümden açılıyor mu).
+  Veritabanı dosya adı flavor'a göre değişir (`detective_dark`, `detective_dark_dev`, `_staging`): Windows'ta flavor
+  olmadığı için dev çalıştırması Steam derlemesiyle aynı klasörü paylaşır. `shared_preferences` küçük bir
+  `KeyValueStore` arayüzünün arkasında (`core/storage`); `deviceId` `core/device`'ta.

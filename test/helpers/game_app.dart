@@ -13,6 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
 
 import 'fake_asset_bundle.dart';
+import 'in_memory_key_value_store.dart';
 
 /// A config for tests: dev flavor, no backend.
 AppConfig testConfig({bool showDebugOverlay = false}) => AppConfig(
@@ -48,6 +49,7 @@ Future<void> setUpGameDependencies({
     GetIt.instance,
     config ?? testConfig(),
     assetBundle: assetBundle ?? realContentBundle(),
+    keyValueStore: InMemoryKeyValueStore(),
   );
 }
 
