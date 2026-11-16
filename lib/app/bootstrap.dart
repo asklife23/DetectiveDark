@@ -6,6 +6,7 @@ import 'package:detective_dark/app/system_ui.dart';
 import 'package:detective_dark/core/config/app_config.dart';
 import 'package:detective_dark/core/di/injection.dart';
 import 'package:detective_dark/core/logging/app_logger.dart';
+import 'package:detective_dark/features/progress/domain/services/progress_autosave.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -33,7 +34,13 @@ Future<void> bootstrap(AppConfig config, {DevMenuBuilder? devMenu}) async {
   await configureSystemUi();
   await configureDependencies(GetIt.instance, config);
 
-  runApp(App(config: config, devMenu: devMenu));
+  runApp(
+    App(
+      config: config,
+      devMenu: devMenu,
+      autosave: GetIt.instance<ProgressAutosave>(),
+    ),
+  );
 }
 
 /// Routes every uncaught error to [logger].

@@ -1028,7 +1028,7 @@ sahnede durur, mantık testlerle kanıtlanmıştır; panel 1.17'de gelir.
 - Unit testler: her senaryo için.
   **Commit:** `feat(progress): add versioned save payload with migrations`
 
-### [ ] 2.3 DriftProgressRepository ve otomatik kayıt
+### [x] 2.3 DriftProgressRepository ve otomatik kayıt
 **Yapılacaklar:**
 - `DriftProgressRepository`, aynı `ProgressRepository` arayüzüyle. DI'da **tek satır** değişir; arayüz kodu değişmez
   (commit gövdesinde ve devlog'da vurgula).
@@ -1730,3 +1730,15 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   kaydı kullandığı için iki hata ekranı da 2.3'e kadar yalnızca testlerde görünür. (d) Geliştirici menüsünde kaydı
   kopyala / yapıştır **simge düğmesi** oldu (ipucu metinli): üç metin düğmesi başlıkta telefon genişliğine sığmadı.
   İçe aktarılan kayıt başka vakaya aitse veya sahnesi yoksa reddedilir; eşya/not ID'leri içerikle karşılaştırılmaz.
+- 2026-11-16 (2.3): Kararlar ADR 0019'da. (a) **"DI'da tek satır" tam tutmadı:** arayüzü kullanan hiçbir dosya
+  değişmedi (use case, bloc, cubit, widget: sıfır değişiklik), ama `register_progress.dart`'ta tek satır yerine kayıt
+  bloğu değişti (veritabanı + depo + yaşam döngüsü arayüzü) ve `configureDependencies`'e testler için
+  `progressRepository` parametresi eklendi. (b) Planda olmayan iki parça: domain arayüzü `ProgressAutosave` ve `app/`
+  katmanında `SaveLifecycle` (uygulama arka plana geçince yazım; presentation `data`'yı import edemediği için arayüz
+  gerekti). (c) **`save` artık disk hatasını bildirmiyor:** bellek hemen güncellenir, disk 500 ms sonra yazılır; yazım
+  hatası loglanır ve bir sonraki fırsatta yeniden denenir, oyuncuya gösterilmez. (d) Oyun süresi bellekteki ilerlemede
+  canlı değil; diske yazarken damgalanır. Süresi 0 olan kayıttan "yeni oyun" başlatmak sayacı kendiliğinden
+  sıfırlamaz: **6.3'teki "Yeni Oyun" sayacı açıkça sıfırlamalı.** (e) Widget ve entegrasyon testleri bellek içi depoyla
+  çalışır (zamanlayıcı ve dosya yok); Drift deposu kendi testlerinde bellek içi SQLite kullanır. (f) Windows'ta gerçek
+  derlemeyle doğrulandı: dosya `%APPDATA%\asklife23\DetectiveDark\detective_dark_dev.sqlite`, ikinci açılış aynı
+  kayıttan devam etti. Telefonda doğrulama kullanıcıda (2.4'ün manuel testi).

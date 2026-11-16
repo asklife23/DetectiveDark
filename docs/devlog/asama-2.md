@@ -78,3 +78,34 @@
   `sealed class` sayesinde `switch` bütün türleri saymak zorundadır: yeni bir hata türü eklersek derleyici ele almayı
   unuttuğumuz yeri gösterir. DTO'da `checked: true` ve bilinmeyen anahtarı reddetme de bilinçli: kayıt yarım okunmaz,
   ya tamamı geçerlidir ya da bozuk sayılır.
+
+### Adım 2.3 — DriftProgressRepository ve otomatik kayıt (2026-11-16)
+- **Ne yaptık:** Oyun artık ilerlemeyi diske yazıyor ve açılışta oradan devam ediyor. `DriftProgressRepository`,
+  `InMemoryProgressRepository` ile **aynı arayüzü** (`ProgressRepository`) uygular; oyunun geri kalanı (use case'ler,
+  bloc'lar, widget'lar) hiç değişmedi, yalnızca DI'daki kayıt değişti. `save` çağrılınca bellek hemen güncellenir ve
+  cevap hemen döner; diske yazım 500 ms sonra yapılır ve o arada gelen değişiklikler tek satır olarak yazılır. Uygulama
+  arka plana geçince (`SaveLifecycle` → `ProgressAutosave.onBackground`) bekleyen ne varsa anında yazılır; Windows'ta
+  pencere kapanırken uygulama yazımı bekler. Oyun süresini `PlayTimeCounter` sayar: yalnızca uygulama ön plandayken.
+  Açılışta bozuk kayıt `save_backups`'a taşınır ("yeni oyun" ekranı), daha yeni sürümün kaydına dokunulmaz ("oyunu
+  güncelle" ekranı).
+- **Neden:** Oyuncu uygulamayı kapatıp açınca kaldığı yerden devam etmeli. Her değişiklikte hemen yazmak yerine kısa
+  bir bekleme, tek dokunuşun ürettiği birkaç kaydı tek yazıma indirir ve oyun diski hiç beklemez. Telefon, arka
+  plandaki uygulamayı haber vermeden kapatabildiği için "arka plana geçtim" anı son güvenli yazma noktasıdır.
+- **Önemli dosyalar:** `lib/features/progress/data/repositories/drift_progress_repository.dart`,
+  `lib/features/progress/data/services/play_time_counter.dart`,
+  `lib/features/progress/domain/services/progress_autosave.dart`, `lib/app/save_lifecycle.dart`,
+  `lib/core/di/register_progress.dart`, `docs/adr/0019-autosave-memory-first-and-play-time.md`.
+- **Telefonda nasıl test edilir:**
+  `flutter run --flavor dev -t lib/main_dev.dart --dart-define-from-file=env/dev.json` → heykelden anahtarı al, kapıyı
+  aç, mektubu al → uygulamayı son uygulamalar listesinden kaydırarak tamamen kapat → yeniden aç: aynı sahnedesin, kapı
+  açık, anahtar kullanılmış, mektup defterde, mesaj geçmişi yerinde. Sıfırdan başlamak için geliştirici menüsü → Reset.
+  Windows'ta aynısı: `flutter run -d windows -t lib/main_dev.dart --dart-define-from-file=env/dev.json`; kayıt dosyası
+  `%APPDATA%\asklife23\DetectiveDark\detective_dark_dev.sqlite`.
+- **Öğrenme notu:** Bu adım **arayüze karşı programlamanın** karşılığını gösterdi: bütün oyun `ProgressRepository`
+  arayüzünü tanıdığı için bellekteki depoyu veritabanıyla değiştirmek tek dosyada (`register_progress.dart`) kaldı.
+  **Debounce/birleştirme:** sık gelen olayları bekletip tek işe indirmek; burada zamanlayıcı ilk değişiklikte kurulur
+  ve sonrakiler onu *yeniden başlatmaz*, yoksa sürekli değişiklik yazımı sonsuza dek erteleyebilirdi. **Uygulama yaşam
+  döngüsü** (`resumed` → `inactive` → `hidden` → `paused`): Flutter bunu `AppLifecycleListener` ile bildirir; `paused`
+  bir telefonda "her an öldürülebilirim" demektir. **Monoton saat:** oyun süresi duvar saatiyle (`DateTime.now`) değil
+  `Stopwatch` ile ölçülür; kullanıcı saati değiştirse veya yaz saatine geçilse bile süre bozulmaz. Bedeli de var
+  (ADR 0019): `save` artık disk hatasını bildiremez; hata loglanır ve sonraki fırsatta yeniden denenir.

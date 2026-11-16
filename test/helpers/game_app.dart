@@ -8,6 +8,7 @@ import 'package:detective_dark/core/config/flavor.dart';
 import 'package:detective_dark/core/di/injection.dart';
 import 'package:detective_dark/core/l10n/l10n.dart';
 import 'package:detective_dark/core/theme/app_theme.dart';
+import 'package:detective_dark/features/progress/data/repositories/in_memory_progress_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -39,7 +40,9 @@ FakeAssetBundle realContentBundle() {
 }
 
 /// Registers all dependencies like `bootstrap` does, with [assetBundle]
-/// (default: the real content) instead of the platform asset bundle.
+/// (default: the real content) instead of the platform asset bundle and
+/// the progress in memory instead of the save database: every test starts
+/// a new game.
 Future<void> setUpGameDependencies({
   AssetBundle? assetBundle,
   AppConfig? config,
@@ -50,6 +53,7 @@ Future<void> setUpGameDependencies({
     config ?? testConfig(),
     assetBundle: assetBundle ?? realContentBundle(),
     keyValueStore: InMemoryKeyValueStore(),
+    progressRepository: InMemoryProgressRepository(),
   );
 }
 

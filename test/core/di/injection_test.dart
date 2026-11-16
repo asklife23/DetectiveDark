@@ -4,7 +4,11 @@ import 'package:detective_dark/core/config/flavor.dart';
 import 'package:detective_dark/core/device/device_id_provider.dart';
 import 'package:detective_dark/core/di/injection.dart';
 import 'package:detective_dark/core/events/game_event_bus.dart';
+import 'package:detective_dark/features/progress/data/datasources/local/app_database.dart';
+import 'package:detective_dark/features/progress/data/repositories/drift_progress_repository.dart';
+import 'package:detective_dark/features/progress/data/repositories/in_memory_progress_repository.dart';
 import 'package:detective_dark/features/progress/domain/repositories/progress_repository.dart';
+import 'package:detective_dark/features/progress/domain/services/progress_autosave.dart';
 import 'package:detective_dark/features/scene_engine/presentation/bloc/scene_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get_it/get_it.dart';
@@ -25,6 +29,7 @@ void main() {
       config,
       assetBundle: minimalCaseBundle(),
       keyValueStore: keyValueStore,
+      progressRepository: InMemoryProgressRepository(),
     );
   });
   tearDown(() => getIt.reset());
@@ -43,6 +48,29 @@ void main() {
   test('shared services are singletons', () {
     expect(getIt<GameEventBus>(), same(getIt<GameEventBus>()));
     expect(getIt<ProgressRepository>(), same(getIt<ProgressRepository>()));
+  });
+
+  test('a progress given from outside has no autosave', () {
+    expect(getIt<ProgressRepository>(), isA<InMemoryProgressRepository>());
+    expect(getIt<ProgressAutosave>(), isA<NoAutosave>());
+  });
+
+  test('without one, the progress is kept in the save database', () async {
+    final app = GetIt.asNewInstance();
+    addTearDown(app.reset);
+    await configureDependencies(
+      app,
+      config,
+      assetBundle: minimalCaseBundle(),
+      keyValueStore: keyValueStore,
+    );
+
+    // Only asked, not created: creating it would open the database file
+    // of the device, which a unit test must not touch.
+    expect(app.isRegistered<DriftProgressRepository>(), isTrue);
+    expect(app.isRegistered<AppDatabase>(), isTrue);
+    expect(app.isRegistered<ProgressRepository>(), isTrue);
+    expect(app.isRegistered<ProgressAutosave>(), isTrue);
   });
 
   test('blocs and cubits are created fresh for every screen', () async {

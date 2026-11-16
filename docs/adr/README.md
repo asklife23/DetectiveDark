@@ -24,6 +24,7 @@ costs. A new decision gets a new file; an outdated one is not deleted — its st
 | [0016](0016-dialogue-showing-evidence-giving-items.md) | Dialogue system, showing evidence and giving items | Accepted |
 | [0017](0017-travel-without-a-map.md) | Travel between locations without a map | Accepted |
 | [0018](0018-content-files-extensions-and-demo-builds.md) | Content files: multiple files per chapter, chapter extensions, demo builds | Accepted |
+| [0019](0019-autosave-memory-first-and-play-time.md) | Autosave: memory first, delayed write, play time stamped by the save | Accepted |
 
 ## Template
 

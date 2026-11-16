@@ -188,7 +188,14 @@ class GameProgress extends Equatable {
       ? this
       : _copy(askedTopics: {...askedTopics, topicKey(dialogueId, topicId)});
 
+  /// The same progress with another play time. The play time is counted
+  /// by the save, not by the game rules: it is stamped when the progress is
+  /// written.
+  GameProgress withPlayTime(int seconds) =>
+      seconds == playTimeSeconds ? this : _copy(playTimeSeconds: seconds);
+
   GameProgress _copy({
+    int? playTimeSeconds,
     List<String>? sceneStack,
     List<String>? inventory,
     List<CollectedNote>? notes,
@@ -213,7 +220,7 @@ class GameProgress extends Equatable {
       spokenLines: spokenLines ?? this.spokenLines,
       firedTriggers: firedTriggers ?? this.firedTriggers,
       askedTopics: askedTopics ?? this.askedTopics,
-      playTimeSeconds: playTimeSeconds,
+      playTimeSeconds: playTimeSeconds ?? this.playTimeSeconds,
     );
   }
 

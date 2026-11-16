@@ -1,9 +1,11 @@
 import 'package:detective_dark/app/dev_menu_builder.dart';
 import 'package:detective_dark/app/flavor_badge.dart';
 import 'package:detective_dark/app/router/app_router.dart';
+import 'package:detective_dark/app/save_lifecycle.dart';
 import 'package:detective_dark/core/config/app_config.dart';
 import 'package:detective_dark/core/l10n/l10n.dart';
 import 'package:detective_dark/core/theme/app_theme.dart';
+import 'package:detective_dark/features/progress/domain/services/progress_autosave.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,12 +14,20 @@ import 'package:go_router/go_router.dart';
 /// It is stateful so the router is created once and disposed with the app,
 /// instead of being rebuilt (and losing navigation state) on every build.
 class App extends StatefulWidget {
-  const App({required this.config, this.devMenu, super.key});
+  const App({
+    required this.config,
+    this.devMenu,
+    this.autosave = const NoAutosave(),
+    super.key,
+  });
 
   final AppConfig config;
 
   /// The developer menu, when the entry point provides one (dev only).
   final DevMenuBuilder? devMenu;
+
+  /// The save, told when the app leaves and re-enters the foreground.
+  final ProgressAutosave autosave;
 
   @override
   State<App> createState() => _AppState();
@@ -37,23 +47,26 @@ class _AppState extends State<App> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      onGenerateTitle: (context) => context.l10n.appTitle,
-      theme: AppTheme.dark(),
-      // Languages come only from the ARB files. A device language that is
-      // not supported falls back to the first supported locale (English).
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      routerConfig: _router,
-      // `builder` wraps every screen, so the badge stays on top of all of
-      // them without each screen knowing about it.
-      builder: (context, child) => Stack(
-        children: [
-          ?child,
-          if (widget.config.showDebugOverlay)
-            FlavorBadge(label: widget.config.debugLabel),
-        ],
+    return SaveLifecycle(
+      autosave: widget.autosave,
+      child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
+        onGenerateTitle: (context) => context.l10n.appTitle,
+        theme: AppTheme.dark(),
+        // Languages come only from the ARB files. A device language that is
+        // not supported falls back to the first supported locale (English).
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        routerConfig: _router,
+        // `builder` wraps every screen, so the badge stays on top of all of
+        // them without each screen knowing about it.
+        builder: (context, child) => Stack(
+          children: [
+            ?child,
+            if (widget.config.showDebugOverlay)
+              FlavorBadge(label: widget.config.debugLabel),
+          ],
+        ),
       ),
     );
   }

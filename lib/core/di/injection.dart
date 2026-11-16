@@ -10,6 +10,7 @@ import 'package:detective_dark/core/di/register_scene_engine.dart';
 import 'package:detective_dark/core/error/result.dart';
 import 'package:detective_dark/core/logging/app_logger.dart';
 import 'package:detective_dark/core/storage/key_value_store.dart';
+import 'package:detective_dark/features/progress/domain/repositories/progress_repository.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 
@@ -20,13 +21,14 @@ import 'package:get_it/get_it.dart';
 /// registration function, called here in dependency order. Widgets read
 /// from `get_it` only when creating a `BlocProvider`.
 ///
-/// [assetBundle] and [keyValueStore] replace the real asset bundle and
-/// `shared_preferences` in tests.
+/// [assetBundle], [keyValueStore] and [progressRepository] replace the real
+/// asset bundle, `shared_preferences` and the save database in tests.
 Future<void> configureDependencies(
   GetIt getIt,
   AppConfig config, {
   AssetBundle? assetBundle,
   KeyValueStore? keyValueStore,
+  ProgressRepository? progressRepository,
 }) async {
   getIt.registerSingleton<AppConfig>(config);
   registerCore(
@@ -34,7 +36,7 @@ Future<void> configureDependencies(
     assetBundle: assetBundle ?? rootBundle,
     keyValueStore: keyValueStore,
   );
-  registerProgress(getIt);
+  registerProgress(getIt, repository: progressRepository);
   registerSceneEngine(getIt);
   registerDialogue(getIt);
   registerInventory(getIt);
