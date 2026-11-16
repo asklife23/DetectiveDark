@@ -321,6 +321,8 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
   - **Yanlış denemenin cezası yoktur;** opsiyonel `wrongSay` ile dedektif kısa bir yorum yapar.
   - Yeni bulmaca türü mimari bir karardır: önce sor, sonra ADR.
 - **Eşya birleştirme ve açma (Aşama 5.7; ADR'si o adımda):** `items.json`'da eşyaya opsiyonel `interactions`.
+  Kural eşyanın içinde yazılır ama onu `scene_engine` okur (`CaseContent.itemRules`; use case'ler
+  `scene_engine/domain`'de): `inventory` kural sınıflarını import ederse feature döngüsü oluşurdu.
   **Birleştir:** A seçiliyken paneldeki B'ye dokunma; iki yön denenir (B'nin `usingItem: A` kuralı, yoksa A'nın
   `usingItem: B` kuralı), hiçbiri tutmazsa genel tepki. **Aç:** inceleme kartında düğme; eşyanın eşyasız kuralını
   çalıştırır.
@@ -404,7 +406,8 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
   alt şeridini (dedektifin yorumu orada görünür) kapatmaz. Açıkken sahneye dokunulamaz. Paneller üst üste binmez:
   konuşma açıkken inceleme penceresi açılmaz.
 - **Aşama 5 ekleri:** sağ panelde not defterinin yanında **ipucu düğmesi** (bekleme sürerken kalan süreyi gösterir;
-  bir panel açıkken etkisizdir). Bölüm bitince sahnenin üstünde kısa **bölüm bildirimi** (kendiliğinden kaybolur,
+  **bulmaca açıkken de çalışır** ve o zaman "göster" bulmacanın bölgelerini işaretler; konuşma paneli, inceleme
+  penceresi, defter, suçlama ve kapı ekranı açıkken etkisizdir). Bölüm bitince sahnenin üstünde kısa **bölüm bildirimi** (kendiliğinden kaybolur,
   dokunmayı engellemez). Kapı durumunda "tam oyunu aç" girişi. Bulmaca görünümü, suçlama ekranı ve kapı ekranı da
   birer katmandır (rota değil); bulmaca açıkken eşya paneli etkisizdir ve Geri düğmesi kök sahnede de görünür.
 - **Geri sırası:** önce en üstteki katman kapanır (not defteri / mesaj geçmişi → kapı ekranı veya suçlama ekranı →

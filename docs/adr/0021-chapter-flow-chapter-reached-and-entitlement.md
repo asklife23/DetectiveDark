@@ -55,6 +55,7 @@ Purchase state must not be trusted from the local save (CLAUDE.md §8).
   errors still point at the author's file.
 - Ownership is asked every time; nothing in the save says "purchased". A player who loses entitlement keeps their
   progress but cannot advance further.
-- Until Phases 8 and 11, non-dev builds cannot reach chapter 2 at all. That is intended: the chapter 1 play test
-  needs nothing more.
+- Until Phases 8 and 11, non-dev builds (staging included) cannot reach chapter 2 at all. That is intended: the
+  chapter 1 play test needs nothing more. The play test of chapters 2–4 (7.5) will need them unlocked in the
+  staging build; how is decided when that step is detailed.
 - The account-linking offer at the end of chapter 1 (Phase 3) is added to the mobile gate screen later.

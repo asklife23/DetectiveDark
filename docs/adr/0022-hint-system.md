@@ -19,6 +19,10 @@ player's actual state, not the scene they happen to stand in.
 
 - **Hints come only when the player asks.** A hint button sits in the HUD. Unprompted nudging is off; no code for
   it is written in this phase.
+- **The button also works while a puzzle is open:** that is where a stuck player most wants a hint. The text shows
+  in the message bar strip, which a puzzle never covers, and the "show the tappable spots" step marks the puzzle's
+  interaction regions instead of the scene's hotspots. The button is inactive while the dialogue panel, the
+  inspection panel, the notebook, the accusation or the gate screen is open.
 - **Objectives in content.** `hints.json` (optional per chapter) is an ordered list of
   `{id, when, tiers: [textKey, ...]}`. `when` means "this objective is still open". The **first** objective whose
   condition holds is the current one. Chapter N's objectives are wrapped with `chapterReached N` (ADR 0021).

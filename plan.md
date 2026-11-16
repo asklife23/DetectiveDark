@@ -142,7 +142,6 @@ Aşamalar numara sırasıyla değil, bu sırayla yapılır. Numaralar değişmez
 
 | Aşama | Konu | Öneri |
 |---|---|---|
-| 5.7 | Eşya kurallarının kodda yeri | `scene_engine` okur (`CaseContent.itemRules`); `inventory` → `scene_engine` import'u döngü olurdu. Adım başlarken onaylanır (Notlar 2026-11-16) |
 | 5.5c | Sonuç paylaşımı: paket mi, pano mu | Önce `share_plus`'ın Windows desteği kontrol edilir; yoksa veya istenmezse panoya kopyala |
 | 6 | Ses kütüphanesi | `flutter_soloud` (düşük gecikme, oyun odaklı) veya `audioplayers` |
 | 7 | Görsel üretim aracı (AI) ve ticari kullanım koşulları | Ticari kullanıma açık lisanslı araç; seçim stil denemeleriyle |
@@ -1180,7 +1179,8 @@ etkileşimlerinin ADR'leri kendi adımlarında yazılır). Devlog: `docs/devlog/
 **Kabul senaryosunun devamı (aşamanın sonunda 1–30 kusursuz çalışmalı; "bulmaca demosu"):**
 21. Holde kasaya dokun → sahne yığını değişmeden kasanın yakın planı açılır (bulmaca görünümü); Geri görünür. Yanlış
     bir kod gir → gösterge temizlenir, dedektif kısa bir yorum yapar; ceza yok. Geri → hol.
-22. Kasayı yeniden aç, villa önündeki kapı numarasını gir (oyunun çizdiği overlay yazısı) → kasa çözülür: yarım
+22. Kasayı yeniden aç, dört haneli şifreyi gir (ilk iki hane villa önündeki kapı numarası, son iki hane başka bir
+    sahnedeki ikinci numara; ikisi de oyunun çizdiği overlay yazısı) → kasa çözülür: yarım
     fotoğraf panele gelir, iki sayfalı defter not defterine girer, dedektif konuşur, bulmaca kapanır. Kasaya tekrar
     dokun → yalnızca "boş" repliği; bulmaca yeniden açılmaz.
 23. Not defterinde iki sayfalı defteri aç → sayfa çevir (ileri / geri).
@@ -1276,7 +1276,7 @@ etkileşimlerinin ADR'leri kendi adımlarında yazılır). Devlog: `docs/devlog/
    "keys": {"rect": {"x": 0.35, "y": 0.30, "width": 0.30, "height": 0.50}, "rows": 4, "columns": 3,
             "values": ["1","2","3","4","5","6","7","8","9","clear","0","enter"]},
    "display": {"rect": {"x": 0.35, "y": 0.18, "width": 0.30, "height": 0.09}, "style": "brass"},
-   "solution": "17", "wrongSay": "say_strongbox_wrong",
+   "solution": "1742", "wrongSay": "say_strongbox_wrong",
    "onSolved": [{"giveItem": "photo_half_a"}, {"addNote": "strongbox_ledger"}, {"say": "say_strongbox_open"}]}
   ```
   - `keys` iki biçim alır: **ızgara** (`rect` + `rows` + `columns` + `values`, satır satır) veya **tek tek**
@@ -1291,8 +1291,11 @@ etkileşimlerinin ADR'leri kendi adımlarında yazılır). Devlog: `docs/devlog/
   0–1 aralığında ve mesaj barı şeridinin dışında; ızgarada `values` sayısı = `rows × columns`; `display.style`
   kodda tanımlı.
 - **Demo içeriği (dikey dilim):** `villa_hall`'e `strongbox` hotspot'u (`sprite`'lı). Kurallar: `puzzleSolved` ise
-  kısa replik; değilse `openPuzzle`. Şifre, villa önündeki kapı numarası overlay'inden okunur (mevcut
-  `villa_house_number`). `onSolved`: `photo_half_a` eşyası + `strongbox_ledger` notu (5.9'da sayfalanır) + replik.
+  kısa replik; değilse `openPuzzle`. **Şifre dört hanelidir ve iki ayrı yerden okunur:** ilk iki hane villa
+  önündeki kapı numarası overlay'i (mevcut `villa_house_number`), son iki hane dilime eklenen **iki haneli ikinci bir
+  overlay** (başka bir sahnede; yeri adımda seçilir, ör. çarşıdaki bir kapı numarası). İkisinin de oyunun çizdiği
+  yazı olması gerekir (ADR 0011). Hanelerin sırasını oyuncu mevcut bir metinden çıkarır (ipucu kademeleri de söyler).
+  `onSolved`: `photo_half_a` eşyası + `strongbox_ledger` notu (5.9'da sayfalanır) + replik.
   Yeni placeholder çizimleri: `strongbox_closeup`, `sprite_strongbox`, `item_photo_half`.
 - `assets/dev/presets.json`'a "kasa çözülmüş" durumu; `tool/render_scenes_test.dart` bulmaca görsellerini de çizer.
 - **Testler:** `PuzzleCubit` (`bloc_test`: hane ekleme, sınır, `clear`, yanlış, doğru, `enter`'sız otomatik deneme),
@@ -1319,8 +1322,8 @@ etkileşimlerinin ADR'leri kendi adımlarında yazılır). Devlog: `docs/devlog/
 - **Kuralların yeri (kodla çelişki, bkz. Notlar 2026-11-16):** `ItemDefinition` `inventory/domain`'dedir ve
   `scene_engine` → `inventory` yönü sabittir; `inventory`, `InteractionRule`'u import ederse döngü oluşur. Bu yüzden
   eşya kuralları `scene_engine` tarafından okunur: `CaseContent.itemRules` (`itemId` → kurallar). `ItemDto`
-  `interactions` alanını tanır ama yorumlamaz (bilinmeyen alan reddedildiği için gerekli). **Adım başlarken
-  kullanıcıya onaylatılır.**
+  `interactions` alanını tanır ama yorumlamaz (bilinmeyen alan reddedildiği için gerekli). **Kullanıcı onayladı
+  (2026-11-16).**
 - **Use case'ler (`scene_engine/domain`):** `InteractionResolver` hotspot yerine kural listesi alacak şekilde
   genelleştirilir (davranış aynı).
   - `OpenItem(itemId)`: eşyanın eşyasız dokunuş kuralını çalıştırır (zarfın içinden mektup çıkar).
@@ -1483,7 +1486,10 @@ yönlendirme kapalıdır:** bu aşamada kodu yazılmaz (bkz. Notlar 2026-11-16).
 #### [ ] 5.6b İpucu düğmesi ve dokunulabilir yerleri gösterme
 **Yapılacaklar:**
 - **HUD:** sağ panelde, not defteri düğmesinin yanında ipucu düğmesi. Bekleme sürerken soluk çizilir ve kalan süreyi
-  gösterir; basınca hiçbir şey olmaz. Bir panel (konuşma, bulmaca, inceleme, defter) açıkken etkisizdir.
+  gösterir; basınca hiçbir şey olmaz. **Bulmaca açıkken de çalışır** (takılan oyuncu ipucunu en çok bulmacanın
+  içinde ister): kademe metni mesaj barının şeridinde görünür (bulmaca şeridi kapatmaz); "göster" basışı bulmacanın
+  etkileşim bölgelerini (tuşlar, parçalar) işaretler. Konuşma paneli, inceleme penceresi, defter, suçlama ve kapı
+  ekranı açıkken etkisizdir. Bulmaca içinde çalıştırmak teknik olarak zor çıkarsa adımda kullanıcıya sorulur.
 - `HintCubit` (`case_flow/presentation`): bekleme sayacı (`Clock`), `RequestHint` çağrısı, "göster" isteği.
 - **İşaretleme:** görünür hotspot'lar ~1,5 sn (tek sabit) türüne göre küçük bir simgeyle işaretlenir; işaret
   dokunma alanının ortasındadır, dokunmayı engellemez, oyun mantığını etkilemez (yalnızca sunum). Çizim
@@ -1491,7 +1497,8 @@ yönlendirme kapalıdır:** bu aşamada kodu yazılmaz (bkz. Notlar 2026-11-16).
 - **Demo içeriği:** `ch01` için birkaç hedef (kasa, fotoğrafı birleştirme, vana kutusu 5.8'de eklenir).
 - Yeni ARB metinleri (düğme etiketi, bekleme bilgisi).
 - **Testler:** `HintCubit` (`bloc_test`, sahte saat: bekleme, sayılmayan basış beklemeyi başlatmaz), widget testleri
-  (işaretler görünür ve kaybolur, düğme beklemede etkisiz), kabul senaryosu 27.
+  (işaretler görünür ve kaybolur, düğme beklemede etkisiz, bulmaca açıkken ipucu ve bölge işaretleri, konuşma
+  açıkken etkisiz), kabul senaryosu 27.
   **Kabul kriterleri:** Kabul senaryosunun 27. adımı; ipucu metinleri mesaj geçmişinde; kapat-aç sonrası açılmış
   kademeler ve sayaç yerinde.
   **Commit:** `feat(case_flow): add hint button and tappable-spot markers`
@@ -1718,6 +1725,8 @@ değerlendirilir; bulmaca veya hikaye değişikliği gerekiyorsa önce o yapıl�
   Her görsel için üretim kaydı (araç, model, tarih, prompt, elle yapılan düzenlemeler): `docs/art/ai-usage.md`
   (Steam AI açıklamasının kaynağı, bkz. 11.5).
 - [ ] 7.5 Bölüm 2–4 içeriği. *(Aşama 6'dan sonra yapılır; aynı sıra: önce yer tutucularla içerik, sonra görsel.)*
+  Bu bölümlerin oyun testi için **`staging` derlemesinde Bölüm 2–4 açılmalıdır** (5.4b'de dev dışındaki derlemeler
+  yalnızca Bölüm 1'i açar); nasıl açılacağı bu adım detaylandırılırken kararlaştırılır.
 
 ## Aşama 8 — Para kazanma (mobil)
 *(Başlarken: açık kararları sor, ADR yaz.)*
@@ -2290,3 +2299,18 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
       belli olduktan sonra `openAccusation` sonuç ekranını açar. Yeni olay `AccusationJudged` (benim eklemem).
     - Demo suçlamasının hotspot'u çarşıda bir polis telefonu (karakol sahnesi dilimde yok).
     - 7.4 üç parçaya bölündü (7.4a içerik, 7.4b görsellerin bağlanması, 7.4c oyun testi); numara aynı.
+- 2026-11-16 (Aşama 5 planı onaylandı; kullanıcı kararları): Plan, yorumlar ve çözümler onaylandı. Dört karar ilgili
+  adımlara, `CLAUDE.md`'ye ve ADR 0021 / 0022'ye işlendi; bu commit de yalnızca belgedir.
+  1. **Eşya kuralları (5.7): öneri onaylandı.** JSON aynı kalır (kural eşyanın içinde yazılır); kuralları
+     `scene_engine` okur (`CaseContent.itemRules`), `OpenItem` / `CombineItems` `scene_engine/domain`'dedir. Açık
+     kararlardan çıkarıldı; ADR'si yine 5.7'de yazılır. (Yukarıdaki 1. çelişki maddesi kapandı.)
+  2. **Demo kasa (5.2): şifre dört haneli, iki ayrı yerden okunur.** İlk iki hane mevcut kapı numarası overlay'i,
+     son iki hane dilime eklenecek iki haneli ikinci bir overlay. (Yukarıdaki 11. madde kapandı.) Yorumum: ikinci
+     overlay'in sahnesi ve hanelerin sırasını veren metin 5.2'de seçilir; plandaki `"1742"` yalnızca biçim örneğidir.
+  3. **İpucu düğmesi bulmaca açıkken de çalışır (5.6b).** Konuşma paneli, inceleme penceresi, defter, suçlama ve
+     kapı ekranı açıkken etkisiz kalır. Yorumum: bulmaca içindeki "göster" basışı sahnenin hotspot'larını değil,
+     bulmacanın etkileşim bölgelerini işaretler (sahne o an görünmüyor). Teknik olarak zor çıkarsa 5.6b'de sorulur.
+     Önceki "bir panel açıkken düğme etkisizdir" yorumu bununla değişti.
+  4. **Sahiplik şimdilik aynı:** dev dışındaki derlemeler (staging dahil) yalnızca Bölüm 1'i açar. **Bölüm 2–4'ün
+     oyun testi (7.5) gelince `staging` derlemesinde bu bölümlerin açılması gerekir;** 7.5'e not düşüldü, yol o adım
+     detaylandırılırken seçilir.
