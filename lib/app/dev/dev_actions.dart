@@ -80,6 +80,27 @@ class DevActions {
     return _enter(content, stocked.progress, preset.sceneId);
   }
 
+  /// Replaces the progress with [imported]: a save pasted into the menu,
+  /// e.g. the state a tester sent along with a bug report.
+  ///
+  /// The save must belong to this case and stand in a scene that exists.
+  Future<Result<void>> importSave(CaseContent content, GameProgress imported) {
+    final sceneId = imported.currentSceneId;
+    if (imported.caseId != content.definition.id || sceneId == null) {
+      return Future.value(
+        Failed(
+          ContentFailure(
+            'The save belongs to case "${imported.caseId}" or has no scene.',
+          ),
+        ),
+      );
+    }
+    // The pipeline stores only what differs from the progress it is given.
+    // Arriving from an empty stack is always a change, so the imported
+    // state is saved even when nothing else happens on arrival.
+    return _enter(content, imported.withSceneStack(const []), sceneId);
+  }
+
   static const _noGame = UnexpectedFailure('No game is running.');
 
   GameProgress _freshProgress(CaseContent content, String chapterId) =>

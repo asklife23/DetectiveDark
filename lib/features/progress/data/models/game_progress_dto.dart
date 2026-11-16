@@ -12,9 +12,15 @@ part 'game_progress_dto.g.dart';
 ///
 /// Sets are written as sorted lists: the same progress always produces the
 /// same JSON, whatever order the flags were set in.
+///
+/// This class always describes the **current** version of the format.
+/// Older payloads are first rewritten by the `SaveMigrator`; only then are
+/// they read here. Changing a field therefore means: new migration, new
+/// version.
 @JsonSerializable(createToJson: true, explicitToJson: true)
 class GameProgressDto {
   const GameProgressDto({
+    required this.schemaVersion,
     required this.caseId,
     required this.chapterId,
     required this.sceneStack,
@@ -33,7 +39,11 @@ class GameProgressDto {
   factory GameProgressDto.fromJson(Map<String, dynamic> json) =>
       _$GameProgressDtoFromJson(json);
 
-  factory GameProgressDto.fromEntity(GameProgress progress) => GameProgressDto(
+  factory GameProgressDto.fromEntity(
+    GameProgress progress, {
+    required int schemaVersion,
+  }) => GameProgressDto(
+    schemaVersion: schemaVersion,
     caseId: progress.caseId,
     chapterId: progress.chapterId,
     sceneStack: progress.sceneStack,
@@ -53,6 +63,9 @@ class GameProgressDto {
     playTimeSeconds: progress.playTimeSeconds,
   );
 
+  /// The version of this format (`SaveMigrator.versionKey`). It is the
+  /// first key of the JSON, so it is the first thing a reader sees.
+  final int schemaVersion;
   final String caseId;
   final String chapterId;
   final List<String> sceneStack;

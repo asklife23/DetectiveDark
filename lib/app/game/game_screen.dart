@@ -5,6 +5,7 @@ import 'package:detective_dark/app/game/game_hud.dart';
 import 'package:detective_dark/app/game/game_status_views.dart';
 import 'package:detective_dark/app/game/game_texts_cubit.dart';
 import 'package:detective_dark/core/content/content_text_scope.dart';
+import 'package:detective_dark/core/error/failure.dart';
 import 'package:detective_dark/core/events/game_event_bus.dart';
 import 'package:detective_dark/features/detective_chat/presentation/cubit/chat_cubit.dart';
 import 'package:detective_dark/features/dialogue/presentation/cubit/dialogue_cubit.dart';
@@ -96,10 +97,14 @@ class _GameGate extends StatelessWidget {
     final sceneStatus = context.select<SceneBloc, SceneStatus>(
       (bloc) => bloc.state.status,
     );
+    final sceneFailure = context.select<SceneBloc, Failure?>(
+      (bloc) => bloc.state.failure,
+    );
     final texts = textsState.texts;
 
     if (textsState.failure != null || sceneStatus == SceneStatus.failed) {
       return GameErrorView(
+        failure: sceneFailure,
         onRetry: () {
           final languageCode = Localizations.localeOf(context).languageCode;
           context.read<SceneBloc>().add(const SceneStarted());

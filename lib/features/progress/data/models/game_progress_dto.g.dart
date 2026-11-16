@@ -11,6 +11,7 @@ GameProgressDto _$GameProgressDtoFromJson(Map<String, dynamic> json) =>
       $checkKeys(
         json,
         allowedKeys: const [
+          'schemaVersion',
           'caseId',
           'chapterId',
           'sceneStack',
@@ -27,6 +28,10 @@ GameProgressDto _$GameProgressDtoFromJson(Map<String, dynamic> json) =>
         ],
       );
       final val = GameProgressDto(
+        schemaVersion: $checkedConvert(
+          'schemaVersion',
+          (v) => (v as num).toInt(),
+        ),
         caseId: $checkedConvert('caseId', (v) => v as String),
         chapterId: $checkedConvert('chapterId', (v) => v as String),
         sceneStack: $checkedConvert(
@@ -83,6 +88,7 @@ GameProgressDto _$GameProgressDtoFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$GameProgressDtoToJson(GameProgressDto instance) =>
     <String, dynamic>{
+      'schemaVersion': instance.schemaVersion,
       'caseId': instance.caseId,
       'chapterId': instance.chapterId,
       'sceneStack': instance.sceneStack,

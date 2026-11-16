@@ -10,6 +10,7 @@ import 'package:detective_dark/features/inventory/domain/repositories/item_catal
 import 'package:detective_dark/features/notebook/domain/repositories/note_catalog_repository.dart';
 import 'package:detective_dark/features/progress/domain/entities/game_progress.dart';
 import 'package:detective_dark/features/progress/domain/repositories/progress_repository.dart';
+import 'package:detective_dark/features/progress/domain/services/save_codec.dart';
 import 'package:detective_dark/features/scene_engine/domain/entities/case_content.dart';
 import 'package:detective_dark/features/scene_engine/domain/repositories/scene_content_repository.dart';
 import 'package:equatable/equatable.dart';
@@ -24,6 +25,7 @@ class DevMenuState extends Equatable {
     this.presets = const [],
     this.progress,
     this.actionFailed = false,
+    this.saveCopied = false,
   });
 
   final DevMenuStatus status;
@@ -36,22 +38,34 @@ class DevMenuState extends Equatable {
   /// The last action could not be carried out (e.g. the save failed).
   final bool actionFailed;
 
+  /// The last action handed out the save text (it is in the clipboard).
+  final bool saveCopied;
+
   DevMenuState copyWith({
     DevMenuStatus? status,
     DevCatalog? catalog,
     List<DevPreset>? presets,
     GameProgress? progress,
     bool? actionFailed,
+    bool? saveCopied,
   }) => DevMenuState(
     status: status ?? this.status,
     catalog: catalog ?? this.catalog,
     presets: presets ?? this.presets,
     progress: progress ?? this.progress,
     actionFailed: actionFailed ?? this.actionFailed,
+    saveCopied: saveCopied ?? this.saveCopied,
   );
 
   @override
-  List<Object?> get props => [status, catalog, presets, progress, actionFailed];
+  List<Object?> get props => [
+    status,
+    catalog,
+    presets,
+    progress,
+    actionFailed,
+    saveCopied,
+  ];
 }
 
 /// State of the developer menu: what can be chosen and what the player has.
@@ -68,6 +82,7 @@ class DevMenuCubit extends Cubit<DevMenuState> {
     required this._dialogueCatalog,
     required this._presetSource,
     required this._progressRepository,
+    required this._saveCodec,
     required this._actions,
   }) : super(const DevMenuState());
 
@@ -78,6 +93,7 @@ class DevMenuCubit extends Cubit<DevMenuState> {
   final DialogueCatalogRepository _dialogueCatalog;
   final DevPresetSource _presetSource;
   final ProgressRepository _progressRepository;
+  final SaveCodec _saveCodec;
   final DevActions _actions;
 
   CaseContent? _content;
@@ -136,6 +152,28 @@ class DevMenuCubit extends Cubit<DevMenuState> {
   Future<bool> loadPreset(DevPreset preset) =>
       _run((content) => _actions.loadPreset(content, preset));
 
+  /// The running game as save text (the JSON the save slot stores), for
+  /// the clipboard. Null when no game is running.
+  String? exportSave() {
+    final progress = _progressRepository.current;
+    final text = progress == null ? null : _saveCodec.encode(progress);
+    emit(state.copyWith(actionFailed: text == null, saveCopied: text != null));
+    return text;
+  }
+
+  /// Replaces the progress with the save in [text] (from the clipboard).
+  /// Older save versions are migrated, exactly as when the game loads one.
+  Future<bool> importSave(String? text) async {
+    switch (_saveCodec.decode(text ?? '')) {
+      case Success(:final value):
+        return _run((content) => _actions.importSave(content, value));
+      case Failed(:final failure):
+        addError(failure);
+        emit(state.copyWith(actionFailed: true, saveCopied: false));
+        return false;
+    }
+  }
+
   Future<bool> _run(
     Future<Result<void>> Function(CaseContent content) action,
   ) async {
@@ -144,7 +182,11 @@ class DevMenuCubit extends Cubit<DevMenuState> {
 
     final result = await action(content);
     if (result case Failed(:final failure)) addError(failure);
-    if (!isClosed) emit(state.copyWith(actionFailed: !result.isSuccess));
+    if (!isClosed) {
+      emit(
+        state.copyWith(actionFailed: !result.isSuccess, saveCopied: false),
+      );
+    }
     return result.isSuccess;
   }
 

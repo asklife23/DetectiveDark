@@ -187,6 +187,82 @@ void main() {
     });
   });
 
+  group('importSave', () {
+    const imported = GameProgress(
+      caseId: caseId,
+      chapterId: 'ch01',
+      sceneStack: ['villa_exterior', 'villa_door_closeup', 'villa_hall'],
+      inventory: ['pill_bottle'],
+      flags: {'front_door_open'},
+      visitedSceneIds: {'villa_exterior', 'villa_door_closeup', 'villa_hall'},
+      playTimeSeconds: 90,
+    );
+
+    test('replaces the progress with the imported one, in one save', () async {
+      await actions.giveItem(content, 'brass_key');
+      await pumpEventQueue();
+      saves.clear();
+      game.events.clear();
+
+      final result = await actions.importSave(content, imported);
+      await pumpEventQueue();
+
+      expect(result.isSuccess, isTrue);
+      expect(progress().sceneStack, imported.sceneStack);
+      expect(progress().inventory, ['pill_bottle']);
+      expect(progress().hasFlag('front_door_open'), isTrue);
+      expect(progress().playTimeSeconds, 90);
+      expect(saves, hasLength(1));
+      expect(
+        game.events.whereType<SceneEntered>().single.sceneId,
+        'villa_hall',
+      );
+      expect(game.events.whereType<ItemObtained>(), isEmpty);
+    });
+
+    test('a save that equals the running game is still stored', () async {
+      final result = await actions.importSave(content, progress());
+      await pumpEventQueue();
+
+      expect(result.isSuccess, isTrue);
+      expect(saves, hasLength(1));
+    });
+
+    for (final (name, broken) in [
+      (
+        'of another case',
+        const GameProgress(
+          caseId: 'case99',
+          chapterId: 'ch01',
+          sceneStack: ['villa_exterior'],
+        ),
+      ),
+      (
+        'without a scene',
+        const GameProgress(caseId: caseId, chapterId: 'ch01', sceneStack: []),
+      ),
+      (
+        'in an unknown scene',
+        const GameProgress(
+          caseId: caseId,
+          chapterId: 'ch01',
+          sceneStack: ['nowhere'],
+        ),
+      ),
+    ]) {
+      test('a save $name fails and changes nothing', () async {
+        final before = progress();
+
+        final result = await actions.importSave(content, broken);
+        await pumpEventQueue();
+
+        expect(result, isA<Failed<void>>());
+        expect(progress(), before);
+        expect(saves, isEmpty);
+      });
+    }
+  });
+
   test('without a running game nothing happens', () async {
     final empty = GameHarness();
     addTearDown(empty.dispose);

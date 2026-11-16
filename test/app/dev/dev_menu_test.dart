@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:detective_dark/app/dev/dev_menu.dart';
@@ -182,6 +183,81 @@ void main() {
       expect(current.flags, isEmpty);
 
       await tester.closeGame();
+    });
+
+    group('the save as text', () {
+      /// Replaces the system clipboard for one test and returns a reader.
+      String? Function() fakeClipboard(WidgetTester tester, {String? text}) {
+        var content = text;
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async {
+            switch (call.method) {
+              case 'Clipboard.setData':
+                final arguments = call.arguments as Map<Object?, Object?>;
+                content = arguments['text'] as String?;
+              case 'Clipboard.getData':
+                return content == null ? null : {'text': content};
+            }
+            return null;
+          },
+        );
+        addTearDown(
+          () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            SystemChannels.platform,
+            null,
+          ),
+        );
+        return () => content;
+      }
+
+      testWidgets('copy puts the save into the clipboard, paste brings that '
+          'state back', (tester) async {
+        final clipboard = fakeClipboard(tester);
+        tester.useLandscapePhone();
+        await tester.pumpGame(devMenu: buildDevMenu);
+        await openMenu(tester);
+
+        await tester.tap(find.byTooltip(l10n.devMenuCopySave));
+        await tester.pumpFor();
+
+        expect(find.text(l10n.devMenuSaveCopied), findsOneWidget);
+        final saved = jsonDecode(clipboard()!) as Map<String, dynamic>;
+        expect(saved['schemaVersion'], 1);
+        expect(saved['sceneStack'], ['villa_exterior']);
+        expect(saved['inventory'], isEmpty);
+
+        await openTab(tester, l10n.devMenuTabItems);
+        await tapChip(tester, 'pill_bottle');
+        expect(progress().current!.inventory, ['pill_bottle']);
+
+        await tester.tap(find.byTooltip(l10n.devMenuPasteSave));
+        await tester.pumpSceneRestart();
+
+        expect(find.text(l10n.devMenuTitle), findsNothing);
+        expect(find.bySemanticsLabel('Front door'), findsOneWidget);
+        expect(progress().current!.inventory, isEmpty);
+
+        await tester.closeGame();
+      });
+
+      testWidgets('pasting something that is not a save keeps the menu open '
+          'and the game as it was', (tester) async {
+        fakeClipboard(tester, text: 'not a save');
+        tester.useLandscapePhone();
+        await tester.pumpGame(devMenu: buildDevMenu);
+        final before = progress().current;
+        await openMenu(tester);
+
+        await tester.tap(find.byTooltip(l10n.devMenuPasteSave));
+        await tester.pumpFor();
+
+        expect(find.text(l10n.devMenuTitle), findsOneWidget);
+        expect(find.text(l10n.devMenuActionFailed), findsOneWidget);
+        expect(progress().current, before);
+
+        await tester.closeGame();
+      });
     });
 
     testWidgets('the button does not depend on the debug overlay flag', (

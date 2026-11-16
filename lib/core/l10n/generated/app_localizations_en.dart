@@ -27,6 +27,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retryButton => 'Try again';
 
   @override
+  String get saveTooNewTitle =>
+      'This saved case comes from a newer version of the game.';
+
+  @override
+  String get saveTooNewBody =>
+      'Update the game to continue. Your progress is safe.';
+
+  @override
+  String get saveCorruptTitle => 'Your saved case could not be read.';
+
+  @override
+  String get saveCorruptBody =>
+      'It was set aside, not deleted. You can start a new case.';
+
+  @override
+  String get newGameButton => 'New game';
+
+  @override
   String get inventoryLabel => 'Inventory';
 
   @override
@@ -117,4 +135,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get devMenuActionFailed => 'That did not work. See the log.';
+
+  @override
+  String get devMenuCopySave => 'Copy save';
+
+  @override
+  String get devMenuPasteSave => 'Paste save';
+
+  @override
+  String get devMenuSaveCopied => 'Save copied to the clipboard.';
 }

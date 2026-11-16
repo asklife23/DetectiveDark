@@ -130,6 +130,36 @@ abstract class AppLocalizations {
   /// **'Try again'**
   String get retryButton;
 
+  /// Shown instead of the game when the save was written by a newer version of the game than the installed one. The save is left untouched.
+  ///
+  /// In en, this message translates to:
+  /// **'This saved case comes from a newer version of the game.'**
+  String get saveTooNewTitle;
+
+  /// Second line under saveTooNewTitle: tells the player what to do.
+  ///
+  /// In en, this message translates to:
+  /// **'Update the game to continue. Your progress is safe.'**
+  String get saveTooNewBody;
+
+  /// Shown instead of the game when the save file is damaged.
+  ///
+  /// In en, this message translates to:
+  /// **'Your saved case could not be read.'**
+  String get saveCorruptTitle;
+
+  /// Second line under saveCorruptTitle: the damaged save was kept as a backup and a new game can be started.
+  ///
+  /// In en, this message translates to:
+  /// **'It was set aside, not deleted. You can start a new case.'**
+  String get saveCorruptBody;
+
+  /// Button that starts the case from the beginning.
+  ///
+  /// In en, this message translates to:
+  /// **'New game'**
+  String get newGameButton;
+
   /// Accessibility label of the item panel on the right edge of the screen.
   ///
   /// In en, this message translates to:
@@ -304,11 +334,29 @@ abstract class AppLocalizations {
   /// **'This build contains no presets.'**
   String get devMenuNoPresets;
 
-  /// Developer menu: shown when an action (jump, add, reset, preset) failed.
+  /// Developer menu: shown when an action (jump, add, reset, preset, paste save) failed.
   ///
   /// In en, this message translates to:
   /// **'That did not work. See the log.'**
   String get devMenuActionFailed;
+
+  /// Developer menu: button that copies the current save game as JSON text to the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy save'**
+  String get devMenuCopySave;
+
+  /// Developer menu: button that replaces the progress with the save game JSON in the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste save'**
+  String get devMenuPasteSave;
+
+  /// Developer menu: shown after the save game was copied to the clipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Save copied to the clipboard.'**
+  String get devMenuSaveCopied;
 }
 
 class _AppLocalizationsDelegate

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:detective_dark/app/dev/dev_actions.dart';
 import 'package:detective_dark/app/dev/dev_menu_cubit.dart';
@@ -8,6 +10,7 @@ import 'package:detective_dark/core/content/content_paths.dart';
 import 'package:detective_dark/features/dialogue/data/repositories/asset_dialogue_catalog_repository.dart';
 import 'package:detective_dark/features/inventory/data/repositories/asset_item_catalog_repository.dart';
 import 'package:detective_dark/features/notebook/data/repositories/asset_note_catalog_repository.dart';
+import 'package:detective_dark/features/progress/data/migrations/json_save_codec.dart';
 import 'package:detective_dark/features/progress/domain/entities/game_progress.dart';
 import 'package:detective_dark/features/progress/domain/repositories/progress_repository.dart';
 import 'package:detective_dark/features/scene_engine/data/models/codec_rule_parser.dart';
@@ -50,6 +53,7 @@ void main() {
       ),
       presetSource: DevPresetSource(bundle),
       progressRepository: game.progress,
+      saveCodec: const JsonSaveCodec(),
       actions: DevActions(
         pipeline: game.pipeline,
         enterScene: game.enterScene,
@@ -162,6 +166,83 @@ void main() {
 
     expect(await cubit.jumpTo('villa_hall'), isTrue);
     expect(cubit.state.actionFailed, isFalse);
+  });
+
+  group('the save as text', () {
+    const codec = JsonSaveCodec();
+
+    test('export hands out the running game in the save format', () async {
+      final cubit = await readyCubit();
+      addTearDown(cubit.close);
+      await cubit.giveItem('pill_bottle');
+
+      final text = cubit.exportSave();
+
+      expect(codec.decode(text!).valueOrNull, game.progress.current);
+      expect(cubit.state.saveCopied, isTrue);
+      expect(cubit.state.actionFailed, isFalse);
+    });
+
+    test('export without a running game gives nothing and is reported', () {
+      final cubit = cubitOn(bundleWithPresets());
+      addTearDown(cubit.close);
+
+      expect(cubit.exportSave(), isNull);
+      expect(cubit.state.saveCopied, isFalse);
+      expect(cubit.state.actionFailed, isTrue);
+    });
+
+    test('import brings back the exported state', () async {
+      final cubit = await readyCubit();
+      addTearDown(cubit.close);
+      await cubit.jumpTo('villa_hall');
+      final text = cubit.exportSave()!;
+      final exported = game.progress.current;
+
+      await cubit.reset();
+      expect(await cubit.importSave(text), isTrue);
+      await pumpEventQueue();
+
+      expect(game.progress.current, exported);
+      expect(cubit.state.progress, exported);
+      expect(cubit.state.saveCopied, isFalse);
+      expect(cubit.state.actionFailed, isFalse);
+    });
+
+    test('a text that is not a readable save changes nothing and is '
+        'reported', () async {
+      final cubit = await readyCubit();
+      addTearDown(cubit.close);
+      final before = game.progress.current;
+      final tooNew = jsonEncode({
+        ...jsonDecode(cubit.exportSave()!) as Map<String, dynamic>,
+        'schemaVersion': codec.version + 1,
+      });
+
+      for (final text in [null, '', 'not a save', tooNew]) {
+        expect(await cubit.importSave(text), isFalse);
+        expect(cubit.state.actionFailed, isTrue);
+        expect(cubit.state.saveCopied, isFalse);
+        expect(game.progress.current, before);
+      }
+    });
+
+    test('a save of another case is refused', () async {
+      final cubit = await readyCubit();
+      addTearDown(cubit.close);
+      final before = game.progress.current;
+      final foreign = codec.encode(
+        const GameProgress(
+          caseId: 'case99',
+          chapterId: 'ch01',
+          sceneStack: ['villa_exterior'],
+        ),
+      );
+
+      expect(await cubit.importSave(foreign), isFalse);
+      expect(cubit.state.actionFailed, isTrue);
+      expect(game.progress.current, before);
+    });
   });
 
   test('a failed save changes nothing and is reported', () async {

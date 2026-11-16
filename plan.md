@@ -1014,7 +1014,7 @@ sahnede durur, mantık testlerle kanıtlanmıştır; panel 1.17'de gelir.
 - DAO testleri bellek içi veritabanıyla.
   **Commit:** `feat(progress): add drift database and save slots table`
 
-### [ ] 2.2 Sürümlü payload ve migration zinciri
+### [x] 2.2 Sürümlü payload ve migration zinciri
 **Yapılacaklar:**
 - `GameProgressDto` (JSON), payload `schemaVersion = 1`. Kayıtta metin değil sadece ID'ler, bayraklar ve anahtarlar tutulur.
   Kayıt şekli Aşama 1b'nin alanlarını **ilk sürümden** içerir: `askedTopics`, `firedTriggers`, `spokenLines`, notlarda
@@ -1721,3 +1721,12 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   Veritabanı dosya adı flavor'a göre değişir (`detective_dark`, `detective_dark_dev`, `_staging`): Windows'ta flavor
   olmadığı için dev çalıştırması Steam derlemesiyle aynı klasörü paylaşır. `shared_preferences` küçük bir
   `KeyValueStore` arayüzünün arkasında (`core/storage`); `deviceId` `core/device`'ta.
+- 2026-11-16 (2.2): (a) Kayıt metnini üreten/okuyan şey domain'de küçük bir arayüz oldu: `SaveCodec`
+  (`progress/domain/services`); uygulaması `JsonSaveCodec` (`progress/data/migrations`). Geliştirici menüsü `data`'yı
+  import edemediği için panoya verme/alma bu arayüzden geçer; Drift dönüştürücüsü de aynı codec'i kullanır (tek format).
+  (b) Plan yalnızca `SaveTooNewFailure`'ı adlandırıyordu; bozuk kayıt için **`SaveCorruptFailure`** eklendi. (c) **Bozuk
+  kaydın yedeğe taşınması bu adımda bağlanmadı:** parçalar hazır (`moveSlotToBackup` 2.1'de, `SaveCorruptFailure` ve
+  "yeni oyun" ekranı 2.2'de), ama taşımayı yapacak olan `DriftProgressRepository` 2.3'te geliyor. Oyun hâlâ bellekteki
+  kaydı kullandığı için iki hata ekranı da 2.3'e kadar yalnızca testlerde görünür. (d) Geliştirici menüsünde kaydı
+  kopyala / yapıştır **simge düğmesi** oldu (ipucu metinli): üç metin düğmesi başlıkta telefon genişliğine sığmadı.
+  İçe aktarılan kayıt başka vakaya aitse veya sahnesi yoksa reddedilir; eşya/not ID'leri içerikle karşılaştırılmaz.

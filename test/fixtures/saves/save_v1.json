@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "caseId": "case01",
+  "chapterId": "ch01",
+  "sceneStack": [
+    "villa_exterior",
+    "statue_closeup"
+  ],
+  "inventory": [
+    "brass_key",
+    "crowbar"
+  ],
+  "notes": [
+    {
+      "noteId": "torn_letter",
+      "addedAtUtcMs": 1700000000100,
+      "isRead": false,
+      "entries": []
+    },
+    {
+      "noteId": "person_pharmacist",
+      "addedAtUtcMs": 1700000000200,
+      "isRead": true,
+      "entries": [
+        {
+          "entryId": "alibi",
+          "addedAtUtcMs": 1700000000300
+        },
+        {
+          "entryId": "lied",
+          "addedAtUtcMs": 1700000000400
+        }
+      ]
+    }
+  ],
+  "flags": [
+    "alarm_off",
+    "front_door_open"
+  ],
+  "hiddenHotspots": [
+    "statue_closeup/key",
+    "villa_hall/crowbar"
+  ],
+  "visitedSceneIds": [
+    "statue_closeup",
+    "villa_exterior"
+  ],
+  "chatLog": [
+    {
+      "sender": "detective",
+      "textKey": "intro_line",
+      "params": {},
+      "sentAtUtcMs": 1700000000500
+    },
+    {
+      "sender": "system",
+      "textKey": "hint_header",
+      "params": {
+        "step": "2"
+      },
+      "sentAtUtcMs": 1700000000600
+    }
+  ],
+  "spokenLines": [
+    "statue_first_look"
+  ],
+  "firedTriggers": [
+    "both_witnesses_asked"
+  ],
+  "askedTopics": [
+    "barista/last_night",
+    "pharmacist/about_villa"
+  ],
+  "playTimeSeconds": 754
+}

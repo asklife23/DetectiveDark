@@ -24,6 +24,26 @@
   "@retryButton": {
     "description": "Button that repeats a failed action, e.g. loading the game content."
   },
+  "saveTooNewTitle": "This saved case comes from a newer version of the game.",
+  "@saveTooNewTitle": {
+    "description": "Shown instead of the game when the save was written by a newer version of the game than the installed one. The save is left untouched."
+  },
+  "saveTooNewBody": "Update the game to continue. Your progress is safe.",
+  "@saveTooNewBody": {
+    "description": "Second line under saveTooNewTitle: tells the player what to do."
+  },
+  "saveCorruptTitle": "Your saved case could not be read.",
+  "@saveCorruptTitle": {
+    "description": "Shown instead of the game when the save file is damaged."
+  },
+  "saveCorruptBody": "It was set aside, not deleted. You can start a new case.",
+  "@saveCorruptBody": {
+    "description": "Second line under saveCorruptTitle: the damaged save was kept as a backup and a new game can be started."
+  },
+  "newGameButton": "New game",
+  "@newGameButton": {
+    "description": "Button that starts the case from the beginning."
+  },
   "inventoryLabel": "Inventory",
   "@inventoryLabel": {
     "description": "Accessibility label of the item panel on the right edge of the screen."
@@ -142,6 +162,18 @@
   },
   "devMenuActionFailed": "That did not work. See the log.",
   "@devMenuActionFailed": {
-    "description": "Developer menu: shown when an action (jump, add, reset, preset) failed."
+    "description": "Developer menu: shown when an action (jump, add, reset, preset, paste save) failed."
+  },
+  "devMenuCopySave": "Copy save",
+  "@devMenuCopySave": {
+    "description": "Developer menu: button that copies the current save game as JSON text to the clipboard."
+  },
+  "devMenuPasteSave": "Paste save",
+  "@devMenuPasteSave": {
+    "description": "Developer menu: button that replaces the progress with the save game JSON in the clipboard."
+  },
+  "devMenuSaveCopied": "Save copied to the clipboard.",
+  "@devMenuSaveCopied": {
+    "description": "Developer menu: shown after the save game was copied to the clipboard."
   }
 }

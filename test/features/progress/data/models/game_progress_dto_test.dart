@@ -10,9 +10,12 @@ import '../../../../helpers/progress_fixtures.dart';
 import '../../../../helpers/slice_fixtures.dart';
 
 void main() {
+  Map<String, dynamic> toJson(GameProgress progress) =>
+      GameProgressDto.fromEntity(progress, schemaVersion: 1).toJson();
+
   /// To JSON text and back, as the save does.
   GameProgress roundTrip(GameProgress progress) {
-    final text = jsonEncode(GameProgressDto.fromEntity(progress).toJson());
+    final text = jsonEncode(toJson(progress));
     final json = jsonDecode(text) as Map<String, dynamic>;
     return GameProgressDto.fromJson(json).toEntity();
   }
@@ -26,9 +29,10 @@ void main() {
   });
 
   test('the JSON holds IDs and keys under the documented names', () {
-    final json = GameProgressDto.fromEntity(richProgress).toJson();
+    final json = toJson(richProgress);
 
     expect(json.keys, [
+      'schemaVersion',
       'caseId',
       'chapterId',
       'sceneStack',
@@ -65,10 +69,10 @@ void main() {
     final one = newGame.withFlag('b').withFlag('a').withFlag('c');
     final other = newGame.withFlag('c').withFlag('a').withFlag('b');
 
-    expect(GameProgressDto.fromEntity(one).toJson()['flags'], ['a', 'b', 'c']);
+    expect(toJson(one)['flags'], ['a', 'b', 'c']);
     expect(
-      jsonEncode(GameProgressDto.fromEntity(one).toJson()),
-      jsonEncode(GameProgressDto.fromEntity(other).toJson()),
+      jsonEncode(toJson(one)),
+      jsonEncode(toJson(other)),
     );
   });
 
@@ -79,7 +83,7 @@ void main() {
   });
 
   test('a chat log longer than the limit is cut to its newest entries', () {
-    final json = GameProgressDto.fromEntity(newGame).toJson();
+    final json = toJson(newGame);
     json['chatLog'] = [
       for (var i = 0; i < GameProgress.chatLogLimit + 5; i++)
         {
@@ -98,8 +102,16 @@ void main() {
   });
 
   group('a damaged payload is rejected, not half-read', () {
-    Map<String, dynamic> validJson() =>
-        GameProgressDto.fromEntity(richProgress).toJson();
+    Map<String, dynamic> validJson() => toJson(richProgress);
+
+    test('missing version', () {
+      final json = validJson()..remove('schemaVersion');
+
+      expect(
+        () => GameProgressDto.fromJson(json),
+        throwsA(isA<CheckedFromJsonException>()),
+      );
+    });
 
     test('missing field', () {
       final json = validJson()..remove('inventory');

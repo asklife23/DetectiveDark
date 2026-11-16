@@ -14,11 +14,13 @@ import 'package:detective_dark/features/dialogue/domain/repositories/dialogue_ca
 import 'package:detective_dark/features/inventory/domain/repositories/item_catalog_repository.dart';
 import 'package:detective_dark/features/notebook/domain/repositories/note_catalog_repository.dart';
 import 'package:detective_dark/features/progress/domain/repositories/progress_repository.dart';
+import 'package:detective_dark/features/progress/domain/services/save_codec.dart';
 import 'package:detective_dark/features/scene_engine/domain/repositories/scene_content_repository.dart';
 import 'package:detective_dark/features/scene_engine/domain/services/effect_pipeline.dart';
 import 'package:detective_dark/features/scene_engine/domain/usecases/enter_scene.dart';
 import 'package:detective_dark/features/scene_engine/presentation/bloc/scene_bloc.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 
@@ -47,6 +49,7 @@ DevMenuCubit createDevMenuCubit(GetIt getIt) {
     dialogueCatalog: getIt<DialogueCatalogRepository>(),
     presetSource: DevPresetSource(getIt<AssetBundle>()),
     progressRepository: progressRepository,
+    saveCodec: getIt<SaveCodec>(),
     actions: DevActions(
       pipeline: getIt<EffectPipeline>(),
       enterScene: getIt<EnterScene>(),
@@ -57,7 +60,8 @@ DevMenuCubit createDevMenuCubit(GetIt getIt) {
 }
 
 /// The developer menu: jump to a scene, add items, notes and flags, reset
-/// the progress or load a named state. It covers the whole game screen.
+/// the progress, load a named state, or copy the save out of the game and
+/// paste one in. It covers the whole game screen.
 class DevMenu extends StatelessWidget {
   const DevMenu({required this.onClose, super.key});
 
@@ -69,6 +73,22 @@ class DevMenu extends StatelessWidget {
   Future<void> _move(BuildContext context, Future<bool> action) async {
     final sceneBloc = context.read<SceneBloc>();
     if (!await action) return;
+    onClose();
+    sceneBloc.add(const SceneStarted());
+  }
+
+  /// Puts the save of the running game into the clipboard, as the JSON the
+  /// save slot stores.
+  Future<void> _copySave(DevMenuCubit cubit) async {
+    final text = cubit.exportSave();
+    if (text != null) await Clipboard.setData(ClipboardData(text: text));
+  }
+
+  /// Replaces the progress with the save text in the clipboard.
+  Future<void> _pasteSave(BuildContext context, DevMenuCubit cubit) async {
+    final sceneBloc = context.read<SceneBloc>();
+    final clipboard = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!await cubit.importSave(clipboard?.text)) return;
     onClose();
     sceneBloc.add(const SceneStarted());
   }
@@ -99,6 +119,8 @@ class DevMenu extends StatelessWidget {
               child: Column(
                 children: [
                   _Header(
+                    onCopySave: () => _copySave(cubit),
+                    onPasteSave: () => _pasteSave(context, cubit),
                     onReset: () => _move(context, cubit.reset()),
                     onClose: onClose,
                   ),
@@ -131,17 +153,30 @@ class DevMenu extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header({required this.onReset, required this.onClose});
+  const _Header({
+    required this.onCopySave,
+    required this.onPasteSave,
+    required this.onReset,
+    required this.onClose,
+  });
 
+  final VoidCallback onCopySave;
+  final VoidCallback onPasteSave;
   final VoidCallback onReset;
   final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final actionFailed = context.select<DevMenuCubit, bool>(
-      (cubit) => cubit.state.actionFailed,
-    );
+    final (actionFailed, saveCopied) = context
+        .select<DevMenuCubit, (bool, bool)>(
+          (cubit) => (cubit.state.actionFailed, cubit.state.saveCopied),
+        );
+    final message = actionFailed
+        ? l10n.devMenuActionFailed
+        : saveCopied
+        ? l10n.devMenuSaveCopied
+        : null;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -158,13 +193,27 @@ class _Header extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
-            child: actionFailed
-                ? Text(
-                    l10n.devMenuActionFailed,
+            child: message == null
+                ? const SizedBox.shrink()
+                : Text(
+                    message,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppColors.warning),
-                  )
-                : const SizedBox.shrink(),
+                    style: TextStyle(
+                      color: actionFailed ? AppColors.warning : null,
+                    ),
+                  ),
+          ),
+          // Icons, not labels: three text buttons do not fit next to the
+          // title on a phone.
+          HudIconButton(
+            icon: Icons.copy,
+            tooltip: l10n.devMenuCopySave,
+            onPressed: onCopySave,
+          ),
+          HudIconButton(
+            icon: Icons.paste,
+            tooltip: l10n.devMenuPasteSave,
+            onPressed: onPasteSave,
           ),
           TextButton(onPressed: onReset, child: Text(l10n.devMenuReset)),
           const SizedBox(width: AppSpacing.sm),

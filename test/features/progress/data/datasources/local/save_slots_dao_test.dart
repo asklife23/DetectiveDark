@@ -1,5 +1,6 @@
 import 'package:detective_dark/features/progress/data/datasources/local/app_database.dart';
 import 'package:detective_dark/features/progress/data/datasources/local/save_slots_dao.dart';
+import 'package:detective_dark/features/progress/data/migrations/save_exception.dart';
 import 'package:detective_dark/features/progress/domain/entities/game_progress.dart';
 import 'package:drift/drift.dart' hide isNull;
 import 'package:drift/native.dart';
@@ -157,7 +158,10 @@ void main() {
         'readable', () async {
       await corruptSlot();
 
-      await expectLater(dao.readSlot(0), throwsFormatException);
+      await expectLater(
+        dao.readSlot(0),
+        throwsA(isA<SaveCorruptException>()),
+      );
       expect(await dao.readSchemaVersion(0), 1);
       expect(await dao.readRawPayload(0), garbage);
     });
