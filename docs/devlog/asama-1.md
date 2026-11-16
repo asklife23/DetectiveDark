@@ -596,3 +596,55 @@
   edilemezdi. İkinci ders küçük ama değerli: `ShowToCharacter` yeni bir "oynat" kodu yazmadı, `AskTopic.play`'i
   kullandı; böylece "ilk seferde etkiler çalışır, tetikleyiciler aynı kayıtta değerlendirilir, tekrar edince yalnızca
   cevap okunur" kuralları iki yolda da kendiliğinden aynı.
+
+### Adım 1.19 — Geliştirici menüsü (yalnızca dev) (2026-11-15)
+- **Ne yaptık:** Oyunu istediğimiz duruma saniyeler içinde getiren bir geliştirici menüsü.
+  - **Menü (`lib/app/dev/`):** sahnenin sağ üstündeki anahtar simgesinden açılır. Beş sekme: sahneler (atla), eşyalar,
+    notlar, bayraklar (ekle) ve preset'ler (adlandırılmış durum yükle); ayrıca "Reset progress".
+  - **`DevActions`:** menünün yapabildiği her şey. Kaydı kendisi yazmaz; hepsi oyunun kendi yolundan geçer (ADR 0014):
+    atlama = `EnterScene`; ekleme = `GiveItem` / `AddNote` / `SetFlag` etkileri `EffectPipeline` üzerinden; sıfırlama
+    ve preset = boş bir `GameProgress` + sahneye giriş. Preset'in eşya, not ve bayrakları yeni ilerlemeye
+    `EffectApplier` ile **olay üretmeden** konur (hiçbir şey "toplanmadı", ekranda bir şey uçmamalı).
+  - **Menü yalnızca dev derlemesinde var:** oyun kodu menüyü yalnızca `DevMenuBuilder` adlı bir fonksiyon tipi olarak
+    tanır (`lib/app/dev_menu_builder.dart`). Menüyü import edip `bootstrap`'e veren tek dosya `lib/main_dev.dart`'tır;
+    staging, prod ve Steam giriş noktaları vermez. Verilmemişse düğme çizilmez. Menü `SHOW_DEBUG_OVERLAY` bayrağına
+    bağlı değildir.
+  - **`assets/dev/presets.json`** yalnızca `dev` flavor'ında paketlenir (`pubspec.yaml`: `path` + `flavors: [dev]`).
+    Dosya yoksa (`DevPresetSource`) menü çökmez, "This build contains no presets." yazar.
+  - **Testler:** mimari testi (`app/dev/`'i import eden tek dosya `main_dev.dart`; diğer giriş noktaları `devMenu`
+    vermiyor), içerik doğrulama testi (preset'teki her sahne, eşya, not ve bayrak içerikte var; dosya diskten okunur),
+    `DevActions` unit testleri, `DevMenuCubit` bloc testleri, menünün widget testleri (menüsüz kurulan oyunda düğme
+    yok; preset dosyası yokken boş liste).
+- **Derleme doğrulaması (planın istediği):** Flutter dokümanı flavor'sız derlemede ne olduğunu açıkça yazmıyordu;
+  derleme çıktısına bakıldı. Klasör girdisiyle (`path: assets/dev/`) `presets.json` **dev APK'sında var; prod APK'sında,
+  staging APK'sında ve Windows derlemesinde yok.** Yedek yola (preset'leri Dart sabiti yapmak) gerek kalmadı.
+  Tek dosya yoluyla (`path: assets/dev/presets.json`) da çalışıp çalışmadığı **kaydedilmedi** (oturum yarıda kesildi);
+  klasör girdisi kullanıldığı için sonucu etkilemiyor.
+- **Neden:** 50 sahnelik bir bölümde tek bir bulmacayı denemek için her seferinde baştan oynamak günde saatler yer.
+  Ama geliştirici aracı oyuncunun eline geçerse hem oyunu bozar hem de içeriği (sahne / eşya ID'leri) açık eder. Bu
+  yüzden "kapalı" değil "**yok**" olmalı: bir bayrakla kapatılan kod hâlâ paketin içindedir ve bayrak bulunursa açılır;
+  hiç derlenmeyen kod açılamaz.
+- **Önemli dosyalar:** `lib/app/dev/dev_menu.dart`, `dev_actions.dart`, `dev_menu_cubit.dart`, `dev_preset.dart`,
+  `dev_preset_source.dart`, `dev_catalog.dart`, `lib/app/dev_menu_builder.dart`, `lib/main_dev.dart`,
+  `lib/app/game/scene_buttons.dart`, `assets/dev/presets.json`, `pubspec.yaml`, testler: `test/app/dev/`,
+  `test/architecture/dependency_rules_test.dart`, `test/content/content_validation_test.dart`.
+- **Telefonda nasıl test edilir** (`flutter run --flavor dev -t lib/main_dev.dart --dart-define-from-file=env/dev.json`):
+  1. Sağ üstteki **anahtar** simgesine dokun → menü açılır.
+  2. "Presets" → `market_with_pills`: oyun **çarşıda** açılmalı, **şişe** sağ panelde, **mektup** defterde, villa
+     kapısı açık sayılmalı. Hiçbir "eşya alındı" animasyonu oynamamalı.
+  3. "Scenes" → bir sahne seç: eşyalar ve notlar korunarak o sahneye geçilir. "Items" / "Notes" / "Flags" → ekle;
+     eşya panelde, not defterde (rozet yanar) görünmeli.
+  4. "Reset progress" → oyun villa önünde, boş panelle baştan başlar.
+  5. **Windows'ta** (`flutter run -d windows -t lib/main_dev.dart --dart-define-from-file=env/dev.json`): menü açılır,
+     "Presets" sekmesi boş görünür (beklenen davranış); diğer sekmeler çalışır.
+  6. **Olmaması gereken:** `--flavor prod -t lib/main_prod.dart` ile çalıştırınca anahtar simgesi hiç yok;
+     `env/prod.json`'a `SHOW_DEBUG_OVERLAY: true` yazsan bile gelmez.
+- **Öğrenme notu:** İki kavram. **Tree shaking:** Dart derleyicisi yayın derlemesinde `main()`'den başlayıp
+  ulaşılabilen kodu izler; hiçbir yerden çağrılmayan kodu pakete koymaz. Biz bunu bilerek kullandık: menüye giden tek
+  yol `main_dev.dart`'taki bir import; başka giriş noktasından derlenince o yol yok, menü de yok. `if (isDev)` ile
+  gizlemek bunu sağlamaz, çünkü kod hâlâ ulaşılabilirdir. **Bağımlılığı tersine çevirme (dependency inversion):** oyun
+  menüyü import etmez; yalnızca "bana bir widget oluşturan fonksiyon verilebilir" der (`DevMenuBuilder`, opsiyonel).
+  Menü oyunu tanır, oyun menüyü tanımaz. Bu yüzden menüyü silmek tek satırlık iştir ve kural bir **mimari testiyle**
+  korunur: biri yarın `game_screen.dart`'a menüyü import ederse test kırılır. Kuralı yoruma değil teste yazmak, altı ay
+  sonra unutulmamasının tek yoludur. Aynı fikir `DevActions`'ta da var: menü "hile" yapmaz, etki hattını kullanır;
+  böylece menüyle gelinen durum, oynayarak gelinen durumla aynı kurallardan geçmiştir (tetikleyiciler dahil).

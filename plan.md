@@ -1687,3 +1687,7 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
       olmayacak.
     - Karakolun hangi mekanda ve hangi bölümde açıldığı yazılmadı (hikaye).
     - Yeni Aşama 5 adımları 5.8 ve 5.9 olarak numaralandı; 8.3 silinmedi, üstü çizildi (numaralar değişmez).
+- 2026-11-16 (1.19): Kod 2026-11-15'te commit'lendi (`fa4a8f7`); oturum yarıda kesildiği için devlog notu ayrı bir
+  commit'le eklendi. Derleme doğrulaması: klasör girdisiyle (`path: assets/dev/` + `flavors: [dev]`) `presets.json` dev
+  APK'sında var; prod ve staging APK'sında ve Windows derlemesinde yok; yedek yola (Dart sabiti) gerek kalmadı. Tek
+  dosya yoluyla da çalışıp çalışmadığı **doğrulanmadı** (kullanılan çözümü etkilemiyor).
