@@ -9,11 +9,15 @@ import 'package:detective_dark/features/notebook/presentation/widgets/notebook_s
 import 'package:detective_dark/features/scene_engine/presentation/widgets/inspect_panel.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'acceptance_scenario_market.dart';
 import 'game_app.dart';
 
-/// The acceptance scenario of phase 1 (plan.md), steps 1–11, played on the
+/// The acceptance scenario of phase 1 (plan.md), steps 1–20, played on the
 /// real game screen exactly as a player would: only taps on what is
 /// visible, only checks of what is visible.
+///
+/// Steps 1–11 (the villa) are below; steps 12–20 (the market demo) are in
+/// `acceptance_scenario_market.dart`.
 ///
 /// One function, two runners:
 /// - `test/app/game/acceptance_scenario_test.dart` plays it in the headless
@@ -28,6 +32,14 @@ import 'game_app.dart';
 Future<void> playAcceptanceScenario(
   WidgetTester tester, {
   PointerDeviceKind pointer = PointerDeviceKind.touch,
+}) async {
+  await _playVillaSteps(tester, pointer: pointer);
+  await playMarketSteps(tester, pointer: pointer);
+}
+
+Future<void> _playVillaSteps(
+  WidgetTester tester, {
+  required PointerDeviceKind pointer,
 }) async {
   final l10n = lookupAppLocalizations(const Locale('en'));
 
