@@ -648,3 +648,90 @@
   korunur: biri yarın `game_screen.dart`'a menüyü import ederse test kırılır. Kuralı yoruma değil teste yazmak, altı ay
   sonra unutulmamasının tek yoludur. Aynı fikir `DevActions`'ta da var: menü "hile" yapmaz, etki hattını kullanır;
   böylece menüyle gelinen durum, oynayarak gelinen durumla aynı kurallardan geçmiştir (tetikleyiciler dahil).
+
+### Adım 1.20 — Çarşı demosunun kabul testi ve cila (2026-11-16)
+- **Ne yaptık:** Aşama 1b'yi kapattık.
+  - **Kabul senaryosu 1–20:** Paylaşılan senaryo 12–20. adımlarla genişledi (ilaç şişesi, tabela, çarşı, iki konuşma,
+    şişeyi verme, mektubu gösterme, ikinci karşılama, villaya dönüş, heykelin uzun / kısa repliği). Giriş fonksiyonu
+    aynı (`playAcceptanceScenario`); çarşı kısmı `acceptance_scenario_market.dart`'ta. Dört koşuda geçiyor: telefon
+    boyutunda dokunma ve fare, 1280×720 pencere, 4:3 tablet. **Windows'ta gerçek uygulamada da geçti**
+    (`integration_test`, dokunma + fare).
+  - **Kenar durumları (12 yeni test, `edge_cases_test.dart`):** satır yazılırken hızlı çift dokunma (satır atlanmıyor),
+    soruya ve silüete hızlı çift dokunma (bir kez sorulur, tek konuşma açılır), cevabın ortasında sistem geri / `Esc`
+    (panel kapanır, soru sorulmuş kalır), iki kez üst üste geri (oyundan çıkılmaz), kanıt için açılan defterde geri /
+    `Esc` (panele döner, hiçbir şey gösterilmez), satırın ortasında arka plana alıp dönme, eşya seçiliyken ilgisiz
+    karaktere dokunma ve eşya seçiliyken hızlı çift dokunma (eşya bir kez verilir). **Hepsi ilk seferde geçti; oyunda
+    hata çıkmadı.**
+  - **Placeholder cilası:** İki silüet yeniden çizildi (omuz, kol, bacak, ayakkabı; lambaya bakan tarafta ince ışık
+    çizgisi). **Portreler artık ayrı çizim:** tam boy silüetin dar kutuya gerilmesi yerine baş-omuz büstü
+    (`portrait_pharmacist`, `portrait_cafe_owner`; `PortraitPainter`). Çarşıya pencere çıtaları, kapı panelleri ve
+    kolları, tente şeritleri, sandalye, parke taşları ve lamba ışığının yerdeki gölü eklendi; tabelaların direği
+    görünür oldu; ilaç şişesine pirinç kapak ve **yırtık etiket** geldi (metin "the label torn off" diyordu).
+  - **README:** konuşma, kanıt gösterme, tetikleyiciler, haritasız geçiş ve geliştirici menüsü; örnek `dialogues.json`
+    ve tetikleyici; içerik dosya düzeni; etki hattıyla güncellenen akış diyagramı; iki yeni ekran görüntüsü.
+- **Senaryoda öğrendiğimiz bir davranış:** 18. adım ilk yazışta kırıldı; hata oyunda değil beklentideydi. Defter son
+  okunan notu hatırlar; mektup 9. adımda okunduğu için "Show evidence" defteri mektup açık ve "Show" düğmesi hazır
+  halde getirir ("Pick the note to show." ipucu yalnızca hiçbir not açık değilken görünür). Oyuncu için bir dokunuş
+  eksik, yani iyi; senaryo buna göre yazıldı.
+- **Mimari testinde düzeltme:** "İlerlemeyi yalnızca etki hattı kaydeder" kuralı satırda `.save(` arıyordu ve yeni
+  çizim kodundaki `canvas.save()` çağrısına takıldı (Flutter'da çizim durumunu saklar; kayıtla ilgisi yok). Kural
+  daraltıldı: **argümansız** `save()` sayılmaz, çünkü `ProgressRepository.save` her zaman ilerlemeyi alır. Argümanlı
+  her çağrı (argüman alt satırda başlasa bile) hâlâ yakalanır; ikisi de ayrı testle sabitlendi.
+- **Neden:** 1.9–1.19'da her parça kendi testiyle geldi; ama "çarşıya git, iki kişiyi sorgula, çelişkiyi yakala" tek
+  bir oyuncu deneyimidir ve ancak baştan sona oynanınca kanıtlanır. Çizimlerin cilası da süs değil: gerçek görseller
+  Aşama 7'de gelecek, o zamana kadar her test oturumunda bu çizimlere bakacağız; kimin kim olduğu ve neye
+  dokunulacağı bir bakışta anlaşılmalı.
+- **Önemli dosyalar:** `test/helpers/acceptance_scenario.dart`, `test/helpers/acceptance_scenario_market.dart`,
+  `test/app/game/edge_cases_test.dart`, `lib/core/placeholders/silhouette_painters.dart`,
+  `lib/core/placeholders/portrait_painters.dart`, `lib/core/placeholders/market_painters.dart`,
+  `lib/core/placeholders/placeholder_brush.dart` (`FractionPath`), `assets/content/.../ch01/dialogues.json`,
+  `test/architecture/architecture_rules.dart`, `README.md`, `docs/screenshots/`.
+- **Performans (Windows, profil modu, senaryo boyunca 775 kare):** build ortalama 0,54 ms, %99'luk dilim 2,6 ms, en
+  kötü 3,7 ms; raster ortalama 1,6 ms, %99'luk dilim 7,6 ms, en kötü 29,2 ms. 16,6 ms'lik (60 fps) bütçeyi 6 raster
+  karesi aştı (%0,8), build karesi hiç aşmadı. Konuşma paneli ve daktilo efekti dahil akış takılmasız; 1.8'deki
+  ölçümle aynı düzeyde. Uzun karelerin hangi anlara denk geldiğini ayrıca ölçmedim. **Telefon ölçümü yapılmadı**
+  (bağlı cihaz yoktu).
+- **Telefonda nasıl test edilir:**
+  1. Elle: `flutter run --flavor dev -t lib/main_dev.dart --dart-define-from-file=env/dev.json` ile kabul senaryosunun
+     20 adımını oyna (hızlı yol: geliştirici menüsü → "Presets" → `market_with_pills`, 13. adımdan başlar).
+  2. Ek kontrol listesi: satır yazılırken hızlıca iki kez dokun (ikinci satıra geçmeli, soru listesine atlamamalı);
+     cevabın ortasında telefonun geri tuşuna bas (yalnızca panel kapanmalı); panel açıkken oyunu arka plana alıp dön
+     (aynı satır); "Show evidence" → defterde geri tuşu (panele dönmeli); şişe seçiliyken kahveciye dokun (panel
+     açılmalı, "Means nothing to me", şişe kalmalı). Bakılacak yerler: portreler dar ekranda kesik mi duruyor, dört
+     soru kaydırmadan sığıyor mu, silüetlerin dokunma alanı parmakla rahat mı.
+  3. Otomatik (telefon USB ile bağlıyken): `flutter test integration_test/acceptance_test.dart -d <cihaz> --flavor dev
+     --dart-define-from-file=env/dev.json`.
+  4. Performans: `flutter drive --profile --flavor dev -d <cihaz> --driver=test_driver/performance_driver.dart
+     --target=integration_test/performance_test.dart --dart-define-from-file=env/dev.json`.
+- **Öğrenme notu:** İki ders. **Test kırıldığında önce "hangisi yanlış?" diye sor.** 18. adımda test, benim
+  varsayımımı (defter boş sayfayla açılır) sınıyordu; oyun ise tasarlandığı gibi davranıyordu. Testi oyuna uydurduk.
+  Mimari testinde ise tersi oldu: kural gereğinden genişti (`canvas.save()`'i yakalıyordu), ama "testi sustur" yerine
+  kuralın **neyi kastettiğini** daha kesin yazdık ve yeni sınırı da testle koruduk. İkisinde de ölçüt aynı: test bir
+  **niyeti** korur; niyet doğruysa kodu, niyet yanlış ifade edilmişse testi düzeltirsin, ama asla ikisini birden
+  gevşetmezsin. **Çizimde oran bağımsızlığı:** Portre kutusunun şekli ekrana göre değişir (dar telefonda uzun ve ince,
+  tablette daha kare). Büstü kutunun yüzdeleriyle çizseydik dar kutuda yüz uzar, geniş kutuda yayılırdı (ilk halde
+  olan buydu). Bunun yerine büst sabit oranlı bir "tasarım alanı"na çizilir ve bu alan kutuyu **kaplayacak** kadar
+  büyütülür (fotoğrafın çerçeveye sığdırılması gibi; web'deki `object-fit: cover`); taşan kenarlar kırpılır.
+  `SceneViewport`'un 16:9'u korumasıyla aynı fikir: önce oranı sabitle, sonra ekrana yerleştir.
+
+### Aşama 1b özeti (adım 1.9–1.20)
+- **Neydi:** Dikey dilim "eşyayı al, doğru yerde kullan" döngüsünü kanıtlamıştı; ama 40–50 sahnelik bir bölümün
+  dayanacağı parçalar eksikti. 1b bunları, kayıt şeklini (Aşama 2) ve içerik dosyalarını (Aşama 7) belirledikleri
+  için o aşamalardan **önce** ekledi.
+- **Motorun yeni yetenekleri:**
+  - Kural dili: `not`, `atLeast`, `visited`, `inScene`, `topicAsked` koşulları; `say` `first/then` (1.9, 1.10).
+  - **Tek etki hattı** (`EffectPipeline`): etkiler → tetikleyiciler → tek kayıt → olaylar (1.11).
+  - **Tetikleyiciler:** birleşik koşula bir kez tepki veren kurallar (1.12).
+  - **Not satırları ve "Kişiler":** büyüyen kişi dosyaları (1.13).
+  - **İçerik düzeni:** çoklu dosya, bölüm genişletmeleri, eksik bölüm = demo (1.14).
+  - **Haritasız geçiş:** tabela, çarşı, tuzak mekan kontrolü (1.15).
+  - **Konuşma:** içerik + panel + kanıt gösterme ve eşya verme (1.16–1.18).
+  - **Geliştirici menüsü** (yalnızca dev) (1.19) ve uçtan uca kabul testi (1.20).
+- **Sayılarla:** Test sayısı Aşama 1'in sonundan bu yana 811'e çıktı; kabul senaryosu 11 adımdan 20 adıma; altı ADR
+  (0013–0018). Oyuncunun kaydında yeni alanlar: `spokenLines`, `firedTriggers`, `askedTopics`, not satırları. Aşama
+  2'nin veritabanı şeması bu şekli bir kerede, migration'sız alacak; 1b'yi önce yapmanın asıl kazancı bu.
+- **Bilinçli olarak yapılmayanlar:** kalıcı kayıt (Aşama 2), ses (Aşama 6), gerçek görseller ve hikaye (Aşama 7),
+  bulmaca türleri ve ipuçları (Aşama 5), kişi dosyasında portre (7.3).
+- **Açık kalan (kullanıcıda):** telefonda manuel doğrulama ve profil ölçümü (1.8'den beri bağlı cihaz olmadı);
+  ayrıntılar `plan.md` Notlar'da.
+- **Sıradaki:** Aşama 2 — kalıcı kayıt (Drift, internetsiz).

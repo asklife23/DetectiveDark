@@ -975,7 +975,7 @@ sahnede durur, mantık testlerle kanıtlanmıştır; panel 1.17'de gelir.
   `assets/dev/presets.json` yok.
   **Commit:** `feat(app): add developer menu`
 
-### [ ] 1.20 Çarşı demosunun kabul testi ve cila
+### [x] 1.20 Çarşı demosunun kabul testi ve cila
 **Amaç:** Aşama 1b'yi sağlam kapatmak: genişleyen kabul senaryosu (1–20) otomatik ve cihazda çalışsın.
 **Yapılacaklar:**
 - Paylaşılan senaryo fonksiyonu (`test/helpers/acceptance_scenario.dart`) 12–20. adımlarla genişler; iki yerden
@@ -1691,3 +1691,16 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   commit'le eklendi. Derleme doğrulaması: klasör girdisiyle (`path: assets/dev/` + `flavors: [dev]`) `presets.json` dev
   APK'sında var; prod ve staging APK'sında ve Windows derlemesinde yok; yedek yola (Dart sabiti) gerek kalmadı. Tek
   dosya yoluyla da çalışıp çalışmadığı **doğrulanmadı** (kullanılan çözümü etkilemiyor).
+- 2026-11-16 (1.20): Kabul senaryosu 1–20 CI widget testinde (dokunma, fare, 1280×720, 4:3) ve Windows'ta
+  `integration_test` ile geçti. **Windows, profil modu, 775 kare:** build ortalama 0,54 ms (en kötü 3,7 ms), raster
+  ortalama 1,6 ms (%99: 7,6 ms, en kötü 29,2 ms); bütçeyi aşan 6 raster karesi, hiç build karesi yok. Sapmalar ve
+  yorumlar: (a) **Portreler ayrı çizim oldu:** yeni placeholder stilleri `portrait_pharmacist` / `portrait_cafe_owner`
+  (`PortraitPainter`); `dialogues.json`'daki `portrait.placeholderStyle` bunlara çevrildi. Sahnedeki silüet stilleri
+  aynı adla kaldı. (b) **Mimari testi daraltıldı:** kayıt kuralı argümansız `save()` çağrısını (`Canvas.save()`)
+  artık saymıyor; argümanlı her çağrı yakalanmaya devam ediyor, iki durum da testle sabit. (c) Planın saydığı kenar
+  durumlarından "seçim modundaki defterde Geri" ve "eşya seçiliyken silüete dokunma" 1.18'in testlerinde zaten vardı;
+  `edge_cases_test.dart`'a aynıları kopyalanmadı, daha sert çeşitleri yazıldı (`Esc`, cevabın ortasında geri, hızlı
+  çift dokunma, ilgisiz karakter). (d) Senaryonun 18. adımında defter mektubu açık getirir (son okunan not hatırlanır);
+  senaryo "Pick the note to show." ipucunu beklemez. **Yapılamayan (cihaz bağlı değildi), kullanıcıda:** telefonda
+  kabul senaryosunun 12–20. adımları ve 1.20 kontrol listesi, telefonda profil modu ölçümü (panel açılışı ve daktilo
+  efekti), 1.15–1.19'dan devreden telefon doğrulamaları. Komutlar `docs/devlog/asama-1.md`'de (Adım 1.20).
