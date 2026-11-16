@@ -25,6 +25,10 @@ costs. A new decision gets a new file; an outdated one is not deleted — its st
 | [0017](0017-travel-without-a-map.md) | Travel between locations without a map | Accepted |
 | [0018](0018-content-files-extensions-and-demo-builds.md) | Content files: multiple files per chapter, chapter extensions, demo builds | Accepted |
 | [0019](0019-autosave-memory-first-and-play-time.md) | Autosave: memory first, delayed write, play time stamped by the save | Accepted |
+| [0020](0020-puzzles-played-on-the-close-up.md) | Puzzle framework: puzzles are played on the close-up picture | Accepted |
+| [0021](0021-chapter-flow-chapter-reached-and-entitlement.md) | Chapter flow, the `chapterReached` condition and entitlement | Accepted |
+| [0022](0022-hint-system.md) | Hint system: asked for, tiered, objective-based | Accepted |
+| [0023](0023-accusation.md) | The accusation | Accepted |
 
 ## Template
 

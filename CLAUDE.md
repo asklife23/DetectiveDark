@@ -34,7 +34,7 @@ Kullanıcı terminalde şu tür komutlar yazar (yazım farklılıklarını aynı
 
 | Komut | Ne yaparsın |
 |---|---|
-| `Aşama 1.2'yi yap` / `aşama 1 kısım 2` | Sadece o adımı uygula, sonra dur. |
+| `Aşama 1.2'yi yap` / `aşama 1 kısım 2` | Sadece o adımı uygula, sonra dur. Harfli alt adımlar (5.4a, 5.4b...) ayrı adımdır; `Aşama 5.4'ü yap` = o adımın kalan alt adımları, her biri ayrı commit. |
 | `Aşama 1'i yap` | O aşamanın tamamlanmamış adımlarını sırayla uygula. Her adım ayrı commit. Aşama bitince dur. (`Aşama 1b'yi yap` = adım 1.9–1.20; devlog `asama-1.md`'ye devam eder.) |
 | `Sıradaki adım` | `plan.md`'deki **"Çalışma sırası"na** göre ilk işaretlenmemiş adımı uygula (dosyadaki ilk kutu değil). |
 | `Durum` | Biten adımlar, sıradaki adım, açık kararlar. Kod yazma. |
@@ -89,8 +89,8 @@ lib/
     progress/          # GameProgress, kayıt (Aşama 1: bellekte, Aşama 2: Drift)
     auth/              # Aşama 3
     sync/              # Aşama 4
-    puzzles/           # Aşama 5: kilitler, kayıt inceleme
-    case_flow/         # Aşama 5: bölümler, suçlama, ipuçları
+    puzzles/           # Aşama 5: yakın plan üstünde oynanan bulmacalar (tuş takımı, yön bulmacası)
+    case_flow/         # Aşama 5: bölüm ilerletme, sahiplik, kapı ekranı, ipuçları, suçlama
     settings/ main_menu/ monetization/   # sonraki aşamalar
 ```
 
@@ -109,15 +109,19 @@ Her feature içinde:
 - `app/` katmanı, feature'ların `presentation` katmanlarını birleştirebilen **tek** yerdir (ör. `GameScreen`:
   sahne + eşya paneli + not defteri + mesaj barı). Seçili eşyayı sahneye ileten de odur.
 - Feature'lar arası olaylar `core/events` içindeki `GameEventBus` üzerinden akar
-  (`SceneEntered`, `ItemObtained`, `ItemUsed`, `NoteAdded`, `NoteUpdated`, `DetectiveSaid`, `TopicAsked`...). Olaylar arayüz tepkisi içindir; kalıcı durum her zaman ilerlemeden okunur.
+  (`SceneEntered`, `ItemObtained`, `ItemUsed`, `NoteAdded`, `NoteUpdated`, `DetectiveSaid`, `TopicAsked`; Aşama 5:
+  `PuzzleSolved`, `ChapterCompleted`, `AccusationJudged`). Olaylar arayüz tepkisi içindir; kalıcı durum her zaman
+  ilerlemeden okunur.
 - DTO (`data/models`) ile entity (`domain/entities`) ayrıdır; dönüşüm `data` katmanında yapılır.
 - Hata yönetimi: `data` katmanı exception'ları yakalar, `domain`'e `Result<T>` (`Success` / `Failed`; `Failed` bir `Failure` taşır) döner.
   UI'a exception sızmaz.
 - İlerlemenin tek doğruluk kaynağı `ProgressRepository`'dir. Sahne, eşya paneli, not defteri, konuşma paneli ve chat
   bu kaynaktan okur.
 - **Tek etki hattı (ADR 0014):** İlerlemeyi değiştiren her use case (hotspot dokunuşu, sahneye giriş, konuşmayı
-  başlatma, konuşma konusu, kanıt gösterme, geliştirici menüsü, ileride bulmaca `onSolved`) `EffectPipeline`'ı kullanır:
-  etkiler (`EffectApplier`, saf) → tetikleyiciler (sabit noktaya kadar) → **tek** atomik `save` → olaylar (yalnızca
+  başlatma, konuşma konusu, kanıt gösterme, geliştirici menüsü; Aşama 5: bulmaca çözümü ve ara durumu, eşya
+  birleştirme / açma, bölüm ilerletme, ipucu, suçlama) `EffectPipeline`'ı kullanır:
+  etkiler (`EffectApplier`, saf) → tetikleyiciler (sabit noktaya kadar) → **bölüm bitişi** (bulunulan bölümün
+  `completeWhen`'i tutuyorsa aynı kayıtta işaretlenir, ADR 0021) → **tek** atomik `save` → olaylar (yalnızca
   kayıt başarılıysa). Yeni bir yazma yolu eklemek yerine hatta yeni bir çağıran eklenir.
   **Tek istisna `MarkNoteRead`'dir** (doğrudan `save`): `isRead`'i hiçbir koşul okumaz, etki ve olay üretmez.
   `ProgressRepository.save` başka hiçbir yerden çağrılmaz (mimari testi denetler); yeni istisna eklemek ADR ister.
@@ -128,8 +132,10 @@ Her feature içinde:
   kuralları `playTimeSeconds`'a dokunmaz. Testler `configureDependencies`'e bellek içi depo verir.
 - **Feature'lar arasında döngü yoktur.** A feature'ı B'yi import ediyorsa B, A'yı (dolaylı olarak da) import edemez;
   mimari testi feature bağımlılık grafını import satırlarından çıkarır ve döngüde kırılır. Yön sabittir:
-  `dialogue` → `scene_engine` → `notebook` / `inventory` / `progress`. Ters yönde bilgi gerekiyorsa entity değil düz
-  veri (ID listesi) parametreyle verilir.
+  `dialogue` / `puzzles` / `case_flow` → `scene_engine` → `notebook` / `inventory` / `progress` (`dialogue`, `puzzles`
+  ve `case_flow` birbirini import etmez). Ters yönde bilgi gerekiyorsa entity değil düz veri (ID listesi)
+  parametreyle verilir. Başka bir feature'ın çizimi gerekiyorsa (bulmacanın sahne çizim hattını kullanması)
+  birleştirme `app/`'te yapılır.
 - Koşul ve etkileri JSON'dan ayrıştıran kod `scene_engine/data`'dadır. Başka bir feature'ın `data` katmanı
   (ör. `dialogue`) buna `scene_engine/domain`'deki `RuleParser` arayüzü üzerinden ulaşır; `data` → `data` import'u yoktur.
 - **Platforma özel servisler** (satın alma / sahiplik, hesap, bulut kaydı) domain arayüzleri arkasındadır
@@ -188,19 +194,21 @@ sorunu, denediklerini ve önerini kullanıcıya anlat.
 
 Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kurallardır.
 
-- **Veri odaklı içerik:** Sahneler, hotspot'lar, eşyalar, notlar, konuşmalar, tetikleyiciler ve bulmacalar
+- **Veri odaklı içerik:** Sahneler, hotspot'lar, eşyalar, notlar, konuşmalar, tetikleyiciler, bulmacalar, ipuçları,
+  bölüm bitiş koşulları ve suçlama
   `assets/content/` altındaki JSON'dan yüklenir (`cases/<vaka>/chapters/<bölüm>/`). Kodda sahne metni, eşya/not metni,
   konuşma metni, koordinat veya bulmaca çözümü yazılmaz. Sahne sayısı koda bağlı değildir: yeni sahne = yeni JSON + görsel.
 - **İçerik dosya düzeni (ADR 0018):**
   - Bölüm klasöründe her tür tek dosya (`scenes.json`) **veya** klasör (`scenes/*.json`) olabilir: `scenes`, `items`,
-    `notes`, `inspections`, `dialogues`, `triggers`. İkisi birden hatadır. Dosyalar asset manifest'inden listelenir ve
-    ad sırasıyla okunur; yeni içerik klasörü `pubspec.yaml`'a eklenir. `dialogues` ve `triggers` opsiyoneldir.
+    `notes`, `inspections`, `dialogues`, `triggers`; Aşama 5: `puzzles`, `hints`. İkisi birden hatadır. Dosyalar asset
+    manifest'inden listelenir ve ad sırasıyla okunur; yeni içerik klasörü `pubspec.yaml`'a eklenir. `dialogues`,
+    `triggers`, `puzzles` ve `hints` opsiyoneldir.
     Metinler dil başına tek dosyadır (`text_xx.json`).
   - **Sonraki bölüm önceki bölümün içeriğini kendi dosyasında genişletir:** `sceneExtensions` (yeni hotspot'lar sona;
     `rules` ve `visualVariants` mevcutların **önüne**), `dialogueExtensions` (konular sona), `noteExtensions` (satırlar
     sona). Önceki bölümün dosyası sonraki bölüm için düzenlenmez. Birleştirme `data` katmanındadır; `domain` birleşmiş
-    `CaseContent` görür; kayıt şekli değişmez. Genişletmeler oyuncunun bölümüne göre kendiliğinden açılmaz; yazar
-    koşulla kapatır.
+    `CaseContent` görür; kayıt şekli değişmez. Aşama 5.4a'dan itibaren genişletmeler oyuncunun bölümüne göre
+    kendiliğinden açılır (birleştirmede `chapterReached` ile sarılır, ADR 0021); o adıma kadar yazar koşulla kapatır.
   - `case.json`'da listelenen ama pakette hiç dosyası olmayan bölüm atlanır (demo derlemesi); yarım bölüm hatadır.
 - **Hiyerarşi:** Sahneler Parent → Child yapısındadır. Gezinme bir yığındır: `[villa_exterior, statue_closeup]`.
 - **İçerik kuralı (gerçek içerik, Aşama 7):** dokunulan her şey ayrı bir sahnedir (`goToScene`), yalnızca bakılan
@@ -213,13 +221,17 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
   - Kural = `when` (opsiyonel koşul) + `do` (etki listesi). Yukarıdan aşağı, koşulu tutan **ilk** kural çalışır.
   - Koşullar (`sealed class Condition`): `flag`, `notFlag`, `hasItem`, `usingItem`, `hasNote`, `all`, `any`, `not`,
     `atLeast` (`{"count": 2, "of": [...]}`), `visited`, `inScene` (yığının tepesindeki sahne), `topicAsked`
-    (`"dialogueId/topicId"`) (ADR 0013, 0016). `usingItem` yalnızca hotspot kuralının `when`'inde anlamlıdır; `not` ve
-    `atLeast` içinde, tetikleyici ve konuşma konusu koşullarında kullanılamaz. `usingNote` koşulu yoktur.
+    (`"dialogueId/topicId"`) (ADR 0013, 0016); Aşama 5: `puzzleSolved` (ADR 0020), `chapterReached` (ADR 0021).
+    `usingItem` yalnızca hotspot ve eşya kuralının `when`'inde anlamlıdır; `not` ve `atLeast` içinde, tetikleyici,
+    konuşma konusu, bölüm bitişi (`completeWhen`) ve ipucu hedefi koşullarında kullanılamaz. `usingNote` koşulu yoktur.
   - Etkiler (`sealed class Effect`): `goToScene`, `giveItem`, `consumeItem`, `addNote`, `addNoteEntry`, `setFlag`,
-    `hideHotspot`, `say`, `inspect`, `talk`; Aşama 5'te `openPuzzle`, `playMedia`.
+    `hideHotspot`, `say`, `inspect`, `talk`; Aşama 5: `openPuzzle` (ADR 0020), `openAccusation` (ADR 0023).
+    (`playMedia` kayıt incelemeyle birlikte ertelendi.)
   - **Etki nerede kullanılabilir:** hotspot kuralı: hepsi. `onFirstEnter`: `say`, `setFlag`, `addNote`, `giveItem`.
     Tetikleyici: `say`, `setFlag`, `addNote`, `addNoteEntry`, `giveItem`. Konuşma konusu: `say`, `setFlag`, `addNote`,
-    `addNoteEntry`, `giveItem`, `consumeItem`.
+    `addNoteEntry`, `giveItem`, `consumeItem`. Bulmaca `onSolved`: `say`, `setFlag`, `addNote`, `addNoteEntry`,
+    `giveItem`. Eşya kuralı (5.7): konuşma konusuyla aynı liste. Suçlama `onSolved`: bulmaca listesi + `goToScene`.
+    `openPuzzle` ve `openAccusation` yalnızca hotspot kuralındadır.
   - **`say` iki biçim alır (ADR 0013):** `{"say": "key"}` ve `{"say": {"first": "key_long", "then": "key_short"}}`
     (ilk seferde `first`, sonra hep `then`). Söylenenler kayıtta `spokenLines` kümesindedir (anahtar: `first`); `first`
     anahtarları vaka içinde benzersizdir. `chatLog` son 200 girişle sınırlıdır (tek sabit) ve **hiçbir oyun mantığı
@@ -236,6 +248,9 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
     inceleme kartı da aynı pencereyi kullanır.
   - **`talk`** (ADR 0016): konuşma panelini açar. `inspect` gibi arayüz durumudur: yığını değiştirmez, kayda girmez.
     Bir kuralda en fazla bir `talk` olur; `goToScene` veya `inspect` ile birlikte kullanılmaz.
+  - **`openPuzzle`** (ADR 0020) ve **`openAccusation`** (ADR 0023) da arayüz durumudur: yığını değiştirmez, kayda
+    girmez. Bir kuralda "arayüz açan" etkilerden (`inspect`, `talk`, `openPuzzle`, `openAccusation`) en fazla biri
+    olur ve hiçbiri `goToScene` ile birlikte kullanılmaz. Çözülmüş bulmaca için `openPuzzle` yok sayılır.
   - Seçili eşyayla dokunulduysa ve hiçbir kural o eşyayı karşılamıyorsa yalnızca genel tepki verilir
     (`generic_item_no_effect`); yanlış eşya normal etkileşimi tetiklemez. Dokunuştan sonra seçim temizlenir.
     **Tek istisna:** eşyasız dokunuşta çalışacak kural `talk` içeriyorsa panel açılır ve eşya karaktere gösterilir
@@ -292,6 +307,60 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
     eşyaya tek dokunuş. Not: panelde "Kanıt göster" defteri seçim modunda açar; notta "Göster" düğmesi.
   - Not yalnızca kişilere gösterilir; sahne nesnelerinde `hasNote` kullanılır.
   - Eşleşen konu yoksa veya koşulu tutmuyorsa karakter `noReactionKey` repliğini söyler; ceza, işaret ve kayıt yoktur.
+- **Bulmacalar (Aşama 5, ADR 0020; `features/puzzles/`, içerik `puzzles.json`, opsiyonel):**
+  - Bulmaca, oyunun çizdiği genel bir panel **değildir**: yakın plan görselinin üstünde oynanır. Görünümü sahne
+    alanını kaplayan bir katmandır ve sahneyle aynı hattan çizilir: arka plan → overlay ve bulmacanın çizdiği yazı /
+    parçalar → noir filtre → etkileşim bölgeleri. Bölgeler JSON'da normalize koordinatladır; rakam ve yazıları oyun
+    çizer (ADR 0011). Mesaj barının şeridini kapatmaz.
+  - Tanım: `id`, `type`, `visual` (sahne görseliyle aynı şekil), türe özel alanlar, `onSolved`, opsiyonel `wrongSay`.
+    Türler: `keypad` (rakamlı tuş takımı; girilen haneler kaydedilmez) ve `directions` (yön bulmacası: dokunuş
+    parçayı saat yönünde 90° çevirir, sürükleme yok; ara durum kayıtta). Başka kilit türü yoktur.
+  - Çözüm etki hattından geçer: "çözüldü" işareti + `onSolved` + tetikleyiciler **tek** kayıt; olay `PuzzleSolved`.
+    Kayıt: `solvedPuzzles`, `puzzleStates` (id → tamsayı listesi). Çözülmüş bulmaca yeniden açılmaz; içerik
+    hotspot'u `puzzleSolved` koşuluyla değiştirir.
+  - **Yanlış denemenin cezası yoktur;** opsiyonel `wrongSay` ile dedektif kısa bir yorum yapar.
+  - Yeni bulmaca türü mimari bir karardır: önce sor, sonra ADR.
+- **Eşya birleştirme ve açma (Aşama 5.7; ADR'si o adımda):** `items.json`'da eşyaya opsiyonel `interactions`.
+  **Birleştir:** A seçiliyken paneldeki B'ye dokunma; iki yön denenir (B'nin `usingItem: A` kuralı, yoksa A'nın
+  `usingItem: B` kuralı), hiçbiri tutmazsa genel tepki. **Aç:** inceleme kartında düğme; eşyanın eşyasız kuralını
+  çalıştırır.
+- **Sayfalı not (Aşama 5.9):** nota `bodyKey` yerine `pages` (metin anahtarı listesi) verilebilir; defterde sayfa
+  çevrilir; kayıt şekli değişmez.
+- **Bölüm akışı (Aşama 5, ADR 0021; `features/case_flow/`):**
+  - `case.json`'da bölüme `titleKey` ve opsiyonel `completeWhen`. Bitiş etki hattında, tetikleyicilerden sonra, aynı
+    kayıtta işaretlenir (`completedChapters`); olay `ChapterCompleted`. **Oyun durmaz;** üstte kısa bildirim çıkar.
+  - **İlerletme ayrı bir use case'tir** (`AdvanceChapter`): bitişte, açılışta ve sahiplik değişince denenir.
+    Sıradaki bölüm pakette yoksa veya sahiplik yoksa bölüm ilerlemez (**kapı durumu**; türetilir, kaydedilmez).
+    İlerleyince `chapterId` değişir ve bölüm `reachedChapters`'a girer; oyuncu ışınlanmaz.
+  - **Genişletmeler bölüme göre açılır:** birleştirme sırasında (`data`) bölüm N'in önceki bölümlere eklediği her
+    şeyin koşulu `all[chapterReached N, <kendi koşulu>]` ile sarılır: `sceneExtensions` hotspot'ları, kuralları ve
+    görünüm varyantları; `dialogueExtensions` konuları; bölüm N'in tetikleyicileri ve ipucu hedefleri. Yazar bu koşulu
+    elle yazmaz; resolver'lar değişmez. Bölüm N'in kendi sahneleri ve `noteExtensions` sarılmaz.
+  - **Sahiplik** `EntitlementRepository`'den sorulur, kayda girmez (bölüm 8). `dev`: hepsi açık + geliştirici
+    menüsünde aç / kapat; diğer derlemeler: gerçek mağaza gelene kadar yalnızca Bölüm 1.
+  - **Kapı ekranı** (pratikte yalnızca Bölüm 1 sonu): mobilde satın alma, Steam'de demo sonu; hangisi olacağını DI
+    belirler. **Kapatılabilir:** oyuncu Bölüm 1 dünyasında dolaşır, Bölüm 2 içeriği açılmaz, HUD'da "tam oyunu aç"
+    girişi kalır.
+- **İpucu (Aşama 5, ADR 0022; içerik `hints.json`, opsiyonel):**
+  - **İlke: oyuncuya hiçbir şey doğrudan buldurulmaz.** Dedektif gördüğünü söyler, yön göstermez (`say` metinleri
+    böyle yazılır); ipucu yalnızca oyuncu isteyince gelir. **Kendiliğinden yönlendirme yoktur.**
+  - Sıralı hedefler: `{id, when, tiers}`; `when` = "bu hedef hâlâ açık"; koşulu tutan **ilk** hedef şu anki hedeftir.
+  - Basışlar sırayla: (1) dokunulabilir yerleri göster, (2..n) hedefin kademeleri (yön → net → cevap). Son kademeden
+    sonra aynı metin tekrar gelir ve sayılmaz; hedef yoksa genel bir cümle, sayılmaz.
+  - Metin dedektifin iç sesiyle, etki hattından gelir (`say`). Sınırsız ve ücretsiz; iki basış arasında 60 sn (tek
+    sabit; `Clock` ile, kaydedilmez). Kayıt: `hintsUsed`, `hintTiers`.
+  - "Dokunulabilir yerleri göster": görünür hotspot'lar ~1,5 sn işaretlenir; tür o an çalışacak kuralın etkilerinden
+    türetilir (kişi, bulmaca, geçiş, alınacak nesne, diğer); JSON'a alan eklenmez; yalnızca sunumdur.
+- **Suçlama (Aşama 5, ADR 0023; `case.json` → `accusation`):**
+  - `suspects` (kişi notu ID'leri), `culprit`, `evidence` (`{"note": id}` veya `{"note": id, "entry": id}`),
+    `minValid`, `maxPicked`, `attempts`, `solutionTextKey`, opsiyonel `onSolved`. `openAccusation` etkisiyle açılır.
+  - Akış: şüpheli seç → defterden en fazla `maxPicked` kanıt seç (not veya dosya satırı) → onay.
+    **Kabul = isim doğru VE seçilenlerin en az `minValid` tanesi geçerli;** ilgisiz ek kanıt zarar vermez.
+    İsim yanlış → "ikna olmadım"; isim doğru, kanıt yetersiz → "kanıtlar zayıf"; ikisinde de hak düşer.
+  - Haklar bitince "Baştan oyna" (ilerleme ve süre sıfırlanır) veya "Çözümü gör". Sonuç ekranı: deneme sayısı, toplam
+    süre, ipucu sayısı; paylaşım metni spoiler içermez. Kayıt: `accusation` (denemeler + `outcome`).
+  - Kural saf bir serviste (`AccusationJudge`); doğru cevap kodda yazılmaz, içerikten gelir.
+- **Dedektifin adı Detective Dark'tır;** içerik metinlerinde ön adı geçmez.
 - **Mekanlar arası geçiş (ADR 0017): harita yok.** Mekanlara yalnızca sahnedeki geçiş hotspot'larıyla gidilir (tabela,
   çıkış). Geri her zaman `parentId` zincirindeki üst sahneye döner; kök mekana gidince yığın tek elemanlıdır (Geri
   görünmez). Her iç mekanın merkez sahnesinde bir çıkış hotspot'u bulunur; hiçbir mekan tuzak olamaz (doğrulayıcı).
@@ -334,11 +403,17 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
 - **Konuşma paneli:** sahne alanının üstünde açılır; eşya panelini (eşya göstermek için dokunulur) ve mesaj barının
   alt şeridini (dedektifin yorumu orada görünür) kapatmaz. Açıkken sahneye dokunulamaz. Paneller üst üste binmez:
   konuşma açıkken inceleme penceresi açılmaz.
-- **Geri sırası:** önce en üstteki katman kapanır (not defteri / mesaj geçmişi → konuşma paneli veya inceleme
-  penceresi), hiçbiri açık değilse üst sahneye dönülür. Sistem geri tuşu ve `Esc` aynı sırayı izler.
+- **Aşama 5 ekleri:** sağ panelde not defterinin yanında **ipucu düğmesi** (bekleme sürerken kalan süreyi gösterir;
+  bir panel açıkken etkisizdir). Bölüm bitince sahnenin üstünde kısa **bölüm bildirimi** (kendiliğinden kaybolur,
+  dokunmayı engellemez). Kapı durumunda "tam oyunu aç" girişi. Bulmaca görünümü, suçlama ekranı ve kapı ekranı da
+  birer katmandır (rota değil); bulmaca açıkken eşya paneli etkisizdir ve Geri düğmesi kök sahnede de görünür.
+- **Geri sırası:** önce en üstteki katman kapanır (not defteri / mesaj geçmişi → kapı ekranı veya suçlama ekranı →
+  konuşma paneli, inceleme penceresi veya bulmaca), hiçbiri açık değilse üst sahneye dönülür. Sistem geri tuşu ve
+  `Esc` aynı sırayı izler.
 - Klavye: `Esc` = Geri (açık pencereyi kapatır, yoksa üst sahneye döner; ana sahnede etkisizdir).
 - **Geliştirici menüsü (yalnızca dev):** sahneye atlama, eşya/not/bayrak ekleme, ilerlemeyi sıfırlama,
-  `assets/dev/presets.json`'dan adlandırılmış durum yükleme. Değişiklikler etki hattından geçer.
+  `assets/dev/presets.json`'dan adlandırılmış durum yükleme; Aşama 5: bulmacayı çözme, sahipliği açma / kapatma.
+  Değişiklikler etki hattından geçer.
   Menüyü (`lib/app/dev/`) yalnızca `lib/main_dev.dart` import edip `bootstrap`'e verir; staging, prod ve Steam giriş
   noktaları vermez, bu yüzden o derlemelerde kodu yoktur ve hiçbir env bayrağıyla açılamaz (mimari testi denetler).
   `assets/dev/` yalnızca `dev` flavor'ında paketlenir (`pubspec.yaml`: `flavors: [dev]`); Windows'ta hiç paketlenmez.
@@ -411,10 +486,23 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
   - Koordinatlar (hotspot, nesne, overlay ve nesne overlay'i) 0–1 aralığındadır; nesne ve portre placeholder stilleri
     kodda tanımlıdır.
   - Bir kuralda en fazla bir `inspect` ve en fazla bir `talk` vardır; `inspect`, `talk` ve `goToScene` aynı kuralda
-    birlikte kullanılmaz.
-  - Her etki yalnızca izinli olduğu yerde kullanılır (`onFirstEnter`, tetikleyici, konuşma konusu listeleri: bölüm 6).
-  - `usingItem`, `not` / `atLeast` içinde, tetikleyici ve konu koşullarında yoktur; `atLeast.count` 1 ile koşul sayısı
-    arasındadır.
+    birlikte kullanılmaz. Aşama 5: aynı kural `openPuzzle` ve `openAccusation` için de geçerlidir (bir kuralda
+    arayüz açan etkilerden en fazla biri; `goToScene` ile birlikte değil; yalnızca hotspot kuralında).
+  - Her etki yalnızca izinli olduğu yerde kullanılır (`onFirstEnter`, tetikleyici, konuşma konusu, bulmaca
+    `onSolved`, eşya kuralı, suçlama `onSolved` listeleri: bölüm 6).
+  - `usingItem`, `not` / `atLeast` içinde, tetikleyici, konu, `completeWhen` ve ipucu hedefi koşullarında yoktur;
+    `atLeast.count` 1 ile koşul sayısı arasındadır.
+  - **Aşama 5 kontrolleri** (ilgili adımla birlikte eklenir):
+    - Bulmaca: `openPuzzle` / `puzzleSolved` referansı vardır; bulmaca ID'leri vaka içinde benzersizdir; tuş,
+      gösterge ve parça `rect`'leri 0–1 aralığında ve mesaj barı şeridinin dışındadır; tuş takımının çözümü yalnızca
+      var olan tuşlardan oluşur; yön bulmacasının başlangıcı çözümle aynı değildir; stil adları kodda tanımlıdır.
+    - Bölüm: `chapterReached` `case.json`'da listeli, o önekte var olan bir bölümü gösterir; `titleKey` metni vardır.
+    - İpucu: hedef ID'leri vaka içinde benzersizdir; her kademe metni vardır; en az bir kademe.
+    - Suçlama: şüpheliler `person` kategorisinde var olan notlardır ve portreleri vardır; `culprit` listededir; kanıt
+      notları / satırları vardır; `1 ≤ minValid ≤ maxPicked`, geçerli kanıt sayısı ≥ `minValid`, `attempts ≥ 1`;
+      `openAccusation` varsa `accusation` tanımlıdır.
+    - Sayfalı not: `bodyKey` veya `pages` (tam olarak biri); `pages` boş değildir.
+    - Eşya kuralları: `usingItem` var olan bir eşyayı gösterir.
   - `say` ve `greeting` `first` anahtarları, tetikleyici ID'leri ve konuşma ID'leri vaka içinde; konu ID'leri konuşma
     içinde; satır ID'leri not içinde benzersizdir.
   - Konu `trigger`'ı tam olarak bir `showItem` veya `showNote` içerir.
@@ -427,7 +515,8 @@ Ayrıntılı tasarım `docs/game_design.md`'dedir; burası koda dökülmüş kur
   - **Bölüm önekleri ayrı doğrulanır** (B1; B1–2; ...): erken bölüm, geç bölümün ID'sine, bayrağına veya metnine
     bağımlı olamaz (demo derlemesi yalnızca ilk bölümle çalışır).
   - **Uyarılar** testi kırmaz, raporlanır: kullanılmayan metin anahtarı; hedefi mevcut sahnenin çocuğu, ebeveyni veya
-    bir kök sahne olmayan `goToScene`; hiçbir `talk` ile açılmayan konuşma.
+    bir kök sahne olmayan `goToScene`; hiçbir `talk` ile açılmayan konuşma; Aşama 5: hiçbir `openPuzzle` ile
+    açılmayan bulmaca, `openAccusation`'ı olmayan `accusation`.
   - `assets/dev/presets.json`'daki her sahne, eşya, not ve bayrak içerikte vardır (dosya diskten okunur).
   - `assets/content` altında dosya içeren **her klasör** `pubspec.yaml`'ın asset listesinde tanımlıdır (unutulan klasör
     sessizce eksik içerik demektir; test kırılır).

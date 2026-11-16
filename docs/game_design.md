@@ -2,7 +2,7 @@
 
 > Bu doküman oyunun **nasıl oynandığını** tanımlar ve mekanik kararların tek kaynağıdır.
 > Hikaye metni (olay örgüsü, karakterler, diyaloglar) ayrıca yazılır.
-> Durum: Taslak v2 — 2026-11-15. Her değişiklik en alttaki "Değişiklik geçmişi"ne tarih ve gerekçeyle yazılır.
+> Durum: Taslak v3 — 2026-11-16. Her değişiklik en alttaki "Değişiklik geçmişi"ne tarih ve gerekçeyle yazılır.
 
 ---
 
@@ -17,14 +17,17 @@ mekanları keşfedip eşya ve belge topladığı, bulmacalar çözdüğü ve son
 1. **Kullanımı kolay, düşündüren bulmacalar.** Arayüz hiçbir zaman zorluk kaynağı değildir; zorluk yalnızca akıl yürütmededir.
 2. **Tek yol.** Hikaye dallanmaz. Oyuncunun becerisi sonucu değil, çözüm hızını ve finaldeki başarıyı belirler.
 3. **Önce atmosfer.** Karanlık, yağmur, sis, sessizlik, daktilo.
-4. **Oyuncu asla çaresiz kalmaz.** Dedektifin iç sesi gerektiğinde yön gösterir.
+4. **Oyuncu asla çaresiz kalmaz, ama hiçbir şey ona doğrudan buldurulmaz.** Dedektif gördüğünü söyler, yön
+   göstermez; ne yapılacağını bulmak oyuncunun işidir. Yardım yalnızca oyuncu istediğinde gelir: ipucu düğmesi her
+   zaman oradadır, sınırsız ve ücretsizdir (5.5).
 5. **İzlenmeye uygun final.** İzleyen birinin de tahmin yürütüp tartışabileceği bir suçlama anı (yayıncılar, sosyal medya).
 
 ## 3. Oyuncu ve dedektif
 
 - Oyuncu dedektifi yönetir. Bakış birinci şahıstır; dedektif ekranda görünmez.
+- Dedektifin adı **Detective Dark**'tır; ön adı hiçbir yerde geçmez.
 - **Dedektifin iç sesi**, ekranın altındaki mesaj barından oyuncuya konuşur: gördüğüne yorum yapar,
-  bulduğunu değerlendirir, oyuncu takıldığında ipucu verir.
+  bulduğunu değerlendirir. Yön göstermez (ilke 4); oyuncu ipucu istediğinde ipucunu da bu ses verir.
 - İç ses **tek yönlüdür**: oyuncu cevap yazmaz. İç ses oyuncuya soru sormaz, oyuncu da ona bir şey söylemez.
 - **Diğer karakterler sahnede silüet olarak görünür ve onlarla konuşulur** (bkz. 5.9). Sahnede yüzleri seçilmez;
   noir bir gölge, bir duruş. Konuşma kutusunda ve kişi dosyasında ise karakterin **çizilmiş portresi** görünür.
@@ -80,31 +83,42 @@ mekanları keşfedip eşya ve belge topladığı, bulmacalar çözdüğü ve son
 Bulmaca türleri (hepsi dokunmayla, sürüklemesiz oynanır):
 - **Eşya kullanma:** anahtar → kapı.
 - **Eşya birleştirme:** iki eşya bir araya gelince yeni bir eşya veya bilgi çıkar.
-- **Rakamlı tuş takımı:** şifreli kilit. Başka kilit türleri (döner kilit, harf kilidi...) yalnızca hikaye isterse eklenir.
+- **Rakamlı tuş takımı:** şifreli kilit. Başka kilit türü (döner kilit, harf kilidi...) yoktur.
 - **Sembol eşleştirme:** bir yerde görülen sembollerin başka bir yerdeki karşılığını bulmak. Ayrı bir arayüzü
   yoktur; içerikle kurulur.
 - **Karanlık sahnede ışık kaynağı:** karanlık bir sahnede bir şey görmek için ışık kaynağı (fener, lamba) kullanmak.
-- **Yön bulmacası:** birkaç nesnenin yönünü bir metindeki tarife göre ayarlamak.
+- **Yön bulmacası:** birkaç nesnenin yönünü bir metindeki tarife göre ayarlamak. Nesneye dokunmak onu saat yönünde
+  çeyrek tur çevirir; yarım bırakılan ayar yerinde kalır; hepsi doğru olunca kendiliğinden çözülür.
 - **Delikli kağıt:** delikli bir şablon seçilip hedef yazıya dokunulur; yalnızca deliklerin altında kalan yazı
   okunur. Şablon sürüklenmez.
 - **Çelişki yakalama:** bir karakterin söylediğiyle çelişen kanıtı ona göstermek (5.10).
-- **Kayıt inceleme (yalnızca hikaye isterse):** döneme uyar; güvenlik kamerası yoktur. Gerekirse makaralı ses bandı
-  veya film şeridi incelenir.
+- **Kayıt inceleme: ertelendi.** Hikaye kullanmıyor. İleride gerekirse döneme uyar (güvenlik kamerası yoktur):
+  makaralı ses bandı veya film şeridi.
 
 Kurallar:
+- **Bulmaca kendi görselinin üstünde oynanır.** Tuş takımı ve yön bulmacası, oyunun çizdiği genel bir pencere
+  değildir: oyuncu kasanın, kutunun, panonun yakın planına bakar ve doğrudan onun tuşlarına, parçalarına dokunur.
+  Rakamları ve yazıları oyun çizer (bkz. 9), bu yüzden her zaman okunur. Geri, yakın plandan çıkarır.
+- **Yanlış denemenin cezası yoktur:** dedektif kısa bir yorum yapar, oyuncu yeniden dener.
+- Çözülen bulmaca çözülmüş kalır; bir daha açılmaz.
+- Eşyalar panelde birbirine de kullanılır (bir eşya seçiliyken diğerine dokunulur); bazı eşyalar inceleme kartındaki
+  "Aç" ile açılır (zarfın içinden mektup çıkar).
 - Bulmacalar zincir kurar: bir belgedeki ipucu → kasa şifresi → kasadaki mektup → yeni bir kişi.
 - Her bulmacanın cevabı oyun içinde adil biçimde bulunabilir olmalıdır.
 - **Zaman baskısı yoktur:** hiçbir bulmaca süreye bağlı değildir (bkz. 9, "Ortam").
 
 ### 5.5 İpucu sistemi
-- Uzun süre ilerleme olmazsa dedektif kendiliğinden hafifçe yönlendirir.
-- Oyuncu istediğinde **kademeli ipucu** alır:
-    1. **Dokunulabilir yerleri göster:** sahnedeki dokunulabilir yerler kısa süre işaretlenir.
+- **Kendiliğinden yönlendirme yoktur.** Oyuncu uzun süre ilerlemese de dedektif kendi başına ipucu vermez (ilke 4).
+- Oyuncu HUD'daki ipucu düğmesine bastığında **kademeli ipucu** alır. İpucu, oyuncunun o anki hedefine göredir;
+  her basış bir basamak ilerler:
+    1. **Dokunulabilir yerleri göster:** sahnedeki dokunulabilir yerler kısa süre (~1,5 sn) türlerine göre
+       işaretlenir (geçiş, alınacak nesne, kişi, bulmaca, diğer).
     2. Yön ("Holdeki saat garip duruyor.")
     3. Net ("Saatin gösterdiği zaman bir şifre olabilir.")
     4. Cevap
-- **İpuçları sınırsız ve ücretsizdir.** İki ipucu arasında kısa bir bekleme vardır (öneri: 60 sn); bekleme, ipucunu
-  düşünmeden art arda açmayı frenler, başka hiçbir şeyi kısıtlamaz.
+  Son basamaktan sonra aynı metin yeniden gösterilir. İpucu dedektifin iç sesiyle gelir ve mesaj geçmişinde kalır.
+- **İpuçları sınırsız ve ücretsizdir.** İki ipucu arasında 60 saniye bekleme vardır; bekleme, ipucunu
+  düşünmeden art arda açmayı frenler, başka hiçbir şeyi kısıtlamaz. Süre oyun testiyle ayarlanır.
 - Kullanılan ipucu sayısı sonuç ekranında görünür (5.6).
 - Reklam yoktur; ipucu satılmaz (bkz. 7.1).
 
@@ -112,13 +126,18 @@ Kurallar:
 - Suçlama **karakolda** yapılır.
 - Vaka sonunda **9 şüpheli** vardır. Tanıkların da defterde dosyası olur, ama suçlama ekranında yalnızca
   şüpheliler görünür.
-- Oyuncu polise bir **isim** ve onu destekleyen **2–3 kanıt** (not defterinden) sunar.
-- Doğru isim + yeterli kanıt → tutuklama, doğru son.
-- Yanlışsa polis ikna olmaz; **1 hak daha** verilir (toplam 2 hak).
-- İkinci deneme de yanlışsa iki seçenek sunulur: **Baştan oyna** veya **Çözümü gör**.
+- Oyuncu önce portrelerden bir **şüpheli** seçer, sonra not defterinden onu destekleyen **en fazla 3 kanıt** seçer
+  ve onaylar. Kanıt bir not ya da bir kişi dosyasındaki tek bir satır olabilir.
+- **Kabul:** isim doğru **ve** seçilen kanıtların en az 2'si geçerli. İlgisiz bir ek kanıt zarar vermez.
+  → tutuklama, doğru son.
+- İsim yanlışsa polis "ikna olmadım" der. İsim doğru ama kanıt yetersizse "kanıtlar zayıf" der.
+  **İkisinde de bir hak düşer** (toplam 2 hak).
+- Haklar bitince iki seçenek sunulur: **Baştan oyna** (ilerleme ve süre sıfırlanır) veya **Çözümü gör**.
+- Onaylamadan vazgeçmek hak harcamaz.
 - **Kaçırılabilen kanıt yoktur:** önemli her kanıt ilerlemek için zorunludur. Suçlamaya gelen oyuncunun defterinde
   gereken bütün kanıtlar bulunur; zorluk onları bulmakta değil, doğru olanları seçmektedir.
-- **Sonuç ekranı:** kaç denemede çözüldüğü, toplam süre, kullanılan ipucu sayısı. Paylaşılabilir.
+- **Sonuç ekranı:** kaç denemede çözüldüğü, toplam süre, kullanılan ipucu sayısı. Metin olarak paylaşılabilir;
+  paylaşılan metin kimin suçlu olduğunu ve kanıtları içermez.
 
 ### 5.7 Girdi: dokunma ve fare
 - Mobilde dokunma, PC'de fare. İkisi de aynı etkileşimi tetikler; oyun mantığı hiçbir zaman fareyle üzerine
@@ -204,6 +223,10 @@ Toplam yaklaşık 3–4 saat. **Vaka 2** ileride ayrı ve ücretli çıkar.
 **Tek istisna Bölüm 1'in sonudur:** mobilde Bölüm 2–4 için **tek satın alım ekranı**, Steam demosunda **demo sonu
 ekranı** çıkar. Bölüm 1 bu yüzden güçlü bir kapanışla biter.
 
+**Bu ekran kapatılabilir.** Kapatan oyuncu Bölüm 1 dünyasında dolaşmaya devam eder: mekanlar, defter ve konuşmalar
+yerindedir, ama Bölüm 2'nin içeriği açılmaz. HUD'da "tam oyunu aç" girişi kalır ve ekranı yeniden açar. Satın alınca
+(veya tam oyunda) oyun kaldığı yerden, kesintisiz sürer.
+
 Yeni kişiler ve yeni mekanlar bölümle açılır (bkz. 9, "Ortam").
 
 ## 7. Platformlar ve para kazanma (taslak)
@@ -277,15 +300,12 @@ Aynı oyun ve aynı içerik her platformda çalışır; yalnızca satış biçim
 
 | Konu | Ne zaman |
 |---|---|
-| Kayıt inceleme gerekecek mi; gerekirse makaralı ses bandı mı, film şeridi mi? (Hikaye istemezse ertelenir.) | Bulmaca aşaması |
-| İsim doğru ama kanıt yetersizse hak düşer mi? (Öneri: düşer; polis "kanıtlar zayıf" der.) | Bulmaca aşaması |
-| İki ipucu arasındaki bekleme süresi (öneri: 60 sn) | Bulmaca aşaması |
 | Mobil fiyat | Para kazanma aşaması |
 | Steam fiyatı; başarımlar olacak mı? | Steam aşaması |
 | PC'de imleç hotspot üzerinde değişsin mi? | Steam aşaması |
 | Steam Deck (kontrolcü) ve macOS desteği | Steam çıkışından sonra |
 | Vaka 2 dağıtımı: uygulama güncellemesi mi, sonradan indirilen içerik mi? | Yayın sonrası |
-| Kasabanın adı, dedektifin kimliği, olay örgüsü ve kişiler | Hikaye yazımı (bu belgeye yazılmaz) |
+| Kasabanın adı, olay örgüsü ve kişiler | Hikaye yazımı (bu belgeye yazılmaz) |
 
 **Kapanan sorular:**
 - 50+ sahnede yön bulma → harita ve mekan listesi yok; mekanlara sahnedeki geçiş noktalarıyla gidilir (5.11,
@@ -294,6 +314,10 @@ Aynı oyun ve aynı içerik her platformda çalışır; yalnızca satış biçim
 - İpucu ve reklam modeli → ipuçları sınırsız ve ücretsiz, aralarında kısa bekleme; reklam yok (5.5, 7.1, 2026-11-15).
 - Kayıt inceleme biçimi (kare dizisi mi, video mu) → soru değişti: güvenlik kamerası yok; gerekirse ses bandı veya
   film şeridi (5.4, 2026-11-15).
+- Kayıt inceleme → ertelendi; hikaye kullanmıyor (5.4, 2026-11-16).
+- İsim doğru, kanıt yetersizse → hak düşer; polis "kanıtlar zayıf" der (5.6, 2026-11-16).
+- İpucu bekleme süresi → 60 sn; oyun testiyle ayarlanır (5.5, 2026-11-16).
+- Dedektifin adı → Detective Dark; ön adı geçmez (3, 2026-11-16).
 
 ## Değişiklik geçmişi
 
@@ -354,3 +378,23 @@ Aynı oyun ve aynı içerik her platformda çalışır; yalnızca satış biçim
     göster"; reklam yok, gelir yalnızca bölüm satışından. Gerekçe: ücretli ipucu veya reklam takılan oyuncuyu
     cezalandırır ve atmosferi böler.
   - **Ses** (9): mekan başına ambiyans döngüsü ve efektler; müzik az.
+- 2026-11-16 (bulmaca ve vaka akışı kararları, kullanıcı onaylı; yalnızca mekanik):
+  - **Doğrudan buldurmama ilkesi** (2, 3, 5.5): ilke 4 "dedektifin iç sesi gerektiğinde yön gösterir" idi; artık
+    dedektif yalnızca gördüğünü söyler ve **kendiliğinden yönlendirme kalktı** (önceki karar: uzun süre ilerleme
+    olmazsa dedektif hafifçe yönlendirir). Gerekçe: bir dedektif oyununda keşfin ve çıkarımın sahibi oyuncu olmalı;
+    istenmeden gelen ipucu bulmacayı oyuncunun elinden alır. Çaresiz kalmama güvencesi ipucu düğmesidir: her zaman
+    orada, sınırsız ve ücretsiz. (ADR 0022)
+  - **İpucu ayrıntıları** (5.5): ipucu o anki hedefe göredir; ilk basış dokunulabilir yerleri gösterir; bekleme
+    60 sn olarak kesinleşti (oyun testiyle ayarlanır). (ADR 0022)
+  - **Bulmacalar yakın planın üstünde oynanır** (5.4): tuş takımı ve yön bulmacası genel bir pencere değil, nesnenin
+    kendi görselidir. Gerekçe: her yerde aynı görünen bir pencere atmosferi böler; oyuncu kasaya bakıyorsa kasanın
+    tuşlarına basmalı. Yanlış denemenin cezası yok. Tuş takımı dışında kilit türü yok; kayıt inceleme ertelendi
+    (hikaye kullanmıyor). (ADR 0020)
+  - **Kapatılabilir satın alma / demo sonu ekranı** (6): önceki metin ekranın kapatılıp kapatılamayacağını
+    söylemiyordu. Gerekçe: Bölüm 1'i bitiren oyuncuyu bir duvarın önünde bırakmak yerine dünyada bırakmak; satın
+    almaya zorlanmış hissetmez, istediğinde HUD'daki girişten döner. (ADR 0021)
+  - **Suçlama kuralları** (5.6): en fazla 3 kanıt, en az 2'si geçerli; kanıt bir not veya dosya satırı olabilir;
+    ilgisiz ek kanıt zarar vermez; isim doğru ama kanıt zayıfsa da hak düşer (açık soru kapandı). Gerekçe: finalin
+    zorluğu doğru kanıtı seçmekte; fazladan bir kanıt yüzünden kaybetmek haksız olurdu, ama kanıtsız doğru tahmin de
+    ödüllendirilmemeli. Paylaşılan sonuç metni spoiler içermez. (ADR 0023)
+  - **Dedektifin adı Detective Dark** (3); ön adı geçmez. Gerekçe: oyunun adıyla aynı.
