@@ -109,3 +109,30 @@
   bir telefonda "her an öldürülebilirim" demektir. **Monoton saat:** oyun süresi duvar saatiyle (`DateTime.now`) değil
   `Stopwatch` ile ölçülür; kullanıcı saati değiştirse veya yaz saatine geçilse bile süre bozulmaz. Bedeli de var
   (ADR 0019): `save` artık disk hatasını bildiremez; hata loglanır ve sonraki fırsatta yeniden denenir.
+
+### Adım 2.4 — Testler (2026-11-16)
+- **Ne yaptık:** "Kapat-aç" senaryosunu test olarak yazdık: `close_and_reopen_test.dart` oyun mantığını uygulamadaki
+  gibi kurar (gerçek içerik, `SceneBloc`, etki hattı), kaydı ise geçici klasördeki **gerçek bir SQLite dosyasına**
+  yazar. Her `open()` uygulamanın yeniden başlamasıdır: yeni bellek, aynı dosya. Senaryolar: ilk açılış yeni oyun
+  başlatır ve açılış repliği ikinci açılışta tekrarlanmaz; villa oynanıp kapatılınca her şey yerinde (kapı açık,
+  anahtar kullanılmış, mektup defterde, alınan nesneler gizli, mesaj geçmişi aynı); yeniden açılan oyun oynanmaya ve
+  kaydedilmeye devam eder; okunan not okunmuş kalır; **haber verilmeden öldürülen** uygulama en fazla son 500 ms'lik
+  değişikliği kaybeder ve diskteki durum eksiksiz bir önceki durumdur; oyun süresi oturumlar boyunca toplanır,
+  kapalıyken geçen süre sayılmaz.
+- **Neden:** 2.3'ün birim testleri deponun parçalarını tek tek kanıtlıyor; bu test ise oyuncunun yaşadığı şeyi
+  kanıtlıyor: "kapattım, açtım, kaldığım yerdeyim". Kayıt şekline yeni bir alan eklenip dönüştürücüde unutulursa bu
+  test `after == before` karşılaştırmasında kırılır.
+- **Önemli dosyalar:** `test/features/progress/close_and_reopen_test.dart`,
+  `test/features/progress/data/repositories/drift_progress_repository_test.dart`,
+  `test/features/progress/data/services/play_time_counter_test.dart`, `test/app/save_lifecycle_test.dart`.
+- **Telefonda nasıl test edilir (senin yapacağın kısım):** telefonu uçak moduna al →
+  `flutter run --flavor dev -t lib/main_dev.dart --dart-define-from-file=env/dev.json` → heykelden anahtarı al, kapıyı
+  aç, salona gir, mektubu al → uygulamayı son uygulamalardan kaydırıp tamamen kapat → simgesinden yeniden aç: salondasın,
+  kapı açık, anahtar panelde yok, mektup defterde. Cihazda benim doğruladığım kısım (adb ile, sahneye dokunmadan):
+  kayıt dosyası oluşuyor, ana ekrana dönünce yazılıyor, öldürülüp açılınca aynı kayıttan devam ediyor.
+- **Öğrenme notu:** **Birim testi** tek sınıfı yalıtır (depo + bellek içi SQLite); **senaryo testi** birkaç gerçek
+  parçayı birlikte çalıştırır ve bir kullanıcı hikayesini anlatır. İkisi de gerekli: birincisi hatanın *yerini*,
+  ikincisi hatanın *varlığını* gösterir. "Uygulama öldürüldü" durumunu taklit etmek için süreci öldürmedik; o andaki
+  veritabanı dosyasının **kopyasını** aldık ve yeni oturumu kopyanın üstünde açtık: diskte o an ne varsa o. Testte
+  zamanı da biz yönetiyoruz: oyun süresi sayacına sahte bir saat veriyoruz, böylece "10 saat geçti" demek tek satır ve
+  test bir saniye bile beklemiyor.

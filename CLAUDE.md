@@ -121,6 +121,11 @@ Her feature içinde:
   kayıt başarılıysa). Yeni bir yazma yolu eklemek yerine hatta yeni bir çağıran eklenir.
   **Tek istisna `MarkNoteRead`'dir** (doğrudan `save`): `isRead`'i hiçbir koşul okumaz, etki ve olay üretmez.
   `ProgressRepository.save` başka hiçbir yerden çağrılmaz (mimari testi denetler); yeni istisna eklemek ADR ister.
+- **Otomatik kayıt (ADR 0019):** `DriftProgressRepository.save` belleği hemen günceller ve hemen döner; diske yazım
+  ilk yazılmamış değişiklikten 500 ms sonra, birleştirilerek yapılır (disk hatası `Result`'a yansımaz, loglanır ve
+  yeniden denenir). Uygulama arka plana geçince `app/`'teki `SaveLifecycle`, domain arayüzü `ProgressAutosave`
+  üzerinden anında yazdırır. Oyun süresini kayıt katmanı sayar (yalnızca ön planda) ve diske yazarken damgalar; oyun
+  kuralları `playTimeSeconds`'a dokunmaz. Testler `configureDependencies`'e bellek içi depo verir.
 - **Feature'lar arasında döngü yoktur.** A feature'ı B'yi import ediyorsa B, A'yı (dolaylı olarak da) import edemez;
   mimari testi feature bağımlılık grafını import satırlarından çıkarır ve döngüde kırılır. Yön sabittir:
   `dialogue` → `scene_engine` → `notebook` / `inventory` / `progress`. Ters yönde bilgi gerekiyorsa entity değil düz

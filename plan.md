@@ -1039,7 +1039,7 @@ sahnede durur, mantık testlerle kanıtlanmıştır; panel 1.17'de gelir.
   ateşlenen tetikleyiciler, söylenen replikler ve chat geçmişi geri yüklenir.
   **Commit:** `feat(progress): persist game progress with autosave`
 
-### [ ] 2.4 Testler
+### [x] 2.4 Testler
 **Yapılacaklar:**
 - Repository testleri; kapat-aç senaryosu (aynı veritabanını okuyan yeni repository örneği).
 - Manuel: uçak modunda oyna → uygulamayı tamamen kapat → aç → her şey yerinde (kapı açık, anahtar kullanılmış, not defterde).
@@ -1742,3 +1742,9 @@ gerçek görseller hazırlanırken (Aşama 7) öne alınabilir; Bölüm 1 hazır
   çalışır (zamanlayıcı ve dosya yok); Drift deposu kendi testlerinde bellek içi SQLite kullanır. (f) Windows'ta gerçek
   derlemeyle doğrulandı: dosya `%APPDATA%\asklife23\DetectiveDark\detective_dark_dev.sqlite`, ikinci açılış aynı
   kayıttan devam etti. Telefonda doğrulama kullanıcıda (2.4'ün manuel testi).
+- 2026-11-16 (2.4): Depo testlerinin çoğu 2.3'ün commit'inde geldi (testsiz depo commit edilmedi); 2.4 kapat-aç
+  senaryosunu ekledi (`test/features/progress/close_and_reopen_test.dart`: gerçek içerik + gerçek SQLite dosyası, her
+  "açılış" yeni bellek). **Cihazda doğrulanan** (2201116TG, Android 13, dev derlemesi, adb ile): kayıt dosyası oluştu,
+  ana ekrana dönünce yazıldı, `force-stop` + yeniden açılışta aynı kayıttan devam edildi (açılış repliği tekrarlanmadı,
+  oyun süresi 7 sn → 16 sn, `localRevision` 2 → 3). **Kullanıcıda kalan:** planın manuel testinin oynanış kısmı (uçak
+  modunda anahtarı al, kapıyı aç, mektubu al → tamamen kapat → aç); adb ile sahneye dokunulmadı.
